@@ -57,11 +57,6 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
   color:#f2b441;
   margin-bottom:20px;
 }
-.eyebrow-dot{
-  width:6px; height:6px; border-radius:50%;
-  background:#e0731d; box-shadow:0 0 8px #e0731d;
-  animation:emberPulse 2.6s ease-in-out infinite;
-}
 .hero-title{
   font-family:'Grenze Gotisch',serif; font-weight:700;
   font-size:clamp(34px,5.5vw,58px); line-height:.98;
