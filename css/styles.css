@@ -1,0 +1,340 @@
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -webkit-font-smoothing:antialiased; }
+::selection{ background:#e0731d; color:#160d07; }
+
+@keyframes heroDrift{ 0%{ transform:scale(1.12) translateY(0); } 100%{ transform:scale(1.18) translateY(-14px); } }
+@keyframes emberPulse{ 0%,100%{ opacity:.55; } 50%{ opacity:.95; } }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+::-webkit-scrollbar{ height:10px; width:10px; }
+::-webkit-scrollbar-track{ background:#1a0f08; }
+::-webkit-scrollbar-thumb{ background:#5a3418; border-radius:10px; }
+
+.page{
+  min-height:100vh;
+  background:#120a06;
+  background-image:radial-gradient(120% 80% at 50% -10%, rgba(224,115,29,.10), transparent 55%);
+  overflow-x:hidden;
+}
+
+/* HERO */
+.hero{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.hero-bg{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover;
+  object-position:center 38%;
+  filter:brightness(.72) saturate(1.14) contrast(1.04);
+  transform:scale(1.06);
+  animation:heroDrift 30s ease-in-out infinite alternate;
+}
+.hero-overlay{
+  position:absolute; inset:0;
+  background:
+    radial-gradient(78% 70% at 50% 46%, rgba(18,10,6,.28), rgba(18,10,6,.8) 82%),
+    linear-gradient(180deg, rgba(18,10,6,.5) 0%, rgba(18,10,6,.22) 36%, rgba(18,10,6,.97) 100%);
+}
+.hero-content{
+  position:relative; z-index:2;
+  text-align:center;
+  padding:30px 24px 34px;
+  max-width:920px;
+}
+.eyebrow{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 16px;
+  border:1px solid rgba(242,180,65,.45);
+  border-radius:999px;
+  background:rgba(20,12,7,.5);
+  font-size:12.5px; letter-spacing:.22em; text-transform:uppercase;
+  color:#f2b441;
+  margin-bottom:20px;
+}
+.eyebrow-dot{
+  width:6px; height:6px; border-radius:50%;
+  background:#e0731d; box-shadow:0 0 8px #e0731d;
+  animation:emberPulse 2.6s ease-in-out infinite;
+}
+.hero-title{
+  font-family:'Grenze Gotisch',serif; font-weight:700;
+  font-size:clamp(34px,5.5vw,58px); line-height:.98;
+  margin:0 0 14px;
+  color:#f7ecd8;
+  text-shadow:0 3px 18px rgba(0,0,0,.6);
+  letter-spacing:.01em;
+}
+.hero-sub{
+  font-size:clamp(15px,2vw,19px); line-height:1.5;
+  color:#e6cfae;
+  margin:0 auto;
+  max-width:600px;
+}
+
+/* SCHEDULE */
+.schedule-section{
+  position:relative;
+  padding:34px 20px 40px;
+  scroll-margin-top:70px;
+  background:linear-gradient(180deg,#1a0f08,#160c07);
+  border-top:1px solid rgba(224,115,29,.18);
+}
+.schedule-inner{ max-width:1320px; margin:0 auto; }
+
+.city-tabs{
+  display:flex; flex-wrap:wrap; gap:10px;
+  justify-content:center;
+  margin-bottom:30px;
+}
+.city-tab{
+  font-family:'Grenze Gotisch',serif; font-size:18px; letter-spacing:.03em;
+  padding:9px 20px; border-radius:999px; cursor:pointer;
+  transition:all .18s ease;
+  background:rgba(28,16,9,.7); color:#d6bb96;
+  border:1px solid rgba(224,115,29,.28);
+}
+.city-tab:hover:not(.active){
+  background:rgba(56,32,16,.85); color:#f2cf90;
+  border-color:rgba(242,180,65,.55);
+}
+.city-tab.active{
+  background:linear-gradient(180deg,#f0982e,#d9651a);
+  color:#1a0d05;
+  border:1px solid #f2b441;
+  box-shadow:0 6px 18px rgba(217,101,26,.45);
+}
+
+.week-grid-wrap{
+  overflow-x:auto;
+  padding:4px 2px 14px;
+  -webkit-overflow-scrolling:touch;
+}
+.week-grid{
+  display:grid;
+  grid-template-columns:repeat(7, minmax(168px,1fr));
+  gap:12px;
+  min-width:1180px;
+}
+
+.day-col{
+  border-radius:14px;
+  padding:6px 6px 14px;
+  min-height:120px;
+  background:rgba(26,15,8,.55);
+  border:1px solid rgba(224,115,29,.16);
+}
+.day-col.is-today{
+  background:rgba(40,24,13,.55);
+  border-color:rgba(242,180,65,.55);
+  box-shadow:0 0 0 1px rgba(242,180,65,.25), 0 8px 26px rgba(0,0,0,.4);
+}
+.day-col.is-empty{
+  background:rgba(22,13,7,.4);
+  opacity:.72;
+}
+.day-col.is-empty.is-today{ background:rgba(40,24,13,.55); }
+
+.day-header{
+  display:flex; align-items:baseline; justify-content:space-between;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(224,115,29,.22);
+  margin-bottom:10px;
+}
+.day-label{
+  font-family:'Grenze Gotisch',serif; font-size:19px; letter-spacing:.05em;
+  color:#e6cfae;
+}
+.day-col.is-today .day-label{ color:#f2b441; }
+.day-col.is-empty .day-label{ color:#8a7259; }
+.day-col.is-today.is-empty .day-label{ color:#f2b441; }
+
+.today-badge{
+  font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+  color:#1a0d05; background:#f2b441;
+  padding:3px 7px; border-radius:5px;
+}
+
+.day-events{
+  display:flex; flex-direction:column; gap:10px;
+  padding:0 4px;
+}
+
+.event-card{
+  position:relative;
+  background:linear-gradient(180deg,rgba(40,24,14,.92),rgba(28,16,9,.92));
+  border:1px solid rgba(224,115,29,.28);
+  border-radius:10px;
+  padding:13px 13px 14px;
+  box-shadow:0 5px 16px rgba(0,0,0,.35);
+}
+.event-badge{
+  display:inline-block;
+  font-size:12px; font-weight:600;
+  font-family:'Spectral SC','Spectral',Georgia,serif;
+  letter-spacing:.06em;
+  padding:2px 9px 3px;
+  border-radius:6px;
+  margin-bottom:9px;
+}
+.event-type{
+  font-family:'Grenze Gotisch',serif; font-size:17px; line-height:1.12;
+  color:#f2b441; margin-bottom:7px;
+}
+.event-venue{
+  font-size:15px; font-weight:600; color:#f3e6d2; line-height:1.25;
+}
+.event-suburb{
+  font-size:12.5px; color:#b59a7e; margin-top:1px;
+}
+.event-time{
+  display:flex; align-items:center; gap:7px;
+  margin-top:9px; font-size:13.5px; color:#e6cfae;
+}
+.event-note{
+  margin-top:10px; padding-top:9px;
+  border-top:1px dashed rgba(224,115,29,.25);
+  font-size:12px; font-style:italic; line-height:1.45;
+  color:#c2a884;
+}
+.day-empty-msg{
+  text-align:center; padding:16px 6px;
+  color:#6b5743; font-size:13px; font-style:italic;
+}
+
+.schedule-meta{
+  text-align:center; color:#8a7259; font-size:13px; margin-top:18px;
+}
+.schedule-meta .city-name{ color:#caa970; }
+
+/* JOIN THE REALM */
+.join-section{
+  position:relative;
+  padding:64px 24px 70px;
+  background:linear-gradient(180deg,#160c07,#1d1109);
+  border-top:1px solid rgba(224,115,29,.2);
+  scroll-margin-top:70px;
+}
+.join-wrap{
+  max-width:1020px; margin:0 auto;
+  display:flex; gap:48px; align-items:center;
+  flex-wrap:wrap; justify-content:center;
+}
+
+.discord-card{
+  flex:0 0 340px; max-width:340px;
+  border-radius:14px;
+  box-shadow:0 14px 40px rgba(0,0,0,.55);
+  border:1px solid rgba(224,115,29,.3);
+  background-image:linear-gradient(180deg,rgba(16,9,7,.86),rgba(13,8,5,.96)), url(../project/assets/screamer.png);
+  background-size:cover;
+  background-position:center 12%;
+  padding:22px 22px 24px;
+  min-height:300px;
+}
+
+.live-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin-bottom:18px;
+}
+.live-label{
+  display:inline-flex; align-items:center; gap:7px;
+  font-family:'Spectral SC','Spectral',serif; font-size:13px; letter-spacing:.06em;
+  color:#9fe0a8;
+}
+.live-dot{
+  width:8px; height:8px; border-radius:50%;
+  background:#3ba55d; box-shadow:0 0 8px #3ba55d;
+  animation:emberPulse 2.2s ease-in-out infinite;
+}
+.server-name{ font-size:12px; color:#b59a7e; text-align:right; }
+
+.online-row{ display:flex; align-items:baseline; gap:10px; }
+.online-count{ font-family:'Grenze Gotisch',serif; font-size:56px; line-height:.9; color:#f2b441; }
+.online-label{ font-size:15px; color:#e6cfae; }
+
+.avatars{ display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
+.avatar{
+  width:30px; height:30px; border-radius:50%;
+  background:#1a0f08;
+}
+.avatar-more{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:30px; height:30px; padding:0 9px; border-radius:15px;
+  background:rgba(224,115,29,.18); color:#e6cfae; font-size:12px;
+}
+
+.divider{ height:1px; background:rgba(224,115,29,.2); margin:18px 0; }
+
+.voice-label{
+  font-family:'Spectral SC','Spectral',serif; font-size:13px; letter-spacing:.06em;
+  color:#c98a3f; margin-bottom:10px;
+}
+.voice-rooms{ display:flex; flex-direction:column; gap:9px; }
+.voice-room{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.voice-room-name{
+  display:inline-flex; align-items:center; gap:8px; color:#f3e6d2; font-size:14px; min-width:0;
+}
+.voice-room-name span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.voice-room-count{ font-size:13px; color:#9fe0a8; flex:none; }
+.no-voice{ font-size:14px; color:#b59a7e; font-style:italic; line-height:1.5; }
+
+.discord-loading{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:256px; gap:14px;
+}
+.spinner{
+  width:34px; height:34px; border-radius:50%;
+  border:3px solid rgba(224,115,29,.25); border-top-color:#e0731d;
+  animation:spin .9s linear infinite;
+}
+.discord-loading-text{ color:#b59a7e; font-size:14px; }
+
+.discord-error{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:256px; text-align:center; gap:13px;
+}
+.discord-error-name{ font-family:'Grenze Gotisch',serif; font-size:24px; color:#f7ecd8; }
+.discord-error-text{ color:#b59a7e; font-size:14px; line-height:1.5; }
+
+.join-copy{ flex:1 1 360px; min-width:290px; }
+.join-eyebrow{
+  font-family:'Spectral SC','Spectral',serif; font-weight:600; font-size:16px;
+  letter-spacing:.1em; color:#eab94f; margin-bottom:12px;
+}
+.join-title{
+  font-family:'Grenze Gotisch',serif; font-weight:700;
+  font-size:clamp(32px,5vw,54px); line-height:1;
+  margin:0 0 18px; color:#f7ecd8;
+}
+.join-p{
+  font-size:17px; line-height:1.65; color:#dcc4a0;
+  margin:0 0 16px; text-wrap:pretty;
+}
+.join-p:last-of-type{ margin-bottom:26px; }
+.join-p strong{ color:#f2cf90; }
+
+.discord-btn{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:14px 28px; border-radius:999px;
+  background:linear-gradient(180deg,#5865F2,#4651d6);
+  color:#fff; text-decoration:none;
+  font-family:'Grenze Gotisch',serif; font-size:19px; letter-spacing:.03em;
+  box-shadow:0 8px 24px rgba(88,101,242,.45);
+}
+
+/* FOOTER */
+.site-footer{
+  padding:48px 24px 56px;
+  background:#0f0805;
+  border-top:1px solid rgba(224,115,29,.18);
+}
+.footer-inner{ max-width:760px; margin:0 auto; text-align:center; }
+.footer-p{ color:#8a7259; font-size:14px; line-height:1.6; margin:0 0 14px; }
+.footer-disclaimer{ color:#5f4d3b; font-size:12px; line-height:1.55; margin:0; }
+.discord-link{ color:#c98a3f; text-decoration:none; border-bottom:1px solid rgba(201,138,63,.4); }
