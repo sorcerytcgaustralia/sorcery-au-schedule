@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sorcerytcgaustralia.github.io/sorcery-au-schedule/sitemap.xml
