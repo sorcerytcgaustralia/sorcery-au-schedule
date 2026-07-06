@@ -5,5 +5,5 @@ window.CONFIG = {
   SHEET_ID: '1DZiYwc0o4YKxtS_bn86jfXyIQKpV92XGhEJaL503uS8',
   CITIES: ['Sydney', 'Canberra', 'Melbourne', 'Perth', 'Adelaide', 'Brisbane', 'Hobart'],
   DISCORD_GUILD_ID: '1454028745001402485',
-  DISCORD_INVITE_URL: 'https://discord.gg/XEzy5bBXCD',
+  DISCORD_INVITE_URL: 'https://discord.gg/eyPp9FKpxU',
 };
