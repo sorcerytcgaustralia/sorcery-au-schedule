@@ -54,12 +54,16 @@ which works as an append-only ledger — one event per row, and rows are
 **never deleted**. Header row (order doesn't matter, names do):
 
 ```
-Date | Event | City | Venue | Time | Format | Entry | Link
+Date | End Date | Event | City | Venue | Time | Format | Entry | Link
 ```
 
-- **Date** — `DD/MM/YY` or `DD/MM/YYYY`. For multi-day events use a range
-  like `14/11/26 - 15/11/26`; the event stays visible until the end date
-  passes. Date and Event are the only required fields.
+- **Date** — `DD/MM/YY` or `DD/MM/YYYY`. Date and Event are the only
+  required fields.
+- **End Date** — optional, for multi-day events (e.g. a weekend regional).
+  The event stays visible until the end date passes. Use this column for
+  ranges rather than typing "03/10/26 - 04/10/26" into Date — Google's
+  API silently drops non-date text from a date-formatted column, and the
+  event would vanish from the site.
 - **Event** — the event name shown on the card.
 - **City / Venue / Time / Format / Entry** — optional; shown on the card
   when present. Entry is free text (e.g. `$45`, `Free`).

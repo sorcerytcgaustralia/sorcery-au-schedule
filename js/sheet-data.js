@@ -268,13 +268,17 @@
       const events = [];
       for (let r = headerIdx + 1; r < rows.length; r++) {
         const row = rows[r];
-        const rawDate = col(row, ['date', 'dates']);
+        const rawDate = col(row, ['date', 'dates', 'start date', 'start']);
         const name = col(row, ['event', 'event name', 'name']);
         if (!rawDate || !name) continue;
+        // Preferred: a separate date-typed "End Date" column. Inline text
+        // ranges ("03/10/26 - 04/10/26") also work, but only if the Date
+        // column is plain text; in a date-typed column gviz drops them.
         const parts = rawDate.split(/\s*[–—-]\s*/).map((s) => s.trim()).filter(Boolean);
         const start = parseSpecialDate(parts[0]);
         if (!start) continue;
-        let end = parts.length > 1 ? parseSpecialDate(parts[1]) : null;
+        let end = parseSpecialDate(col(row, ['end date', 'end', 'until', 'to']));
+        if (!end && parts.length > 1) end = parseSpecialDate(parts[1]);
         if (!end || end < start) end = start;
         const link = col(row, ['link', 'url']);
         events.push(Object.assign({
