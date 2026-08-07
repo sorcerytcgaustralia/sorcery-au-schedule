@@ -82,6 +82,30 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
 }
 .schedule-inner{ max-width:1320px; margin:0 auto; }
 
+.view-toggle{
+  display:flex; gap:4px;
+  width:max-content; max-width:100%;
+  margin:0 auto 30px;
+  padding:5px;
+  border:1px solid rgba(224,115,29,.35);
+  border-radius:999px;
+  background:rgba(20,12,7,.6);
+}
+.view-tab{
+  font-family:'Grenze Gotisch',serif; font-size:19px; letter-spacing:.03em;
+  padding:9px 26px; border-radius:999px; cursor:pointer;
+  transition:all .18s ease;
+  background:transparent; color:#d6bb96;
+  border:1px solid transparent;
+}
+.view-tab:hover:not(.active){ color:#f2cf90; }
+.view-tab.active{
+  background:linear-gradient(180deg,#f0982e,#d9651a);
+  color:#1a0d05;
+  border-color:#f2b441;
+  box-shadow:0 6px 18px rgba(217,101,26,.45);
+}
+
 .city-tabs{
   display:flex; flex-wrap:wrap; gap:10px;
   justify-content:center;
@@ -206,6 +230,99 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
   text-align:center; color:#8a7259; font-size:13px; margin-top:18px;
 }
 .schedule-meta .city-name{ color:#caa970; }
+
+/* SPECIAL EVENTS */
+.special-list{
+  max-width:720px; margin:0 auto;
+  display:flex; flex-direction:column; gap:14px;
+}
+.special-card{
+  display:flex; gap:18px;
+  background:linear-gradient(180deg,rgba(40,24,14,.92),rgba(28,16,9,.92));
+  border:1px solid rgba(224,115,29,.28);
+  border-radius:12px;
+  padding:18px 20px;
+  box-shadow:0 5px 16px rgba(0,0,0,.35);
+}
+.special-date{
+  flex:none; width:72px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border-right:1px solid rgba(224,115,29,.25);
+  padding-right:18px;
+}
+.special-date-day{
+  font-family:'Grenze Gotisch',serif; font-size:30px; line-height:1;
+  color:#f2b441; white-space:nowrap;
+}
+.special-date-month{
+  font-family:'Spectral SC','Spectral',serif; font-size:13px; letter-spacing:.08em;
+  color:#c98a3f; margin-top:3px;
+}
+.special-main{ flex:1; min-width:0; }
+.special-top{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin-bottom:5px;
+}
+.special-name{
+  font-family:'Grenze Gotisch',serif; font-size:22px; line-height:1.1;
+  color:#f7ecd8;
+}
+.city-badge{
+  font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:#f2b441;
+  border:1px solid rgba(242,180,65,.45);
+  background:rgba(20,12,7,.5);
+  padding:2px 9px 3px; border-radius:999px;
+  flex:none;
+}
+.special-venue{ font-size:15px; font-weight:600; color:#f3e6d2; line-height:1.3; }
+.special-meta{
+  display:flex; flex-wrap:wrap; gap:4px 6px;
+  margin-top:8px;
+  font-size:13.5px; color:#e6cfae;
+}
+.special-meta span:not(:first-child)::before{ content:'·'; color:#8a7259; margin-right:6px; }
+.special-link{
+  display:inline-block; margin-top:12px;
+  font-size:13.5px; color:#f2b441; text-decoration:none;
+  border:1px solid rgba(242,180,65,.45); border-radius:999px;
+  padding:5px 16px;
+  transition:all .18s ease;
+}
+.special-link:hover{ background:rgba(242,180,65,.12); border-color:#f2b441; }
+.special-empty{
+  text-align:center; padding:36px 16px;
+  color:#b59a7e; font-size:15px; font-style:italic; line-height:1.5;
+}
+.special-archive{ max-width:720px; margin:28px auto 0; }
+.special-archive summary{
+  cursor:pointer; width:max-content; margin:0 auto;
+  font-family:'Spectral SC','Spectral',serif; font-size:14px; letter-spacing:.08em;
+  color:#c98a3f;
+  padding:6px 18px;
+  border:1px solid rgba(224,115,29,.3); border-radius:999px;
+  background:rgba(20,12,7,.5);
+  list-style:none;
+}
+.special-archive summary::-webkit-details-marker{ display:none; }
+.special-archive summary::after{ content:' ▾'; font-size:11px; }
+.special-archive[open] summary::after{ content:' ▴'; }
+.special-archive summary:hover{ color:#f2cf90; border-color:rgba(242,180,65,.55); }
+.special-archive-list{
+  margin-top:16px;
+  display:flex; flex-direction:column; gap:12px;
+}
+.special-archive-list .special-card{ opacity:.6; }
+
+@media (max-width:520px){
+  .special-card{ flex-direction:column; gap:12px; }
+  .special-date{
+    flex-direction:row; gap:8px; width:auto; align-self:flex-start;
+    border-right:none; border-bottom:1px solid rgba(224,115,29,.25);
+    padding:0 0 8px;
+  }
+  .special-date-month{ margin-top:0; }
+}
 
 /* COMMUNITY DECKS */
 .decks-section{

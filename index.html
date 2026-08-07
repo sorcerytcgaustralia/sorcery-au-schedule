@@ -43,15 +43,29 @@
   <section id="schedule" class="schedule-section">
     <div class="schedule-inner">
 
-      <!-- CITY TABS -->
-      <div class="city-tabs" id="city-tabs"></div>
-
-      <!-- WEEK GRID -->
-      <div class="week-grid-wrap">
-        <div class="week-grid" id="week-grid"></div>
+      <!-- VIEW TOGGLE -->
+      <div class="view-toggle" role="tablist" aria-label="Schedule view">
+        <button type="button" class="view-tab active" id="view-tab-weekly">Weekly Events</button>
+        <button type="button" class="view-tab" id="view-tab-special">Special Events</button>
       </div>
 
-      <p class="schedule-meta" id="schedule-meta"></p>
+      <!-- WEEKLY VIEW -->
+      <div id="view-weekly">
+        <div class="city-tabs" id="city-tabs"></div>
+        <div class="week-grid-wrap">
+          <div class="week-grid" id="week-grid"></div>
+        </div>
+        <p class="schedule-meta" id="schedule-meta"></p>
+      </div>
+
+      <!-- SPECIAL EVENTS VIEW -->
+      <div id="view-special" hidden>
+        <div class="special-list" id="special-list"></div>
+        <details class="special-archive" id="special-archive" hidden>
+          <summary>Past events</summary>
+          <div class="special-archive-list" id="special-archive-list"></div>
+        </details>
+      </div>
     </div>
   </section>
 

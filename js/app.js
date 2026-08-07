@@ -24,11 +24,31 @@
   const emptyEvents = () => ({ MON: [], TUE: [], WED: [], THU: [], FRI: [], SAT: [], SUN: [] });
 
   const state = {
+    view: 'weekly',
     activeCity: window.CONFIG.CITIES[0],
     cityData: null,
+    special: null,
     loading: true,
     discord: { status: 'loading' },
   };
+
+  // ---- weekly / special view toggle ----
+
+  function renderViewToggle() {
+    document.getElementById('view-tab-weekly').classList.toggle('active', state.view === 'weekly');
+    document.getElementById('view-tab-special').classList.toggle('active', state.view === 'special');
+    document.getElementById('view-weekly').hidden = state.view !== 'weekly';
+    document.getElementById('view-special').hidden = state.view !== 'special';
+  }
+
+  function wireViewToggle() {
+    [['view-tab-weekly', 'weekly'], ['view-tab-special', 'special']].forEach(([id, view]) => {
+      document.getElementById(id).addEventListener('click', () => {
+        state.view = view;
+        renderViewToggle();
+      });
+    });
+  }
 
   // ---- city tabs ----
 
@@ -117,6 +137,70 @@
     ));
   }
 
+  // ---- special events ----
+
+  function renderSpecialCard(ev) {
+    const card = el('div', 'special-card');
+
+    const dateBlock = el('div', 'special-date');
+    dateBlock.appendChild(el('div', 'special-date-day', ev.dayLabel));
+    dateBlock.appendChild(el('div', 'special-date-month', ev.monthLabel));
+    card.appendChild(dateBlock);
+
+    const main = el('div', 'special-main');
+    const top = el('div', 'special-top');
+    top.appendChild(el('span', 'special-name', ev.event));
+    if (ev.city) top.appendChild(el('span', 'city-badge', ev.city));
+    main.appendChild(top);
+    if (ev.venue) main.appendChild(el('div', 'special-venue', ev.venue));
+
+    const meta = el('div', 'special-meta');
+    meta.appendChild(el('span', null, ev.dateLabel));
+    if (ev.time) meta.appendChild(el('span', null, ev.time));
+    if (ev.format) meta.appendChild(el('span', null, ev.format));
+    if (ev.entry) meta.appendChild(el('span', null, ev.entry));
+    main.appendChild(meta);
+
+    if (ev.link) {
+      const a = el('a', 'special-link', 'Event details');
+      a.href = ev.link;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      main.appendChild(a);
+    }
+
+    card.appendChild(main);
+    return card;
+  }
+
+  function renderSpecial() {
+    const list = document.getElementById('special-list');
+    const archive = document.getElementById('special-archive');
+    const archiveList = document.getElementById('special-archive-list');
+    list.innerHTML = '';
+    archiveList.innerHTML = '';
+    archive.hidden = true;
+
+    const sp = state.special;
+    if (!sp) {
+      list.appendChild(el('div', 'special-empty', 'Loading special events…'));
+      return;
+    }
+    if (sp.error) {
+      list.appendChild(el('div', 'special-empty', 'Couldn’t load the special events. Check the Discord for announcements.'));
+      return;
+    }
+    if (sp.upcoming.length === 0) {
+      list.appendChild(el('div', 'special-empty', 'No special events on the horizon right now. Keep an eye on the Discord for announcements.'));
+    } else {
+      sp.upcoming.forEach((ev) => list.appendChild(renderSpecialCard(ev)));
+    }
+    if (sp.past.length > 0) {
+      archive.hidden = false;
+      sp.past.forEach((ev) => archiveList.appendChild(renderSpecialCard(ev)));
+    }
+  }
+
   // ---- discord realm-status card ----
 
   function renderDiscordCard() {
@@ -193,23 +277,29 @@
   // ---- bootstrap ----
 
   async function init() {
+    wireViewToggle();
+    renderViewToggle();
     renderTabs();
     renderGrid();
     renderMeta();
+    renderSpecial();
     renderDiscordCard();
 
-    const [cityData, discordResult] = await Promise.all([
+    const [cityData, specialData, discordResult] = await Promise.all([
       window.SheetData.fetchAllCities(),
+      window.SheetData.fetchSpecialEvents(),
       window.DiscordWidget.fetchDiscordWidget(),
     ]);
 
     state.cityData = cityData;
+    state.special = specialData;
     state.loading = false;
     state.discord = discordResult;
 
     renderTabs();
     renderGrid();
     renderMeta();
+    renderSpecial();
     renderDiscordCard();
   }
 

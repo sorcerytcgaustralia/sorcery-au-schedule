@@ -46,6 +46,31 @@ the most reliable result. If venue and suburb are run together on one line
 (e.g. `Mighty Cool Games Hornsby`), the site just shows it as one venue name;
 put the suburb on its own line if you want it broken out.
 
+## Special events (one-off tournaments, launches, regionals)
+
+The site has a **Weekly Events / Special Events** toggle above the schedule.
+The Special Events page reads a sheet tab named exactly `Special Events`,
+which works as an append-only ledger — one event per row, and rows are
+**never deleted**. Header row (order doesn't matter, names do):
+
+```
+Date | Event | City | Venue | Time | Format | Entry | Link
+```
+
+- **Date** — `DD/MM/YY` or `DD/MM/YYYY`. For multi-day events use a range
+  like `14/11/26 - 15/11/26`; the event stays visible until the end date
+  passes. Date and Event are the only required fields.
+- **Event** — the event name shown on the card.
+- **City / Venue / Time / Format / Entry** — optional; shown on the card
+  when present. Entry is free text (e.g. `$45`, `Free`).
+- **Link** — optional full URL (`https://…`); renders as an
+  "Event details" button.
+
+Upcoming events are listed soonest-first. Once an event's date passes, it
+automatically moves into the collapsed "Past events" archive at the bottom
+of the page — so the tab doubles as a permanent record of everything the
+community has run.
+
 ## Project structure
 
 ```

@@ -166,6 +166,129 @@
     return rows;
   }
 
+  // ---- special events (ledger tab) ----
+  //
+  // A "Special Events" tab acts as an append-only ledger of one-off events.
+  // Header row: Date | Event | City | Venue | Time | Format | Entry | Link.
+  // Date is DD/MM/YY (or DD/MM/YYYY); a range like "14/11/26 - 15/11/26"
+  // keeps the event visible until the end date passes. Rows are never
+  // deleted; past rows render in the collapsed archive section.
+
+  const MONTHS_SHORT = MONTHS.map((m) => m.slice(0, 3));
+  const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  function parseSpecialDate(str) {
+    if (!str) return null;
+    str = str.trim();
+    let m = str.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})/);
+    if (m) return new Date(+m[1], +m[2], +m[3]);
+    m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (m) {
+      const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+      const d = new Date(y, +m[2] - 1, +m[1]);
+      return isNaN(d) ? null : d;
+    }
+    return null;
+  }
+
+  function specialDateLabels(start, end) {
+    const oneDay = start.getTime() === end.getTime();
+    const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+    if (oneDay) {
+      return {
+        dayLabel: String(start.getDate()),
+        monthLabel: MONTHS_SHORT[start.getMonth()],
+        dateLabel: `${WEEKDAYS_SHORT[start.getDay()]} ${start.getDate()} ${MONTHS_SHORT[start.getMonth()]} ${start.getFullYear()}`,
+      };
+    }
+    if (sameMonth) {
+      return {
+        dayLabel: `${start.getDate()}–${end.getDate()}`,
+        monthLabel: MONTHS_SHORT[start.getMonth()],
+        dateLabel: `${start.getDate()}–${end.getDate()} ${MONTHS_SHORT[start.getMonth()]} ${start.getFullYear()}`,
+      };
+    }
+    return {
+      dayLabel: String(start.getDate()),
+      monthLabel: MONTHS_SHORT[start.getMonth()],
+      dateLabel: `${start.getDate()} ${MONTHS_SHORT[start.getMonth()]} – ${end.getDate()} ${MONTHS_SHORT[end.getMonth()]} ${end.getFullYear()}`,
+    };
+  }
+
+  async function fetchTabFormatted(tabName) {
+    const url = `https://docs.google.com/spreadsheets/d/${window.CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Sheet fetch failed: ' + res.status);
+    const text = await res.text();
+    const json = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+    return (json.table.rows || []).map((row) =>
+      (row.c || []).map((cell) => {
+        if (!cell) return '';
+        if (cell.f != null) return String(cell.f);
+        if (cell.v != null) return String(cell.v);
+        return '';
+      })
+    );
+  }
+
+  async function fetchSpecialEvents() {
+    try {
+      const rows = await fetchTabFormatted(window.CONFIG.SPECIAL_EVENTS_TAB);
+      let colMap = null;
+      let headerIdx = -1;
+      for (let r = 0; r < rows.length; r++) {
+        const lower = rows[r].map((c) => c.trim().toLowerCase());
+        if (lower.includes('date') && lower.some((h) => h === 'event' || h === 'event name')) {
+          headerIdx = r;
+          colMap = {};
+          lower.forEach((h, i) => { if (h && colMap[h] == null) colMap[h] = i; });
+          break;
+        }
+      }
+      if (headerIdx === -1) return { upcoming: [], past: [], error: true };
+
+      const col = (row, names) => {
+        for (const n of names) {
+          if (colMap[n] != null) return (row[colMap[n]] || '').trim();
+        }
+        return '';
+      };
+
+      const events = [];
+      for (let r = headerIdx + 1; r < rows.length; r++) {
+        const row = rows[r];
+        const rawDate = col(row, ['date', 'dates']);
+        const name = col(row, ['event', 'event name', 'name']);
+        if (!rawDate || !name) continue;
+        const parts = rawDate.split(/\s*[–—-]\s*/).map((s) => s.trim()).filter(Boolean);
+        const start = parseSpecialDate(parts[0]);
+        if (!start) continue;
+        let end = parts.length > 1 ? parseSpecialDate(parts[1]) : null;
+        if (!end || end < start) end = start;
+        const link = col(row, ['link', 'url']);
+        events.push(Object.assign({
+          start, end,
+          event: name,
+          city: col(row, ['city']),
+          venue: col(row, ['venue']),
+          time: col(row, ['time', 'times']),
+          format: col(row, ['format']),
+          entry: col(row, ['entry', 'entry fee', 'cost']),
+          link: /^https?:\/\//i.test(link) ? link : '',
+        }, specialDateLabels(start, end)));
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return {
+        upcoming: events.filter((e) => e.end >= today).sort((a, b) => a.start - b.start),
+        past: events.filter((e) => e.end < today).sort((a, b) => b.start - a.start),
+      };
+    } catch (err) {
+      return { upcoming: [], past: [], error: true };
+    }
+  }
+
   async function fetchAllCities() {
     const result = {};
     await Promise.all(window.CONFIG.CITIES.map(async (city) => {
@@ -179,5 +302,5 @@
     return result;
   }
 
-  window.SheetData = { fetchAllCities, parseCell, parseSheetRows };
+  window.SheetData = { fetchAllCities, fetchSpecialEvents, parseCell, parseSheetRows };
 })();
