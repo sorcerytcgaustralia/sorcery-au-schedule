@@ -197,20 +197,20 @@
     if (oneDay) {
       return {
         dayLabel: String(start.getDate()),
-        monthLabel: MONTHS_SHORT[start.getMonth()],
+        monthLabel: `${MONTHS_SHORT[start.getMonth()]} ${start.getFullYear()}`,
         dateLabel: `${WEEKDAYS_SHORT[start.getDay()]} ${start.getDate()} ${MONTHS_SHORT[start.getMonth()]} ${start.getFullYear()}`,
       };
     }
     if (sameMonth) {
       return {
         dayLabel: `${start.getDate()}–${end.getDate()}`,
-        monthLabel: MONTHS_SHORT[start.getMonth()],
+        monthLabel: `${MONTHS_SHORT[start.getMonth()]} ${start.getFullYear()}`,
         dateLabel: `${start.getDate()}–${end.getDate()} ${MONTHS_SHORT[start.getMonth()]} ${start.getFullYear()}`,
       };
     }
     return {
       dayLabel: String(start.getDate()),
-      monthLabel: MONTHS_SHORT[start.getMonth()],
+      monthLabel: `${MONTHS_SHORT[start.getMonth()]} ${start.getFullYear()}`,
       dateLabel: `${start.getDate()} ${MONTHS_SHORT[start.getMonth()]} – ${end.getDate()} ${MONTHS_SHORT[end.getMonth()]} ${end.getFullYear()}`,
     };
   }
