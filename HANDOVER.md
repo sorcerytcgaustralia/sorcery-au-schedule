@@ -30,7 +30,7 @@ Discord" message rather than breaking.
 ## Project structure
 
 ```
-index.html          page structure (hero, schedule grid, Discord card, footer)
+index.html          page structure (masthead, weekly agenda + special events, community section, footer)
 css/styles.css       all styling
 js/config.js         sheet ID, city list, Discord server ID/invite — edit here to retarget
 js/sheet-data.js      fetches + parses the Google Sheet (gviz JSON), free-text cell parser
@@ -83,9 +83,11 @@ If you add a new city or change a tab name, update `CITIES` in
   the graceful-fallback path (loading → error state) rather than live data,
   plus the user manually confirming the Sheet's public sharing worked in an
   incognito browser.
-- The CSS has one deliberately-added specificity fix:
-  `.day-col.is-today.is-empty .day-label` — without it, "today" and "empty"
-  day-column label colors could fight based on source order.
+- The 2026 editorial redesign replaced the seven-column week grid with a
+  vertical agenda (`.agenda-day` rows in `renderGrid()`); the display face
+  (Grenze Gotisch) is reserved for the masthead title and the two community
+  headings, with all UI text in Spectral. Design tokens live in `:root`
+  at the top of `css/styles.css`.
 
 ## Local preview
 

@@ -1,16 +1,16 @@
 (function () {
   const DAY_DEFS = [
-    ['MON', 'Mon'], ['TUE', 'Tue'], ['WED', 'Wed'], ['THU', 'Thu'],
-    ['FRI', 'Fri'], ['SAT', 'Sat'], ['SUN', 'Sun'],
+    ['MON', 'Monday'], ['TUE', 'Tuesday'], ['WED', 'Wednesday'], ['THU', 'Thursday'],
+    ['FRI', 'Friday'], ['SAT', 'Saturday'], ['SUN', 'Sunday'],
   ];
 
-  const FREQ_META = {
-    weekly: { label: 'Weekly', bg: '#caa23f', fg: '#1a1009' },
-    fortnightly: { label: 'Fortnightly', bg: '#e0731d', fg: '#1a0d05' },
-    monthly: { label: 'Monthly', bg: '#3b8fe0', fg: '#08131f' },
-    irregular: { label: 'Check dates', bg: '#5a4434', fg: '#f3e6d2' },
+  const FREQ_LABELS = {
+    weekly: 'Weekly',
+    fortnightly: 'Fortnightly',
+    monthly: 'Monthly',
+    irregular: 'Check dates',
   };
-  function freqMeta(freq) { return FREQ_META[freq] || FREQ_META.irregular; }
+  function freqLabel(freq) { return FREQ_LABELS[freq] || FREQ_LABELS.irregular; }
 
   function todayIndex() { return (new Date().getDay() + 6) % 7; } // Mon = 0
 
@@ -38,8 +38,12 @@
   // ---- weekly / special view toggle ----
 
   function renderViewToggle() {
-    document.getElementById('view-tab-weekly').classList.toggle('active', state.view === 'weekly');
-    document.getElementById('view-tab-special').classList.toggle('active', state.view === 'special');
+    [['view-tab-weekly', 'weekly'], ['view-tab-special', 'special']].forEach(([id, view]) => {
+      const tab = document.getElementById(id);
+      const active = state.view === view;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', String(active));
+    });
     document.getElementById('view-weekly').hidden = state.view !== 'weekly';
     document.getElementById('view-special').hidden = state.view !== 'special';
   }
@@ -59,8 +63,10 @@
     const wrap = document.getElementById('city-tabs');
     wrap.innerHTML = '';
     window.CONFIG.CITIES.forEach((city) => {
-      const btn = el('button', 'city-tab' + (city === state.activeCity ? ' active' : ''), city);
+      const active = city === state.activeCity;
+      const btn = el('button', 'city-tab' + (active ? ' active' : ''), city);
       btn.type = 'button';
+      btn.setAttribute('aria-pressed', String(active));
       btn.addEventListener('click', () => {
         state.activeCity = city;
         renderTabs();
@@ -71,31 +77,28 @@
     });
   }
 
-  // ---- week grid ----
+  // ---- weekly agenda ----
 
-  function renderEventCard(ev) {
-    const card = el('div', 'event-card');
-    const meta = freqMeta(ev.freq);
-    const badge = el('span', 'event-badge', meta.label);
-    badge.style.background = meta.bg;
-    badge.style.color = meta.fg;
-    card.appendChild(badge);
-    card.appendChild(el('div', 'event-type', ev.type));
-    card.appendChild(el('div', 'event-venue', ev.venue));
-    if (ev.suburb) card.appendChild(el('div', 'event-suburb', ev.suburb));
+  function renderAgendaEvent(ev) {
+    const item = el('div', 'agenda-event');
+    item.appendChild(el('div', 'agenda-time', ev.time || 'See details'));
 
-    const timeRow = el('div', 'event-time');
-    timeRow.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e0731d" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>';
-    timeRow.appendChild(document.createTextNode(' ' + ev.time));
-    card.appendChild(timeRow);
+    const info = el('div', 'agenda-info');
+    info.appendChild(el('div', 'agenda-type', ev.type));
+    info.appendChild(el('div', 'agenda-venue', ev.venue + (ev.suburb ? ', ' + ev.suburb : '')));
 
-    if (ev.note) card.appendChild(el('div', 'event-note', ev.note));
-    return card;
+    const tags = el('div', 'agenda-tags');
+    tags.appendChild(el('span', 'freq-tag', freqLabel(ev.freq)));
+    if (ev.note) tags.appendChild(el('span', 'agenda-note-inline', ev.note));
+    info.appendChild(tags);
+
+    item.appendChild(info);
+    return item;
   }
 
   function renderGrid() {
-    const grid = document.getElementById('week-grid');
-    grid.innerHTML = '';
+    const agenda = document.getElementById('week-grid');
+    agenda.innerHTML = '';
     const idx = todayIndex();
     const city = (!state.loading && state.cityData) ? state.cityData[state.activeCity] : null;
 
@@ -103,23 +106,23 @@
       const isToday = i === idx;
       const events = city ? (city.events[key] || []) : [];
       const empty = events.length === 0;
-      const col = el('div', 'day-col' + (isToday ? ' is-today' : '') + (empty ? ' is-empty' : ''));
+      const row = el('div', 'agenda-day' + (isToday ? ' is-today' : '') + (empty ? ' is-empty' : ''));
 
-      const header = el('div', 'day-header');
-      header.appendChild(el('span', 'day-label', label));
-      if (isToday) header.appendChild(el('span', 'today-badge', 'Today'));
-      col.appendChild(header);
+      const head = el('div', 'agenda-day-head');
+      head.appendChild(el('span', 'agenda-day-name', label));
+      if (isToday) head.appendChild(el('span', 'today-flag', 'Today'));
+      row.appendChild(head);
 
-      const body = el('div', 'day-events');
+      const body = el('div', 'agenda-day-body');
       if (state.loading) {
-        body.appendChild(el('div', 'day-empty-msg', 'Loading…'));
+        body.appendChild(el('p', 'agenda-note', 'Loading…'));
       } else if (empty) {
-        body.appendChild(el('div', 'day-empty-msg', 'No events listed'));
+        body.appendChild(el('p', 'agenda-note', 'No regular events'));
       } else {
-        events.forEach((ev) => body.appendChild(renderEventCard(ev)));
+        events.forEach((ev) => body.appendChild(renderAgendaEvent(ev)));
       }
-      col.appendChild(body);
-      grid.appendChild(col);
+      row.appendChild(body);
+      agenda.appendChild(row);
     });
   }
 
@@ -135,8 +138,8 @@
     meta.appendChild(el('span', 'city-name', state.activeCity));
     meta.appendChild(document.createTextNode(
       city.error
-        ? ' · couldn’t load this city’s schedule — check the Discord'
-        : ' · last updated ' + (city.updated || 'unknown') + ' · scroll the grid sideways on smaller screens →'
+        ? ' · couldn’t load this city’s schedule, check the Discord'
+        : ' · last updated ' + (city.updated || 'unknown')
     ));
   }
 
@@ -154,9 +157,9 @@
     const top = el('div', 'special-top');
     if (ev.tier) top.appendChild(el('span', 'tier-gem tier-gem-' + ev.tier));
     top.appendChild(el('span', 'special-name', ev.event));
-    if (ev.city) top.appendChild(el('span', 'city-badge', ev.city));
     main.appendChild(top);
-    if (ev.venue) main.appendChild(el('div', 'special-venue', ev.venue));
+    const whereParts = [ev.venue, ev.city].filter(Boolean);
+    if (whereParts.length) main.appendChild(el('div', 'special-venue', whereParts.join(' · ')));
 
     const meta = el('div', 'special-meta');
     meta.appendChild(el('span', null, ev.dateLabel));
