@@ -44,8 +44,16 @@
       tab.classList.toggle('active', active);
       tab.setAttribute('aria-selected', String(active));
     });
-    document.getElementById('view-weekly').hidden = state.view !== 'weekly';
-    document.getElementById('view-special').hidden = state.view !== 'special';
+    const shown = document.getElementById(state.view === 'weekly' ? 'view-weekly' : 'view-special');
+    const other = document.getElementById(state.view === 'weekly' ? 'view-special' : 'view-weekly');
+    const wasHidden = shown.hidden;
+    shown.hidden = false;
+    other.hidden = true;
+    if (wasHidden) {
+      shown.classList.remove('view-enter');
+      void shown.offsetWidth;
+      shown.classList.add('view-enter');
+    }
   }
 
   function wireViewToggle() {
@@ -58,6 +66,17 @@
   }
 
   // ---- city tabs ----
+
+  function positionCityMarker() {
+    const wrap = document.getElementById('city-tabs');
+    const active = wrap.querySelector('.city-tab.active');
+    const marker = wrap.querySelector('.city-marker');
+    if (!active || !marker) return;
+    const wr = wrap.getBoundingClientRect();
+    const ar = active.getBoundingClientRect();
+    marker.style.width = ar.width + 'px';
+    marker.style.transform = 'translateX(' + (ar.left - wr.left) + 'px)';
+  }
 
   function renderTabs() {
     const wrap = document.getElementById('city-tabs');
@@ -75,24 +94,23 @@
       });
       wrap.appendChild(btn);
     });
+    wrap.appendChild(el('span', 'city-marker'));
+    requestAnimationFrame(positionCityMarker);
   }
 
   // ---- weekly agenda ----
 
   function renderAgendaEvent(ev) {
     const item = el('div', 'agenda-event');
-    item.appendChild(el('div', 'agenda-time', ev.time || 'See details'));
+    item.appendChild(el('div', 'agenda-type', ev.type));
+    item.appendChild(el('div', 'agenda-venue', ev.venue + (ev.suburb ? ', ' + ev.suburb : '')));
 
-    const info = el('div', 'agenda-info');
-    info.appendChild(el('div', 'agenda-type', ev.type));
-    info.appendChild(el('div', 'agenda-venue', ev.venue + (ev.suburb ? ', ' + ev.suburb : '')));
-
-    const tags = el('div', 'agenda-tags');
-    tags.appendChild(el('span', 'freq-tag', freqLabel(ev.freq)));
-    if (ev.note) tags.appendChild(el('span', 'agenda-note-inline', ev.note));
-    info.appendChild(tags);
-
-    item.appendChild(info);
+    // time line: time first, then only non-default frequency, then notes
+    const line = el('div', 'agenda-time-line');
+    if (ev.time) line.appendChild(el('span', null, ev.time));
+    if (ev.freq && ev.freq !== 'weekly') line.appendChild(el('span', 'freq-tag', freqLabel(ev.freq)));
+    if (ev.note) line.appendChild(el('span', 'agenda-note-inline', ev.note));
+    if (line.childNodes.length) item.appendChild(line);
     return item;
   }
 
@@ -144,6 +162,42 @@
   }
 
   // ---- special events ----
+
+  // upcoming events render as notices pinned into the almanac
+  function renderSpecialFeature(ev) {
+    const card = el('article', 'special-feature' + (ev.tier ? ' tier-' + ev.tier : ''));
+
+    const dateBlock = el('div', 'feature-date');
+    dateBlock.appendChild(el('div', 'feature-date-day', ev.dayLabel));
+    dateBlock.appendChild(el('div', 'feature-date-month', ev.monthLabel));
+    card.appendChild(dateBlock);
+
+    const main = el('div', 'feature-main');
+    const nameRow = el('div', 'feature-name-row');
+    if (ev.tier) nameRow.appendChild(el('span', 'tier-gem tier-gem-' + ev.tier));
+    nameRow.appendChild(el('span', 'feature-name', ev.event));
+    main.appendChild(nameRow);
+
+    const subParts = [ev.city, ev.format].filter(Boolean);
+    if (subParts.length) main.appendChild(el('div', 'feature-subline', subParts.join(' · ')));
+    if (ev.venue) main.appendChild(el('div', 'feature-venue', ev.venue));
+
+    const meta = el('div', 'feature-meta');
+    if (ev.time) meta.appendChild(el('span', null, ev.time));
+    if (ev.entry) meta.appendChild(el('span', null, ev.entry));
+    if (meta.childNodes.length) main.appendChild(meta);
+
+    if (ev.link) {
+      const a = el('a', 'special-link', 'Event information');
+      a.href = ev.link;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      main.appendChild(a);
+    }
+
+    card.appendChild(main);
+    return card;
+  }
 
   function renderSpecialCard(ev) {
     const card = el('div', 'special-card' + (ev.tier ? ' tier-' + ev.tier : ''));
@@ -200,7 +254,8 @@
     if (sp.upcoming.length === 0) {
       list.appendChild(el('div', 'special-empty', 'No special events on the horizon right now. Keep an eye on the Discord for announcements.'));
     } else {
-      sp.upcoming.forEach((ev) => list.appendChild(renderSpecialCard(ev)));
+      list.appendChild(el('p', 'special-heading', 'Upcoming gatherings'));
+      sp.upcoming.forEach((ev) => list.appendChild(renderSpecialFeature(ev)));
     }
     if (sp.past.length > 0) {
       archive.hidden = false;
@@ -264,18 +319,18 @@
 
     const data = d.data;
 
-    const liveRow = el('div', 'live-row');
-    const liveLabel = el('span', 'live-label');
-    liveLabel.appendChild(el('span', 'live-dot'));
-    liveLabel.appendChild(document.createTextNode('Live now'));
-    liveRow.appendChild(liveLabel);
-    liveRow.appendChild(el('span', 'server-name', data.serverName));
-    wrap.appendChild(liveRow);
-
-    const onlineRow = el('div', 'online-row');
-    onlineRow.appendChild(el('span', 'online-count', String(data.onlineCount)));
-    onlineRow.appendChild(el('span', 'online-label', data.onlineCount === 1 ? 'sorcerer online now' : 'sorcerers online now'));
-    wrap.appendChild(onlineRow);
+    // live status as supporting evidence, not a dashboard widget
+    const hall = el('div', 'hall-line');
+    hall.appendChild(el('span', 'hall-dot'));
+    const count = el('p', 'hall-count');
+    const strong = el('strong', null, String(data.onlineCount));
+    count.appendChild(strong);
+    count.appendChild(document.createTextNode(
+      data.onlineCount === 1 ? ' sorcerer is in the hall' : ' sorcerers are in the hall'
+    ));
+    count.style.margin = '0';
+    hall.appendChild(count);
+    wrap.appendChild(hall);
 
     if (data.avatars.length > 0) {
       const avatarsWrap = el('div', 'avatars');
@@ -284,31 +339,22 @@
         img.className = 'avatar';
         img.src = a.url;
         img.alt = '';
-        img.style.boxShadow = '0 0 0 2px ' + a.ring;
         avatarsWrap.appendChild(img);
       });
       if (data.moreCount > 0) avatarsWrap.appendChild(el('span', 'avatar-more', '+' + data.moreCount));
       wrap.appendChild(avatarsWrap);
     }
 
-    wrap.appendChild(el('div', 'divider'));
-
+    const voice = el('p', 'voice-line');
     if (data.voiceRooms.length > 0) {
-      wrap.appendChild(el('div', 'voice-label', 'In voice right now'));
-      const rooms = el('div', 'voice-rooms');
-      data.voiceRooms.forEach((v) => {
-        const row = el('div', 'voice-room');
-        const nameWrap = el('span', 'voice-room-name');
-        nameWrap.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" style="flex:none;"><path d="M11 5 6 9H2v6h4l5 4z" fill="#3ba55d"/><path d="M15.5 8.5a5 5 0 0 1 0 7" stroke="#3ba55d" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
-        nameWrap.appendChild(el('span', null, v.name));
-        row.appendChild(nameWrap);
-        row.appendChild(el('span', 'voice-room-count', String(v.count)));
-        rooms.appendChild(row);
-      });
-      wrap.appendChild(rooms);
+      const rooms = data.voiceRooms.map((v) => v.name + ' (' + v.count + ')').join(' · ');
+      const label = el('strong', null, 'In voice: ');
+      voice.appendChild(label);
+      voice.appendChild(document.createTextNode(rooms));
     } else {
-      wrap.appendChild(el('div', 'no-voice', 'Quiet in voice right now. Hop in and start a table.'));
+      voice.textContent = 'Quiet in voice right now. Hop in and start a table.';
     }
+    wrap.appendChild(voice);
   }
 
   // ---- bootstrap ----
@@ -316,6 +362,8 @@
   async function init() {
     wireViewToggle();
     renderViewToggle();
+    window.addEventListener('resize', positionCityMarker);
+    window.addEventListener('load', positionCityMarker);
     renderTabs();
     renderGrid();
     renderMeta();

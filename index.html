@@ -21,24 +21,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=4">
+<link rel="stylesheet" href="css/styles.css?v=5">
 </head>
 <body>
 
 <!-- MASTHEAD -->
 <header class="masthead">
-  <div class="nameplate">
+  <div class="folio-wrap">
     <div class="folio-line">
       <span>Sorcery: Contested Realm</span>
       <span>Australia</span>
     </div>
-    <h1 class="masthead-title">Sorcery TCG Australia</h1>
-    <p class="masthead-sub">The community down under</p>
-    <p class="masthead-index">Weekly organised play · Special events · Tournament decks · Discord</p>
   </div>
-  <figure class="masthead-plate">
-    <img src="project/assets/river-of-flame.jpg" alt="" aria-hidden="true">
-  </figure>
+  <div class="hero">
+    <div class="hero-copy">
+      <h1 class="masthead-title">Sorcery TCG Australia</h1>
+      <p class="standfirst">Find weekly play, major gatherings and the decks shaping Australia's Sorcery community.</p>
+      <a class="hero-cta" href="#schedule">View this week ↓</a>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <img src="project/assets/river-of-flame.jpg" alt="">
+    </div>
+  </div>
 </header>
 
 <main>
@@ -74,35 +78,41 @@
     </div>
   </section>
 
-  <!-- COMMUNITY -->
+  <!-- DISPATCHES -->
   <section id="community" class="community" aria-label="Community">
     <div class="community-inner">
 
-      <div class="community-col" id="decks">
-        <h2>The Australian Meta</h2>
-        <p>Wondering what the realm down under is playing? We collect the decks coming out of Australia's organised-play scene on <strong>Curiosa.io</strong>: tournament winners, top finishing decks, and community brews, updated as the meta shifts.</p>
-        <a href="https://curiosa.io/users/cml4xcf3o00m204l723smuakz" target="_blank" rel="noopener" class="text-link">Browse the decks on Curiosa</a>
-        <div class="deck-fan" aria-hidden="true">
-          <span class="fan-card fan-air"></span>
-          <span class="fan-card fan-archimago"></span>
-          <span class="fan-card fan-pathfinder"></span>
-          <span class="fan-card fan-necromancer"></span>
-          <span class="fan-card fan-imposter"></span>
+      <article class="dispatch" id="decks">
+        <div class="dispatch-copy">
+          <h2>From the Australian Meta</h2>
+          <p>What is the realm down under playing? We collect the decks coming out of Australia's organised-play scene on <strong>Curiosa.io</strong>: tournament winners, top finishing decks, and community brews, updated as the meta shifts.</p>
+          <a href="https://curiosa.io/users/cml4xcf3o00m204l723smuakz" target="_blank" rel="noopener" class="text-link">Browse the decks on Curiosa</a>
         </div>
-      </div>
+        <div class="dispatch-art">
+          <div class="deck-fan" aria-hidden="true">
+            <span class="fan-card fan-air"></span>
+            <span class="fan-card fan-archimago"></span>
+            <span class="fan-card fan-pathfinder"></span>
+            <span class="fan-card fan-necromancer"></span>
+            <span class="fan-card fan-imposter"></span>
+          </div>
+        </div>
+      </article>
 
-      <div class="community-col" id="join">
-        <h2>Join the Realm Down Under</h2>
-        <p>This schedule is maintained by the <strong>Sorcery TCG Australia</strong> community on Discord. Join us to find your local community, discuss the meta, play online with sorcerers across the country, trade on our thriving marketplace, and never miss an event.</p>
-        <p>New to the game? Welcome! Drop in, say hi and find your community.</p>
-        <a href="https://discord.gg/eyPp9FKpxU" target="_blank" rel="noopener" class="discord-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.245.198.372.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-          Open the Discord
-        </a>
+      <article class="dispatch" id="join">
+        <div class="dispatch-copy">
+          <h2>Gather with the Community</h2>
+          <p>This almanac is kept by the <strong>Sorcery TCG Australia</strong> community on Discord. Join local groups, trade, play online with sorcerers across the country, and help keep the schedule current.</p>
+          <p>New to the game? Welcome! Drop in, say hi and find your community.</p>
+          <a href="https://discord.gg/eyPp9FKpxU" target="_blank" rel="noopener" class="discord-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.245.198.372.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            Open the Discord
+          </a>
+        </div>
         <div class="discord-card" id="discord-card">
           <div class="discord-card-state" id="discord-card-state"></div>
         </div>
-      </div>
+      </article>
 
     </div>
   </section>
@@ -111,6 +121,7 @@
 
 <!-- FOOTER -->
 <footer class="site-footer">
+  <p class="footer-mark" aria-hidden="true">✦</p>
   <div class="footer-inner">
     <p class="footer-p">Spotted something out of date, or want to add your event to the schedule? Let us know on the <a href="https://discord.gg/eyPp9FKpxU" target="_blank" rel="noopener" class="discord-link">Sorcery TCG Australia Discord</a>.</p>
     <p class="footer-disclaimer">This is a fan-made website and is not affiliated with or endorsed by Erik's Curiosa. Sorcery: Contested Realm and all related artwork are the property of their respective owners.</p>
@@ -121,6 +132,6 @@
 <script src="js/config.js?v=2"></script>
 <script src="js/sheet-data.js?v=3"></script>
 <script src="js/discord-widget.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>
