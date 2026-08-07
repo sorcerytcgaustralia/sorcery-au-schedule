@@ -91,10 +91,16 @@ button{ font-family:var(--font-text); }
 
 /* ---------- schedule section ---------- */
 .schedule-section{
-  padding:26px 20px 48px;
+  padding:34px 20px 48px;
   scroll-margin-top:70px;
 }
 .schedule-inner{ max-width:var(--measure); margin:0 auto; }
+.section-title{
+  margin:0 0 16px;
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(26px,3.6vw,34px); line-height:1.05;
+  color:#f6ecd8;
+}
 
 /* view toggle: text tabs with underline */
 .view-toggle{
