@@ -152,6 +152,7 @@
 
     const main = el('div', 'special-main');
     const top = el('div', 'special-top');
+    if (ev.tier) top.appendChild(el('span', 'tier-gem tier-gem-' + ev.tier));
     top.appendChild(el('span', 'special-name', ev.event));
     if (ev.city) top.appendChild(el('span', 'city-badge', ev.city));
     main.appendChild(top);

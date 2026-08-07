@@ -257,16 +257,25 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
   padding-right:18px;
 }
 
-/* event tiers: Cornerstone burns red, Grand Contest shines gold */
+/* event tiers: Cornerstone burns red, Grand Contest is illuminated gold */
 .special-card.tier-cornerstone{
-  border-left:3px solid #b83227;
-  box-shadow:0 5px 16px rgba(0,0,0,.35), 0 0 24px -8px rgba(184,50,39,.55);
+  border-color:rgba(184,50,39,.5);
 }
 .special-card.tier-cornerstone .special-date-day{ color:#e05a4e; }
+.special-card.tier-cornerstone .special-date{ border-right-color:rgba(184,50,39,.35); }
 .special-card.tier-grand{
-  border-left:3px solid #f2b441;
-  box-shadow:0 5px 16px rgba(0,0,0,.35), 0 0 24px -8px rgba(242,180,65,.6);
+  border-color:rgba(242,180,65,.6);
+  background:
+    radial-gradient(130% 150% at 50% -20%, rgba(242,180,65,.09), transparent 60%),
+    linear-gradient(180deg,rgba(40,24,14,.92),rgba(28,16,9,.92));
+  box-shadow:0 5px 16px rgba(0,0,0,.35), 0 0 28px -10px rgba(242,180,65,.5);
 }
+.tier-gem{
+  width:8px; height:8px; flex:none;
+  transform:rotate(45deg);
+}
+.tier-gem-grand{ background:#f2b441; box-shadow:0 0 9px rgba(242,180,65,.8); }
+.tier-gem-cornerstone{ background:#b83227; box-shadow:0 0 9px rgba(184,50,39,.8); }
 .special-date-day{
   font-family:'Grenze Gotisch',serif; font-size:30px; line-height:1;
   color:#f2b441; white-space:nowrap;

@@ -69,9 +69,10 @@ Date | End Date | Event | City | Venue | Time | Format | Entry | Link
   when present. Entry is free text (e.g. `$45`, `Free`).
 - **Link** — optional full URL (`https://…`); renders as an
   "Event details" button.
-- **Tier** — optional. Cards for Cornerstone events get a red edge and
-  Grand Contest events a gold edge. The site infers this from the event
-  name automatically; add a `Tier` column (a picker with `Cornerstone` /
+- **Tier** — optional. Cornerstone events get red-trimmed cards with a
+  red gem by the name; Grand Contest events get gold-illuminated cards
+  with a gold gem. The site infers this from the event name
+  automatically; add a `Tier` column (a picker with `Cornerstone` /
   `Grand Contest` works well) only if an event's name doesn't contain
   those words.
 
