@@ -221,7 +221,7 @@
     if (!res.ok) throw new Error('Sheet fetch failed: ' + res.status);
     const text = await res.text();
     const json = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
-    return (json.table.rows || []).map((row) =>
+    const rows = (json.table.rows || []).map((row) =>
       (row.c || []).map((cell) => {
         if (!cell) return '';
         if (cell.f != null) return String(cell.f);
@@ -229,23 +229,34 @@
         return '';
       })
     );
+    const colLabels = (json.table.cols || []).map((c) => (c.label || '').trim());
+    return { rows, colLabels };
+  }
+
+  function buildColMap(labels) {
+    const lower = labels.map((h) => h.trim().toLowerCase());
+    if (!lower.includes('date') || !lower.some((h) => h === 'event' || h === 'event name')) return null;
+    const map = {};
+    lower.forEach((h, i) => { if (h && map[h] == null) map[h] = i; });
+    return map;
   }
 
   async function fetchSpecialEvents() {
     try {
-      const rows = await fetchTabFormatted(window.CONFIG.SPECIAL_EVENTS_TAB);
-      let colMap = null;
+      const { rows, colLabels } = await fetchTabFormatted(window.CONFIG.SPECIAL_EVENTS_TAB);
+
+      // When the Date column is date-typed, gviz promotes the header row into
+      // column metadata (parsedNumHeaders), so check the labels first, then
+      // fall back to scanning the rows for a header row.
+      let colMap = buildColMap(colLabels);
       let headerIdx = -1;
-      for (let r = 0; r < rows.length; r++) {
-        const lower = rows[r].map((c) => c.trim().toLowerCase());
-        if (lower.includes('date') && lower.some((h) => h === 'event' || h === 'event name')) {
-          headerIdx = r;
-          colMap = {};
-          lower.forEach((h, i) => { if (h && colMap[h] == null) colMap[h] = i; });
-          break;
+      if (!colMap) {
+        for (let r = 0; r < rows.length; r++) {
+          colMap = buildColMap(rows[r]);
+          if (colMap) { headerIdx = r; break; }
         }
       }
-      if (headerIdx === -1) return { upcoming: [], past: [], error: true };
+      if (!colMap) return { upcoming: [], past: [], error: true };
 
       const col = (row, names) => {
         for (const n of names) {
