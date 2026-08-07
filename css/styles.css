@@ -286,7 +286,7 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
 }
 .fan-necromancer{
   background-image:url(../project/assets/cards/necromancer.webp);
-  transform:translateX(calc(-50% + 46px)) rotate(9deg);
+  transform:translateX(calc(-50% + 40px)) rotate(8deg);
 }
 .fan-air{
   background-image:url(../project/assets/cards/avatar-of-air.webp);
@@ -294,23 +294,13 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
 }
 .fan-imposter{
   background-image:url(../project/assets/cards/imposter.webp);
-  transform:translateX(calc(-50% - 4px)) rotate(-2deg) translateY(-16px);
+  transform:translateX(-50%) translateY(-16px);
 }
 .deck-fan:hover .fan-archimago{ transform:translateX(calc(-50% - 84px)) rotate(-19deg) translateY(-4px); }
 .deck-fan:hover .fan-pathfinder{ transform:translateX(calc(-50% - 48px)) rotate(-10deg) translateY(-6px); }
-.deck-fan:hover .fan-necromancer{ transform:translateX(calc(-50% + 54px)) rotate(11deg) translateY(-6px); }
+.deck-fan:hover .fan-necromancer{ transform:translateX(calc(-50% + 48px)) rotate(10deg) translateY(-6px); }
 .deck-fan:hover .fan-air{ transform:translateX(calc(-50% + 84px)) rotate(19deg) translateY(-4px); }
-.deck-fan:hover .fan-imposter{ transform:translateX(calc(-50% - 4px)) rotate(-2deg) translateY(-30px); }
-.fan-badge{
-  position:absolute; right:10px; bottom:10px;
-  padding:3px 10px 4px;
-  border-radius:999px;
-  background:rgba(20,12,7,.85);
-  border:1px solid rgba(242,180,65,.45);
-  color:#f2b441;
-  font-family:'Spectral SC','Spectral',serif;
-  font-size:11px; letter-spacing:.08em;
-}
+.deck-fan:hover .fan-imposter{ transform:translateX(-50%) translateY(-30px); }
 
 /* JOIN THE REALM */
 .join-section{
