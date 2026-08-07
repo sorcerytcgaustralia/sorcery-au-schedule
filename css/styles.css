@@ -260,8 +260,8 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
 
 .deck-fan{
   position:relative;
-  flex:0 0 320px;
-  height:320px;
+  flex:0 0 352px;
+  height:330px;
   display:block;
   text-decoration:none;
 }
@@ -269,31 +269,33 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
   position:absolute;
   left:50%; bottom:18px;
   width:168px; height:235px;
-  border-radius:12px;
-  border:1px solid rgba(242,180,65,.5);
+  border-radius:10px;
   background-size:cover;
-  box-shadow:0 14px 34px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.4);
-  transform-origin:50% 115%;
+  background-position:center;
+  box-shadow:0 14px 34px rgba(0,0,0,.6);
+  transform-origin:50% 105%;
   transition:transform .25s ease;
 }
-.fan-card-1{
-  background-image:linear-gradient(180deg,rgba(18,10,6,.25),rgba(18,10,6,.55)), url(../project/assets/river-of-flame.jpg);
-  background-position:8% 20%;
-  transform:translateX(calc(-50% - 58px)) rotate(-16deg);
+.fan-archimago{
+  background-image:url(../project/assets/cards/archimago.webp);
+  transform:translateX(calc(-50% - 74px)) rotate(-16deg);
 }
-.fan-card-2{
-  background-image:linear-gradient(180deg,rgba(18,10,6,.2),rgba(18,10,6,.5)), url(../project/assets/screamer.png);
-  background-position:center 10%;
-  transform:translateX(-50%) rotate(0deg) translateY(-14px);
+.fan-pathfinder{
+  background-image:url(../project/assets/cards/pathfinder.webp);
+  transform:translateX(calc(-50% - 40px)) rotate(-8deg);
 }
-.fan-card-3{
-  background-image:linear-gradient(180deg,rgba(18,10,6,.25),rgba(18,10,6,.55)), url(../project/assets/river-of-flame.jpg);
-  background-position:80% 65%;
-  transform:translateX(calc(-50% + 58px)) rotate(16deg);
+.fan-necromancer{
+  background-image:url(../project/assets/cards/necromancer.webp);
+  transform:translateX(calc(-50% + 52px)) rotate(11deg);
 }
-.deck-fan:hover .fan-card-1{ transform:translateX(calc(-50% - 70px)) rotate(-20deg) translateY(-6px); }
-.deck-fan:hover .fan-card-2{ transform:translateX(-50%) rotate(0deg) translateY(-28px); }
-.deck-fan:hover .fan-card-3{ transform:translateX(calc(-50% + 70px)) rotate(20deg) translateY(-6px); }
+.fan-imposter{
+  background-image:url(../project/assets/cards/imposter.webp);
+  transform:translateX(calc(-50% - 4px)) rotate(-2deg) translateY(-16px);
+}
+.deck-fan:hover .fan-archimago{ transform:translateX(calc(-50% - 84px)) rotate(-19deg) translateY(-4px); }
+.deck-fan:hover .fan-pathfinder{ transform:translateX(calc(-50% - 48px)) rotate(-10deg) translateY(-6px); }
+.deck-fan:hover .fan-necromancer{ transform:translateX(calc(-50% + 62px)) rotate(14deg) translateY(-6px); }
+.deck-fan:hover .fan-imposter{ transform:translateX(calc(-50% - 4px)) rotate(-2deg) translateY(-30px); }
 .fan-badge{
   position:absolute; right:10px; bottom:10px;
   padding:3px 10px 4px;
