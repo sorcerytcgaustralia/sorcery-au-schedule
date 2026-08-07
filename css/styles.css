@@ -107,27 +107,33 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
 }
 
 .city-tabs{
-  display:flex; flex-wrap:wrap; gap:10px;
+  display:flex; flex-wrap:wrap; gap:2px 30px;
   justify-content:center;
-  margin-bottom:30px;
+  margin-bottom:28px;
 }
 .city-tab{
-  font-family:'Grenze Gotisch',serif; font-size:18px; letter-spacing:.03em;
-  padding:9px 20px; border-radius:999px; cursor:pointer;
-  transition:all .18s ease;
-  background:rgba(28,16,9,.7); color:#d6bb96;
-  border:1px solid rgba(224,115,29,.28);
+  position:relative;
+  font-family:'Grenze Gotisch',serif; font-size:21px; letter-spacing:.04em;
+  padding:2px 2px 13px; cursor:pointer;
+  background:none; border:none;
+  color:#a8896a;
+  transition:color .18s ease;
 }
-.city-tab:hover:not(.active){
-  background:rgba(56,32,16,.85); color:#f2cf90;
-  border-color:rgba(242,180,65,.55);
-}
+.city-tab:hover:not(.active){ color:#f2cf90; }
 .city-tab.active{
-  background:linear-gradient(180deg,#f0982e,#d9651a);
-  color:#1a0d05;
-  border:1px solid #f2b441;
-  box-shadow:0 6px 18px rgba(217,101,26,.45);
+  color:#f2b441;
+  text-shadow:0 0 20px rgba(242,180,65,.4);
 }
+.city-tab::after{
+  content:'';
+  position:absolute; left:50%; bottom:1px;
+  width:7px; height:7px;
+  background:#e0731d;
+  box-shadow:0 0 9px rgba(224,115,29,.75);
+  transform:translateX(-50%) rotate(45deg) scale(0);
+  transition:transform .2s ease;
+}
+.city-tab.active::after{ transform:translateX(-50%) rotate(45deg) scale(1); }
 
 .week-grid-wrap{
   overflow-x:auto;
