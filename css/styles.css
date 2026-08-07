@@ -319,6 +319,22 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
   display:flex; flex-direction:column; gap:12px;
 }
 .special-archive-list .special-card{ opacity:.6; }
+.archive-pager{
+  display:flex; align-items:center; justify-content:center; gap:20px;
+  padding-top:10px;
+}
+.pager-btn{
+  background:none; border:none; cursor:pointer;
+  font-family:'Spectral SC','Spectral',serif; font-size:13px; letter-spacing:.06em;
+  color:#c98a3f; padding:2px 0;
+  border-bottom:1px solid transparent;
+  transition:all .18s ease;
+}
+.pager-btn:hover:not(:disabled){ color:#f2cf90; border-bottom-color:rgba(242,180,65,.55); }
+.pager-btn:disabled{ opacity:.3; cursor:default; }
+.pager-label{
+  font-size:12.5px; color:#8a7259;
+}
 
 @media (max-width:520px){
   .special-card{ flex-direction:column; gap:12px; }

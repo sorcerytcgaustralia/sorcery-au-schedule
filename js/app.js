@@ -23,11 +23,14 @@
 
   const emptyEvents = () => ({ MON: [], TUE: [], WED: [], THU: [], FRI: [], SAT: [], SUN: [] });
 
+  const ARCHIVE_PAGE_SIZE = 10;
+
   const state = {
     view: 'weekly',
     activeCity: window.CONFIG.CITIES[0],
     cityData: null,
     special: null,
+    archivePage: 0,
     loading: true,
     discord: { status: 'loading' },
   };
@@ -197,8 +200,38 @@
     }
     if (sp.past.length > 0) {
       archive.hidden = false;
-      sp.past.forEach((ev) => archiveList.appendChild(renderSpecialCard(ev)));
+      const pages = Math.ceil(sp.past.length / ARCHIVE_PAGE_SIZE);
+      if (state.archivePage > pages - 1) state.archivePage = pages - 1;
+      if (state.archivePage < 0) state.archivePage = 0;
+      const from = state.archivePage * ARCHIVE_PAGE_SIZE;
+      sp.past.slice(from, from + ARCHIVE_PAGE_SIZE).forEach((ev) => archiveList.appendChild(renderSpecialCard(ev)));
+      if (pages > 1) archiveList.appendChild(renderArchivePager(pages));
     }
+  }
+
+  function renderArchivePager(pages) {
+    const pager = el('div', 'archive-pager');
+
+    const newer = el('button', 'pager-btn', '← Newer');
+    newer.type = 'button';
+    newer.disabled = state.archivePage === 0;
+    newer.addEventListener('click', () => {
+      state.archivePage--;
+      renderSpecial();
+    });
+
+    const older = el('button', 'pager-btn', 'Older →');
+    older.type = 'button';
+    older.disabled = state.archivePage === pages - 1;
+    older.addEventListener('click', () => {
+      state.archivePage++;
+      renderSpecial();
+    });
+
+    pager.appendChild(newer);
+    pager.appendChild(el('span', 'pager-label', `Page ${state.archivePage + 1} of ${pages}`));
+    pager.appendChild(older);
+    return pager;
   }
 
   // ---- discord realm-status card ----
