@@ -207,6 +207,34 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
 }
 .schedule-meta .city-name{ color:#caa970; }
 
+/* COMMUNITY DECKS */
+.decks-section{
+  position:relative;
+  padding:64px 24px 70px;
+  background:linear-gradient(180deg,#160c07,#1a0f08);
+  border-top:1px solid rgba(224,115,29,.2);
+  text-align:center;
+  scroll-margin-top:70px;
+}
+.decks-inner{ max-width:640px; margin:0 auto; }
+.decks-title{
+  font-family:'Grenze Gotisch',serif; font-weight:700;
+  font-size:clamp(32px,5vw,54px); line-height:1;
+  margin:0 0 18px; color:#f7ecd8;
+}
+.decks-p{
+  font-size:17px; line-height:1.65; color:#dcc4a0;
+  margin:0 0 28px; text-wrap:pretty;
+}
+.curiosa-btn{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:14px 28px; border-radius:999px;
+  background:linear-gradient(180deg,#e0731d,#c45a10);
+  color:#fdf5e8; text-decoration:none;
+  font-family:'Grenze Gotisch',serif; font-size:19px; letter-spacing:.03em;
+  box-shadow:0 8px 24px rgba(224,115,29,.45);
+}
+
 /* JOIN THE REALM */
 .join-section{
   position:relative;
