@@ -281,9 +281,11 @@
         if (!end && parts.length > 1) end = parseSpecialDate(parts[1]);
         if (!end || end < start) end = start;
         const link = col(row, ['link', 'url']);
+        const inferTier = (s) => /grand\s*contest/i.test(s) ? 'grand' : (/cornerstone/i.test(s) ? 'cornerstone' : '');
         events.push(Object.assign({
           start, end,
           event: name,
+          tier: inferTier(col(row, ['tier', 'event tier', 'type', 'event type'])) || inferTier(name),
           city: col(row, ['city']),
           venue: col(row, ['venue']),
           time: col(row, ['time', 'times']),

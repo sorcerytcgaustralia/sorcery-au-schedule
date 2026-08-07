@@ -69,6 +69,11 @@ Date | End Date | Event | City | Venue | Time | Format | Entry | Link
   when present. Entry is free text (e.g. `$45`, `Free`).
 - **Link** — optional full URL (`https://…`); renders as an
   "Event details" button.
+- **Tier** — optional. Cards for Cornerstone events get a red edge and
+  Grand Contest events a gold edge. The site infers this from the event
+  name automatically; add a `Tier` column (a picker with `Cornerstone` /
+  `Grand Contest` works well) only if an event's name doesn't contain
+  those words.
 
 Upcoming events are listed soonest-first. Once an event's date passes, it
 automatically moves into the collapsed "Past events" archive at the bottom

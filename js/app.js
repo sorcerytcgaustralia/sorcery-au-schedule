@@ -143,7 +143,7 @@
   // ---- special events ----
 
   function renderSpecialCard(ev) {
-    const card = el('div', 'special-card');
+    const card = el('div', 'special-card' + (ev.tier ? ' tier-' + ev.tier : ''));
 
     const dateBlock = el('div', 'special-date');
     dateBlock.appendChild(el('div', 'special-date-day', ev.dayLabel));
