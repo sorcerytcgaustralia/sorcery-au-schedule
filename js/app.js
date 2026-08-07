@@ -75,7 +75,7 @@
     const wr = wrap.getBoundingClientRect();
     const ar = active.getBoundingClientRect();
     marker.style.width = ar.width + 'px';
-    marker.style.transform = 'translateX(' + (ar.left - wr.left) + 'px)';
+    marker.style.transform = 'translate(' + (ar.left - wr.left) + 'px,' + (ar.bottom - wr.top) + 'px)';
   }
 
   function renderTabs() {
@@ -293,6 +293,45 @@
     return pager;
   }
 
+  // ---- store locator ----
+  // Derived from the weekly schedule itself: every venue that hosts a
+  // regular event, grouped by city. No separate data to maintain.
+
+  function renderStores() {
+    const section = document.getElementById('stores');
+    const grid = document.getElementById('store-grid');
+    if (!section || !grid) return;
+    if (state.loading || !state.cityData) { section.hidden = true; return; }
+
+    grid.innerHTML = '';
+    let any = false;
+    window.CONFIG.CITIES.forEach((city) => {
+      const data = state.cityData[city];
+      if (!data || data.error) return;
+      const seen = new Map();
+      Object.values(data.events).forEach((list) => list.forEach((ev) => {
+        const venue = (ev.venue || '').trim();
+        const key = venue.toLowerCase();
+        if (!key || seen.has(key)) return;
+        seen.set(key, { venue, suburb: (ev.suburb || '').trim() });
+      }));
+      if (seen.size === 0) return;
+      any = true;
+
+      const col = el('div', 'store-city-col');
+      col.appendChild(el('h3', 'store-city', city));
+      const ul = el('ul', 'store-list');
+      seen.forEach((s) => {
+        const li = el('li', 'store-item', s.venue);
+        if (s.suburb) li.appendChild(el('span', 'store-suburb', ' · ' + s.suburb));
+        ul.appendChild(li);
+      });
+      col.appendChild(ul);
+      grid.appendChild(col);
+    });
+    section.hidden = !any;
+  }
+
   // ---- discord realm-status card ----
 
   function renderDiscordCard() {
@@ -385,6 +424,7 @@
     renderGrid();
     renderMeta();
     renderSpecial();
+    renderStores();
     renderDiscordCard();
   }
 

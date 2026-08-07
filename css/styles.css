@@ -56,62 +56,42 @@ button{ font-family:var(--font-text); }
 @keyframes fadeIn{ from{ opacity:0; } }
 @keyframes viewIn{ from{ opacity:0; transform:translateY(5px); } }
 
-/* ---------- masthead: asymmetric hero ---------- */
-.masthead{ border-bottom:1px solid var(--rule); }
-.folio-wrap{
+/* ---------- masthead: full-width art fading into the page ---------- */
+.masthead{
+  position:relative;
+  overflow:hidden;
+}
+.masthead-art{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; object-position:center 28%;
+}
+.masthead-scrim{
+  position:absolute; inset:0;
+  background:
+    linear-gradient(90deg, rgba(16,11,8,.62) 0%, rgba(16,11,8,.28) 55%, rgba(16,11,8,.1) 100%),
+    linear-gradient(180deg, rgba(16,11,8,.15) 0%, rgba(16,11,8,.4) 55%, var(--umber) 100%);
+}
+.masthead-inner{
+  position:relative; z-index:1;
   max-width:var(--measure); margin:0 auto;
-  padding:22px 20px 0;
-}
-.folio-line{
-  display:flex; justify-content:space-between; flex-wrap:wrap; gap:2px 16px;
-  border-top:1px solid var(--rule-strong);
-  border-bottom:1px solid var(--rule);
-  padding:7px 2px;
-  font-size:12px; font-weight:600;
-  letter-spacing:.16em; text-transform:uppercase;
-  color:var(--gold);
-}
-.hero{
-  display:grid;
-  grid-template-columns:minmax(0,5fr) minmax(0,6fr);
-  align-items:center;
-}
-.hero-copy{
-  padding:52px 28px 56px max(20px, calc((100vw - 880px) / 2 + 2px));
+  padding:76px 20px 34px;
 }
 .masthead-title{
   margin:0;
   font-family:var(--font-display); font-weight:700;
-  font-size:clamp(36px,5.6vw,60px); line-height:.98;
+  font-size:clamp(34px,5.5vw,54px); line-height:.98;
   color:#F2E6CC;
+  text-shadow:0 2px 14px rgba(16,11,8,.6);
   overflow-wrap:break-word;
 }
 .standfirst{
-  margin:16px 0 0;
-  max-width:400px;
-  font-size:16.5px; line-height:1.6;
-  color:var(--parch-soft);
+  margin:14px 0 0;
+  max-width:560px;
+  font-size:16.5px; line-height:1.62;
+  color:var(--parchment);
+  text-shadow:0 1px 10px rgba(16,11,8,.7);
   text-wrap:pretty;
-}
-.hero-cta{
-  display:inline-block;
-  margin-top:24px;
-  font-size:15.5px; color:var(--gold); text-decoration:none;
-  border-bottom:1px solid var(--rule-strong);
-  padding-bottom:2px;
-}
-.hero-cta::before{ content:'✦ '; color:var(--ember); font-size:12px; }
-.hero-cta:hover{ color:var(--parchment); border-bottom-color:var(--ember); }
-.hero-art{
-  align-self:stretch;
-  min-height:400px;
-}
-.hero-art img{
-  display:block;
-  width:100%; height:100%;
-  object-fit:cover; object-position:38% 30%;
-  -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 26%);
-  mask-image:linear-gradient(90deg, transparent 0, #000 26%);
 }
 
 /* ---------- schedule ---------- */
@@ -168,7 +148,7 @@ button{ font-family:var(--font-text); }
 }
 .city-tab.active::before{ content:'✦ '; color:var(--ember); font-size:11px; }
 .city-marker{
-  position:absolute; bottom:0; left:0;
+  position:absolute; top:0; left:0;
   height:2px; width:0;
   background:var(--ember);
 }
@@ -362,7 +342,7 @@ button{ font-family:var(--font-text); }
 .pager-label{ font-size:13.5px; color:var(--parch-muted); opacity:.8; }
 
 /* ---------- dispatches ---------- */
-.community{ padding:54px 20px 30px; }
+.community{ padding:54px 20px 30px; overflow-x:clip; }
 .community-inner{ max-width:var(--measure); margin:0 auto; }
 .dispatch{
   display:grid; grid-template-columns:minmax(0,7fr) minmax(0,5fr);
@@ -414,8 +394,8 @@ button{ font-family:var(--font-text); }
 .fan-air{ background-image:url(../project/assets/cards/avatar-of-air.webp); transform:translateX(calc(-50% + 58px)) rotate(16deg); }
 .fan-imposter{ background-image:url(../project/assets/cards/imposter.webp); transform:translateX(-50%) translateY(-12px); }
 
-/* discord as guild notice */
-.discord-btn{
+/* shared action button (Discord, Curiosa) */
+.action-btn{
   display:inline-flex; align-items:center; gap:9px;
   padding:11px 20px;
   border-radius:3px;
@@ -423,8 +403,8 @@ button{ font-family:var(--font-text); }
   text-decoration:none;
   font-size:15.5px; font-weight:600;
 }
-.discord-btn:hover{ background:#d97335; }
-.discord-btn svg{ color:var(--ink); }
+.action-btn:hover{ background:#d97335; }
+.action-btn svg{ color:var(--ink); }
 
 .discord-card{ margin-top:6px; }
 .hall-line{
@@ -468,6 +448,45 @@ button{ font-family:var(--font-text); }
 .discord-error-name{ font-size:16px; font-weight:600; color:var(--parchment); }
 .discord-error-text{ color:var(--parch-muted); font-size:14.5px; line-height:1.5; margin-top:2px; }
 
+/* ---------- store locator ---------- */
+.stores{
+  background:var(--umber);
+  border-top:1px solid var(--rule);
+  padding:46px 20px 56px;
+}
+.stores-inner{ max-width:var(--measure); margin:0 auto; }
+.stores h2{
+  margin:0 0 12px;
+  font-family:var(--font-display); font-weight:700;
+  font-size:clamp(26px,3.6vw,33px); line-height:1.05;
+  color:#F2E6CC;
+}
+.stores-intro{
+  margin:0 0 24px;
+  max-width:560px;
+  font-size:16px; line-height:1.65;
+  color:var(--parch-soft);
+  text-wrap:pretty;
+}
+.store-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+  gap:24px 36px;
+}
+.store-city{
+  margin:0 0 8px;
+  font-size:15.5px; font-weight:600;
+  color:var(--gold);
+}
+.store-list{
+  list-style:none; margin:0; padding:0;
+  display:flex; flex-direction:column; gap:7px;
+}
+.store-item{
+  font-size:15px; color:var(--parch-soft); line-height:1.45;
+}
+.store-suburb{ color:var(--parch-muted); font-size:13.5px; }
+
 /* ---------- footer ---------- */
 .site-footer{
   border-top:1px solid var(--rule);
@@ -486,13 +505,7 @@ button{ font-family:var(--font-text); }
 
 /* ---------- responsive ---------- */
 @media (max-width:760px){
-  .hero{ grid-template-columns:1fr; }
-  .hero-copy{ padding:40px 20px 8px; }
-  .hero-art{ min-height:230px; }
-  .hero-art img{
-    -webkit-mask-image:linear-gradient(180deg, transparent 0, #000 24%);
-    mask-image:linear-gradient(180deg, transparent 0, #000 24%);
-  }
+  .masthead-inner{ padding:56px 20px 26px; }
   .dispatch{ grid-template-columns:1fr; gap:8px; }
   .deck-fan{ margin-right:0; }
 }
@@ -510,7 +523,6 @@ button{ font-family:var(--font-text); }
   .special-card{ grid-template-columns:1fr; gap:4px; }
   .special-date{ display:flex; align-items:baseline; gap:7px; padding:0; }
   .special-date-day{ font-size:16px; }
-  .folio-line{ justify-content:center; }
 }
 
 /* ---------- motion ---------- */
