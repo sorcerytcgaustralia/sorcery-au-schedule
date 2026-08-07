@@ -286,7 +286,11 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
 }
 .fan-necromancer{
   background-image:url(../project/assets/cards/necromancer.webp);
-  transform:translateX(calc(-50% + 52px)) rotate(11deg);
+  transform:translateX(calc(-50% + 46px)) rotate(9deg);
+}
+.fan-air{
+  background-image:url(../project/assets/cards/avatar-of-air.webp);
+  transform:translateX(calc(-50% + 74px)) rotate(16deg);
 }
 .fan-imposter{
   background-image:url(../project/assets/cards/imposter.webp);
@@ -294,7 +298,8 @@ body{ background:#120a06; color:#f3e6d2; font-family:'Spectral',Georgia,serif; -
 }
 .deck-fan:hover .fan-archimago{ transform:translateX(calc(-50% - 84px)) rotate(-19deg) translateY(-4px); }
 .deck-fan:hover .fan-pathfinder{ transform:translateX(calc(-50% - 48px)) rotate(-10deg) translateY(-6px); }
-.deck-fan:hover .fan-necromancer{ transform:translateX(calc(-50% + 62px)) rotate(14deg) translateY(-6px); }
+.deck-fan:hover .fan-necromancer{ transform:translateX(calc(-50% + 54px)) rotate(11deg) translateY(-6px); }
+.deck-fan:hover .fan-air{ transform:translateX(calc(-50% + 84px)) rotate(19deg) translateY(-4px); }
 .deck-fan:hover .fan-imposter{ transform:translateX(calc(-50% - 4px)) rotate(-2deg) translateY(-30px); }
 .fan-badge{
   position:absolute; right:10px; bottom:10px;
