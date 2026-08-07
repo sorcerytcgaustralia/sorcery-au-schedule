@@ -306,6 +306,63 @@
     }
   }
 
+  // ---- stores tab ----
+  // Header: Store | City | Address | Website | Lat | Lng. Lat/Lng power
+  // the locator map; rows without coordinates still show in the list.
+
+  async function fetchStores() {
+    try {
+      const { rows, colLabels } = await fetchTabFormatted(window.CONFIG.STORES_TAB);
+      const lower = colLabels.map((h) => h.trim().toLowerCase());
+      let colMap = null;
+      let headerIdx = -1;
+      const looksLikeHeader = (arr) => arr.includes('store') || arr.includes('name') || arr.includes('venue');
+      if (looksLikeHeader(lower)) {
+        colMap = {};
+        lower.forEach((h, i) => { if (h && colMap[h] == null) colMap[h] = i; });
+      } else {
+        for (let r = 0; r < rows.length; r++) {
+          const rl = rows[r].map((c) => c.trim().toLowerCase());
+          if (looksLikeHeader(rl)) {
+            headerIdx = r;
+            colMap = {};
+            rl.forEach((h, i) => { if (h && colMap[h] == null) colMap[h] = i; });
+            break;
+          }
+        }
+      }
+      if (!colMap) return { stores: [], error: true };
+
+      const col = (row, names) => {
+        for (const n of names) {
+          if (colMap[n] != null) return (row[colMap[n]] || '').trim();
+        }
+        return '';
+      };
+
+      const stores = [];
+      for (let r = headerIdx + 1; r < rows.length; r++) {
+        const row = rows[r];
+        const name = col(row, ['store', 'name', 'venue']);
+        if (!name) continue;
+        const link = col(row, ['website', 'link', 'url']);
+        const lat = parseFloat(col(row, ['lat', 'latitude']));
+        const lng = parseFloat(col(row, ['lng', 'lon', 'long', 'longitude']));
+        stores.push({
+          name,
+          city: col(row, ['city']),
+          address: col(row, ['address']),
+          link: /^https?:\/\//i.test(link) ? link : '',
+          lat: isFinite(lat) ? lat : null,
+          lng: isFinite(lng) ? lng : null,
+        });
+      }
+      return { stores };
+    } catch (err) {
+      return { stores: [], error: true };
+    }
+  }
+
   async function fetchAllCities() {
     const result = {};
     await Promise.all(window.CONFIG.CITIES.map(async (city) => {
@@ -319,5 +376,5 @@
     return result;
   }
 
-  window.SheetData = { fetchAllCities, fetchSpecialEvents, parseCell, parseSheetRows };
+  window.SheetData = { fetchAllCities, fetchSpecialEvents, fetchStores, parseCell, parseSheetRows };
 })();

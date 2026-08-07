@@ -30,6 +30,7 @@
     activeCity: window.CONFIG.CITIES[0],
     cityData: null,
     special: null,
+    stores: null,
     archivePage: 0,
     loading: true,
     discord: { status: 'loading' },
@@ -294,17 +295,115 @@
   }
 
   // ---- store locator ----
-  // Derived from the weekly schedule itself: every venue that hosts a
-  // regular event, grouped by city. No separate data to maintain.
+  // Primary source: the Stores sheet tab (name, address, website, lat/lng),
+  // rendered as an interactive map plus a grouped list. If the tab is
+  // missing, fall back to venues derived from the weekly schedule.
+
+  let storeMap = null;
+  const storeMarkers = new Map();
+
+  function initStoreMap(stores) {
+    const mapEl = document.getElementById('store-map');
+    const located = stores.filter((s) => s.lat != null && s.lng != null);
+    if (!window.L || located.length === 0) { mapEl.hidden = true; return; }
+    mapEl.hidden = false;
+
+    if (!storeMap) {
+      storeMap = L.map(mapEl, { scrollWheelZoom: false });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 19,
+      }).addTo(storeMap);
+    }
+
+    storeMarkers.forEach((m) => m.remove());
+    storeMarkers.clear();
+
+    located.forEach((s) => {
+      const marker = L.circleMarker([s.lat, s.lng], {
+        radius: 8,
+        color: '#C85F26',
+        weight: 2,
+        fillColor: '#C85F26',
+        fillOpacity: 0.55,
+      }).addTo(storeMap);
+      const popup = '<strong>' + s.name + '</strong>' +
+        (s.address ? '<br>' + s.address : '') +
+        (s.link ? '<br><a href="' + s.link + '" target="_blank" rel="noopener">Website</a>' : '');
+      marker.bindPopup(popup);
+      storeMarkers.set(s.name.toLowerCase(), marker);
+    });
+
+    storeMap.fitBounds(L.latLngBounds(located.map((s) => [s.lat, s.lng])).pad(0.12));
+  }
+
+  function focusStore(store) {
+    if (!storeMap) return;
+    const marker = storeMarkers.get(store.name.toLowerCase());
+    if (!marker) return;
+    storeMap.flyTo([store.lat, store.lng], 14, { duration: 0.8 });
+    marker.openPopup();
+    document.getElementById('store-map').scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  function renderStoreList(grid, groups) {
+    grid.innerHTML = '';
+    groups.forEach(({ city, items }) => {
+      const col = el('div', 'store-city-col');
+      col.appendChild(el('h3', 'store-city', city));
+      const ul = el('ul', 'store-list');
+      items.forEach((s) => {
+        const li = el('li', 'store-item');
+        if (s.lat != null && storeMarkers.size > 0) {
+          const btn = el('button', 'store-name-btn', s.name);
+          btn.type = 'button';
+          btn.addEventListener('click', () => focusStore(s));
+          li.appendChild(btn);
+        } else {
+          li.appendChild(el('span', 'store-name-plain', s.name));
+        }
+        if (s.address) li.appendChild(el('div', 'store-addr', s.address));
+        if (s.link) {
+          const a = el('a', 'store-site', 'Website');
+          a.href = s.link;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          li.appendChild(a);
+        }
+        ul.appendChild(li);
+      });
+      col.appendChild(ul);
+      grid.appendChild(col);
+    });
+  }
 
   function renderStores() {
     const section = document.getElementById('stores');
     const grid = document.getElementById('store-grid');
     if (!section || !grid) return;
-    if (state.loading || !state.cityData) { section.hidden = true; return; }
 
-    grid.innerHTML = '';
-    let any = false;
+    // preferred: the Stores tab
+    const sheet = state.stores;
+    if (sheet && !sheet.error && sheet.stores.length > 0) {
+      section.hidden = false;
+      initStoreMap(sheet.stores);
+      const cityOrder = [...window.CONFIG.CITIES];
+      sheet.stores.forEach((s) => { if (s.city && !cityOrder.includes(s.city)) cityOrder.push(s.city); });
+      const groups = [];
+      cityOrder.forEach((city) => {
+        const items = sheet.stores.filter((s) => s.city === city);
+        if (items.length) groups.push({ city, items });
+      });
+      const unplaced = sheet.stores.filter((s) => !s.city);
+      if (unplaced.length) groups.push({ city: 'Elsewhere', items: unplaced });
+      renderStoreList(grid, groups);
+      return;
+    }
+
+    // fallback: derive venues from the weekly schedule
+    if (state.loading || !state.cityData) { section.hidden = true; return; }
+    document.getElementById('store-map').hidden = true;
+    const groups = [];
     window.CONFIG.CITIES.forEach((city) => {
       const data = state.cityData[city];
       if (!data || data.error) return;
@@ -313,23 +412,12 @@
         const venue = (ev.venue || '').trim();
         const key = venue.toLowerCase();
         if (!key || seen.has(key)) return;
-        seen.set(key, { venue, suburb: (ev.suburb || '').trim() });
+        seen.set(key, { name: venue, address: (ev.suburb || '').trim(), link: '', lat: null, lng: null });
       }));
-      if (seen.size === 0) return;
-      any = true;
-
-      const col = el('div', 'store-city-col');
-      col.appendChild(el('h3', 'store-city', city));
-      const ul = el('ul', 'store-list');
-      seen.forEach((s) => {
-        const li = el('li', 'store-item', s.venue);
-        if (s.suburb) li.appendChild(el('span', 'store-suburb', ' · ' + s.suburb));
-        ul.appendChild(li);
-      });
-      col.appendChild(ul);
-      grid.appendChild(col);
+      if (seen.size) groups.push({ city, items: [...seen.values()] });
     });
-    section.hidden = !any;
+    section.hidden = groups.length === 0;
+    if (groups.length) renderStoreList(grid, groups);
   }
 
   // ---- discord realm-status card ----
@@ -409,14 +497,16 @@
     renderSpecial();
     renderDiscordCard();
 
-    const [cityData, specialData, discordResult] = await Promise.all([
+    const [cityData, specialData, storesData, discordResult] = await Promise.all([
       window.SheetData.fetchAllCities(),
       window.SheetData.fetchSpecialEvents(),
+      window.SheetData.fetchStores(),
       window.DiscordWidget.fetchDiscordWidget(),
     ]);
 
     state.cityData = cityData;
     state.special = specialData;
+    state.stores = storesData;
     state.loading = false;
     state.discord = discordResult;
 

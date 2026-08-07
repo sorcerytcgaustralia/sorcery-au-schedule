@@ -81,6 +81,25 @@ automatically moves into the collapsed "Past events" archive at the bottom
 of the page — so the tab doubles as a permanent record of everything the
 community has run.
 
+## Store locator
+
+The "Find a Local Store" section reads a sheet tab named exactly `Stores`:
+
+```
+Store | City | Address | Website | Lat | Lng
+```
+
+- **Store** is the only required field. City groups the list to match the
+  schedule's city tabs.
+- **Lat / Lng** place the store on the map (decimal degrees, e.g.
+  `-33.87222` / `151.20522`). Look them up on openstreetmap.org: search
+  the address, right-click the spot, "Show address" shows the
+  coordinates. Rows without coordinates still appear in the list.
+- **Website** must be a full `https://` URL.
+
+If the tab is missing entirely, the site falls back to listing venue
+names derived from the weekly schedule (no map).
+
 ## Project structure
 
 ```
