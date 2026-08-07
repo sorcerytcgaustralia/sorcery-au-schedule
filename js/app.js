@@ -334,7 +334,8 @@
       storeMarkers.set(s.name.toLowerCase(), marker);
     });
 
-    storeMap.fitBounds(L.latLngBounds(located.map((s) => [s.lat, s.lng])).pad(0.12));
+    // fixed Australia-wide opening view; sheet edits never reframe the map
+    storeMap.fitBounds([[-44.4, 114.2], [-25.1, 154.6]]);
   }
 
   function focusStore(store) {

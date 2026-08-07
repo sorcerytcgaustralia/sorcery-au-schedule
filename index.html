@@ -22,21 +22,41 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="css/styles.css?v=7">
+<link rel="stylesheet" href="css/styles.css?v=8">
 </head>
 <body>
 
+<!-- NAV -->
+<nav class="site-nav" aria-label="Site">
+  <div class="site-nav-inner">
+    <a class="nav-brand" href="#top"><span class="nav-mark" aria-hidden="true">✦</span> Sorcery TCG Australia</a>
+    <div class="nav-links">
+      <a href="#schedule">Schedule</a>
+      <a href="#decks">Decks</a>
+      <a href="#join">Community</a>
+      <a href="#stores">Stores</a>
+    </div>
+  </div>
+</nav>
+
 <!-- MASTHEAD -->
-<header class="masthead">
+<header class="masthead" id="top">
   <img class="masthead-art" src="project/assets/river-of-flame.jpg" alt="" aria-hidden="true">
   <div class="masthead-scrim" aria-hidden="true"></div>
   <div class="masthead-inner">
     <h1 class="masthead-title">Sorcery TCG Australia</h1>
-    <p class="standfirst">Welcome to the home of the Australian community for Sorcery: Contested Realm. Regular weekly events, special gatherings, our Discord, the winning decklists, and the local stores where we play. This is the home of the community down under.</p>
   </div>
 </header>
 
 <main>
+
+  <!-- WELCOME -->
+  <section id="welcome" class="welcome" aria-label="Welcome">
+    <div class="welcome-inner">
+      <h2 class="section-title">Welcome</h2>
+      <p class="welcome-p">Welcome to the home of the Australian community for Sorcery: Contested Realm. Regular weekly events, special gatherings, our Discord, the winning decklists, and the local stores where we play. This is the home of the community down under.</p>
+    </div>
+  </section>
 
   <!-- SCHEDULE -->
   <section id="schedule" class="schedule-section" aria-label="Event schedule">
@@ -115,7 +135,6 @@
   <section id="stores" class="stores" aria-label="Find a local store" hidden>
     <div class="stores-inner">
       <h2>Find a Local Store</h2>
-      <p class="stores-intro">The stores and venues that host our regular play. Drop in, meet the locals, and bring a deck.</p>
       <div class="store-map" id="store-map" hidden></div>
       <div class="store-grid" id="store-grid"></div>
     </div>
@@ -137,6 +156,6 @@
 <script src="js/config.js?v=3"></script>
 <script src="js/sheet-data.js?v=4"></script>
 <script src="js/discord-widget.js?v=2"></script>
-<script src="js/app.js?v=5"></script>
+<script src="js/app.js?v=6"></script>
 </body>
 </html>
