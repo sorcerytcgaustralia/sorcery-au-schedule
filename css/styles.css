@@ -105,7 +105,9 @@ button{ font-family:var(--font-text); }
   position:relative;
   overflow:hidden;
   display:flex; align-items:flex-end;
-  min-height:clamp(360px, 52vh, 480px);
+  /* content sits at the bottom, so any excess height becomes dead sky
+     above the headline — keep the band close to what the copy needs */
+  min-height:clamp(320px, 42vh, 400px);
 }
 .masthead-art{
   position:absolute; inset:0;
@@ -121,7 +123,7 @@ button{ font-family:var(--font-text); }
 .masthead-inner{
   position:relative; z-index:1;
   width:100%; max-width:var(--measure); margin:0 auto;
-  padding:56px 20px 36px;
+  padding:44px 20px 34px;
 }
 .masthead-title{
   margin:0;
@@ -656,8 +658,8 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible{ transform:translateX(-50%) t
 
 /* ---------- responsive ---------- */
 @media (max-width:760px){
-  .masthead{ min-height:340px; }
-  .masthead-inner{ padding:48px 20px 28px; }
+  .masthead{ min-height:290px; }
+  .masthead-inner{ padding:38px 20px 26px; }
   .dispatch{ grid-template-columns:1fr; gap:8px; }
   .deck-fan{ margin-right:0; margin-bottom:-40px; }
   .nav-brand{ font-size:19px; gap:9px; }
