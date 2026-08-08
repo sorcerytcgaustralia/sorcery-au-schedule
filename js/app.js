@@ -92,29 +92,33 @@
 
   // ---- city tabs ----
 
+  // the schedule and the store explorer each show the same selection, so
+  // every .city-tabs row is rendered from — and writes back to — one state
   function positionCityMarker() {
-    const wrap = document.getElementById('city-tabs');
-    const active = wrap.querySelector('.city-tab.active');
-    const marker = wrap.querySelector('.city-marker');
-    if (!active || !marker) return;
-    const wr = wrap.getBoundingClientRect();
-    const ar = active.getBoundingClientRect();
-    marker.style.width = ar.width + 'px';
-    marker.style.transform = 'translate(' + (ar.left - wr.left) + 'px,' + (ar.bottom - wr.top) + 'px)';
+    document.querySelectorAll('.city-tabs').forEach((wrap) => {
+      const active = wrap.querySelector('.city-tab.active');
+      const marker = wrap.querySelector('.city-marker');
+      if (!active || !marker) return;
+      const wr = wrap.getBoundingClientRect();
+      const ar = active.getBoundingClientRect();
+      marker.style.width = ar.width + 'px';
+      marker.style.transform = 'translate(' + (ar.left - wr.left) + 'px,' + (ar.bottom - wr.top) + 'px)';
+    });
   }
 
   function renderTabs() {
-    const wrap = document.getElementById('city-tabs');
-    wrap.innerHTML = '';
-    window.CONFIG.CITIES.forEach((city) => {
-      const active = city === state.activeCity;
-      const btn = el('button', 'city-tab' + (active ? ' active' : ''), city);
-      btn.type = 'button';
-      btn.setAttribute('aria-pressed', String(active));
-      btn.addEventListener('click', () => setCity(city));
-      wrap.appendChild(btn);
+    document.querySelectorAll('.city-tabs').forEach((wrap) => {
+      wrap.innerHTML = '';
+      window.CONFIG.CITIES.forEach((city) => {
+        const active = city === state.activeCity;
+        const btn = el('button', 'city-tab' + (active ? ' active' : ''), city);
+        btn.type = 'button';
+        btn.setAttribute('aria-pressed', String(active));
+        btn.addEventListener('click', () => setCity(city));
+        wrap.appendChild(btn);
+      });
+      wrap.appendChild(el('span', 'city-marker'));
     });
-    wrap.appendChild(el('span', 'city-marker'));
     requestAnimationFrame(positionCityMarker);
   }
 
@@ -476,11 +480,9 @@
 
   function renderStores() {
     const section = document.getElementById('stores');
-    const title = document.getElementById('store-city-title');
     const list = document.getElementById('store-list');
     if (!section || !list) return;
 
-    title.textContent = state.activeCity;
     list.innerHTML = '';
 
     const sheet = state.stores;
