@@ -246,6 +246,15 @@
     const nameRow = el('div', 'feature-name-row');
     if (ev.tier) nameRow.appendChild(el('span', 'tier-gem tier-gem-' + ev.tier));
     nameRow.appendChild(el('span', 'feature-name', ev.event));
+    if (window.Calendar) {
+      const cal = el('button', 'cal-icon');
+      cal.type = 'button';
+      cal.innerHTML = CAL_ICON;
+      cal.title = 'Add to calendar';
+      cal.setAttribute('aria-label', 'Add ' + ev.event + ' to calendar');
+      cal.addEventListener('click', () => window.Calendar.addSpecial(ev));
+      nameRow.appendChild(cal);
+    }
     main.appendChild(nameRow);
 
     if (ev.format) main.appendChild(el('div', 'feature-subline', ev.format));
@@ -259,21 +268,13 @@
       main.appendChild(foot);
     }
 
-    const actions = el('div', 'feature-actions');
     if (ev.link) {
       const a = el('a', 'special-link', 'View event information');
       a.href = ev.link;
       a.target = '_blank';
       a.rel = 'noopener';
-      actions.appendChild(a);
+      main.appendChild(a);
     }
-    if (window.Calendar) {
-      const cal = el('button', 'cal-link', 'Add to calendar');
-      cal.type = 'button';
-      cal.addEventListener('click', () => window.Calendar.addSpecial(ev));
-      actions.appendChild(cal);
-    }
-    if (actions.childNodes.length) main.appendChild(actions);
 
     card.appendChild(main);
     return card;
