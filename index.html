@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="css/styles.css?v=8">
+<link rel="stylesheet" href="css/styles.css?v=9">
 </head>
 <body>
 
@@ -39,35 +39,34 @@
   </div>
 </nav>
 
-<!-- MASTHEAD -->
+<!-- HERO -->
 <header class="masthead" id="top">
   <img class="masthead-art" src="project/assets/river-of-flame.jpg" alt="" aria-hidden="true">
   <div class="masthead-scrim" aria-hidden="true"></div>
   <div class="masthead-inner">
-    <h1 class="masthead-title">Sorcery TCG Australia</h1>
+    <p class="hero-kicker">The community down under</p>
+    <h1 class="masthead-title">The realm gathers&nbsp;here.</h1>
+    <p class="standfirst">Weekly play, major events, tournament decks and local stores for Sorcery players across Australia.</p>
+    <div class="hero-actions">
+      <a class="hero-link" href="#schedule">Explore the schedule ↓</a>
+      <a class="hero-link" href="#join">Join the community</a>
+    </div>
   </div>
 </header>
 
 <main>
-
-  <!-- WELCOME -->
-  <section id="welcome" class="welcome" aria-label="Welcome">
-    <div class="welcome-inner">
-      <h2 class="section-title">Welcome</h2>
-      <p class="welcome-p">Welcome to the home of the Australian community for Sorcery: Contested Realm. Regular weekly events, special gatherings, our Discord, the winning decklists, and the local stores where we play. This is the home of the community down under.</p>
-    </div>
-  </section>
 
   <!-- SCHEDULE -->
   <section id="schedule" class="schedule-section" aria-label="Event schedule">
 
     <div class="schedule-inner">
 
-      <h2 class="section-title">Organised Play Schedule</h2>
-
-      <div class="view-toggle" role="tablist" aria-label="Schedule view">
-        <button type="button" class="view-tab active" id="view-tab-weekly" role="tab" aria-selected="true">Weekly events</button>
-        <button type="button" class="view-tab" id="view-tab-special" role="tab" aria-selected="false">Special events</button>
+      <div class="schedule-head">
+        <h2 class="section-title">Organised Play</h2>
+        <div class="view-toggle" role="tablist" aria-label="Schedule view">
+          <button type="button" class="view-tab active" id="view-tab-weekly" role="tab" aria-selected="true">Weekly events</button>
+          <button type="button" class="view-tab" id="view-tab-special" role="tab" aria-selected="false">Special events</button>
+        </div>
       </div>
 
       <!-- WEEKLY VIEW -->
@@ -132,11 +131,16 @@
   </section>
 
   <!-- STORE LOCATOR -->
-  <section id="stores" class="stores" aria-label="Find a local store" hidden>
+  <section id="stores" class="stores" aria-label="Find a local store">
     <div class="stores-inner">
       <h2>Find a Local Store</h2>
-      <div class="store-map" id="store-map" hidden></div>
-      <div class="store-grid" id="store-grid"></div>
+      <div class="store-explorer">
+        <div class="store-list-col">
+          <h3 class="store-city" id="store-city-title"></h3>
+          <ul class="store-list" id="store-list"></ul>
+        </div>
+        <div class="store-map" id="store-map" role="application" aria-label="Store locations map"></div>
+      </div>
     </div>
   </section>
 
@@ -156,6 +160,6 @@
 <script src="js/config.js?v=3"></script>
 <script src="js/sheet-data.js?v=4"></script>
 <script src="js/discord-widget.js?v=2"></script>
-<script src="js/app.js?v=6"></script>
+<script src="js/app.js?v=7"></script>
 </body>
 </html>

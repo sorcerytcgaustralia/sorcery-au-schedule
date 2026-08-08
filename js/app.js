@@ -25,16 +25,39 @@
 
   const ARCHIVE_PAGE_SIZE = 10;
 
+  function cityFromURL() {
+    try {
+      const p = new URLSearchParams(location.search).get('city');
+      if (!p) return null;
+      return window.CONFIG.CITIES.find((c) => c.toLowerCase() === p.toLowerCase()) || null;
+    } catch (e) { return null; }
+  }
+
   const state = {
     view: 'weekly',
-    activeCity: window.CONFIG.CITIES[0],
+    activeCity: cityFromURL() || window.CONFIG.CITIES[0],
     cityData: null,
     special: null,
     stores: null,
     archivePage: 0,
     loading: true,
+    mapWanted: false,
     discord: { status: 'loading' },
   };
+
+  // one city selection drives the schedule, the store list and the map
+  function setCity(city) {
+    state.activeCity = city;
+    renderTabs();
+    renderGrid();
+    renderMeta();
+    renderStores();
+    try {
+      const u = new URL(location.href);
+      u.searchParams.set('city', city);
+      history.replaceState(null, '', u);
+    } catch (e) { /* URL API unavailable: selection simply isn't shareable */ }
+  }
 
   // ---- weekly / special view toggle ----
 
@@ -87,12 +110,7 @@
       const btn = el('button', 'city-tab' + (active ? ' active' : ''), city);
       btn.type = 'button';
       btn.setAttribute('aria-pressed', String(active));
-      btn.addEventListener('click', () => {
-        state.activeCity = city;
-        renderTabs();
-        renderGrid();
-        renderMeta();
-      });
+      btn.addEventListener('click', () => setCity(city));
       wrap.appendChild(btn);
     });
     wrap.appendChild(el('span', 'city-marker'));
@@ -101,12 +119,42 @@
 
   // ---- weekly agenda ----
 
+  function findStoreForVenue(venue) {
+    const sheet = state.stores;
+    if (!sheet || sheet.error || !venue) return null;
+    const v = venue.trim().toLowerCase();
+    return sheet.stores.find((s) => {
+      const n = s.name.trim().toLowerCase();
+      return v.includes(n) || n.includes(v);
+    }) || null;
+  }
+
+  function goToStore(store) {
+    state.mapWanted = true;
+    renderStores();
+    document.getElementById('stores').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => focusStore(store), 450);
+  }
+
   function renderAgendaEvent(ev) {
     const item = el('div', 'agenda-event');
     item.appendChild(el('div', 'agenda-type', ev.type));
-    item.appendChild(el('div', 'agenda-venue', ev.venue + (ev.suburb ? ', ' + ev.suburb : '')));
 
-    // time line: time first, then only non-default frequency, then notes
+    // venue links through to the store explorer when we know the store
+    const venueText = ev.venue + (ev.suburb ? ', ' + ev.suburb : '');
+    const store = findStoreForVenue(ev.venue);
+    if (store) {
+      const wrap = el('div', 'agenda-venue');
+      const btn = el('button', 'agenda-venue-link', venueText);
+      btn.type = 'button';
+      btn.title = 'Find this store on the map';
+      btn.addEventListener('click', () => goToStore(store));
+      wrap.appendChild(btn);
+      item.appendChild(wrap);
+    } else {
+      item.appendChild(el('div', 'agenda-venue', venueText));
+    }
+
     const line = el('div', 'agenda-time-line');
     if (ev.time) line.appendChild(el('span', null, ev.time));
     if (ev.freq && ev.freq !== 'weekly') line.appendChild(el('span', 'freq-tag', freqLabel(ev.freq)));
@@ -179,17 +227,19 @@
     nameRow.appendChild(el('span', 'feature-name', ev.event));
     main.appendChild(nameRow);
 
-    const subParts = [ev.city, ev.format].filter(Boolean);
-    if (subParts.length) main.appendChild(el('div', 'feature-subline', subParts.join(' · ')));
+    if (ev.format) main.appendChild(el('div', 'feature-subline', ev.format));
     if (ev.venue) main.appendChild(el('div', 'feature-venue', ev.venue));
+    if (ev.time) main.appendChild(el('div', 'feature-meta', ev.time));
 
-    const meta = el('div', 'feature-meta');
-    if (ev.time) meta.appendChild(el('span', null, ev.time));
-    if (ev.entry) meta.appendChild(el('span', null, ev.entry));
-    if (meta.childNodes.length) main.appendChild(meta);
+    if (ev.city || ev.entry) {
+      const foot = el('div', 'feature-foot');
+      foot.appendChild(el('span', 'feature-city', ev.city || ''));
+      if (ev.entry) foot.appendChild(el('span', 'feature-entry', ev.entry));
+      main.appendChild(foot);
+    }
 
     if (ev.link) {
-      const a = el('a', 'special-link', 'Event information');
+      const a = el('a', 'special-link', 'View event information');
       a.href = ev.link;
       a.target = '_blank';
       a.rel = 'noopener';
@@ -301,32 +351,45 @@
 
   let storeMap = null;
   const storeMarkers = new Map();
+  // fixed Australia-wide opening view; sheet edits never reframe the map
+  const STORE_MAP_BOUNDS = [[-42.88, 115.89], [-26.63, 152.96]];
+  const STORE_MAP_FIT = { padding: [28, 28] };
+
+  function makePin(dimmed) {
+    return L.divIcon({
+      className: 'map-pin' + (dimmed ? ' map-pin-dim' : ''),
+      html: '✦',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+      popupAnchor: [0, -8],
+    });
+  }
 
   function initStoreMap(stores) {
     const mapEl = document.getElementById('store-map');
     const located = stores.filter((s) => s.lat != null && s.lng != null);
-    if (!window.L || located.length === 0) { mapEl.hidden = true; return; }
-    mapEl.hidden = false;
+    if (!window.L || located.length === 0 || !state.mapWanted) return;
 
-    if (!storeMap) {
-      storeMap = L.map(mapEl, { scrollWheelZoom: false });
+    const firstInit = !storeMap;
+    if (firstInit) {
+      storeMap = L.map(mapEl, { scrollWheelZoom: false, zoomSnap: 0.25, zoomDelta: 1 });
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         maxZoom: 19,
       }).addTo(storeMap);
+      mapEl.classList.add('is-live');
+      window.addEventListener('resize', () => {
+        storeMap.invalidateSize();
+        storeMap.fitBounds(STORE_MAP_BOUNDS, STORE_MAP_FIT);
+      });
     }
 
     storeMarkers.forEach((m) => m.remove());
     storeMarkers.clear();
 
     located.forEach((s) => {
-      const marker = L.circleMarker([s.lat, s.lng], {
-        radius: 8,
-        color: '#C85F26',
-        weight: 2,
-        fillColor: '#C85F26',
-        fillOpacity: 0.55,
-      }).addTo(storeMap);
+      const dimmed = s.city && s.city !== state.activeCity;
+      const marker = L.marker([s.lat, s.lng], { icon: makePin(dimmed) }).addTo(storeMap);
       const popup = '<strong>' + s.name + '</strong>' +
         (s.address ? '<br>' + s.address : '') +
         (s.link ? '<br><a href="' + s.link + '" target="_blank" rel="noopener">Website</a>' : '');
@@ -334,91 +397,123 @@
       storeMarkers.set(s.name.toLowerCase(), marker);
     });
 
-    // fixed Australia-wide opening view; sheet edits never reframe the map
-    storeMap.fitBounds([[-44.4, 114.2], [-25.1, 154.6]]);
+    if (firstInit) storeMap.fitBounds(STORE_MAP_BOUNDS, STORE_MAP_FIT);
   }
 
   function focusStore(store) {
     if (!storeMap) return;
     const marker = storeMarkers.get(store.name.toLowerCase());
-    if (!marker) return;
+    if (!marker || store.lat == null) return;
     storeMap.flyTo([store.lat, store.lng], 14, { duration: 0.8 });
     marker.openPopup();
-    document.getElementById('store-map').scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
-  function renderStoreList(grid, groups) {
-    grid.innerHTML = '';
-    groups.forEach(({ city, items }) => {
-      const col = el('div', 'store-city-col');
-      col.appendChild(el('h3', 'store-city', city));
-      const ul = el('ul', 'store-list');
-      items.forEach((s) => {
-        const li = el('li', 'store-item');
-        if (s.lat != null && storeMarkers.size > 0) {
-          const btn = el('button', 'store-name-btn', s.name);
-          btn.type = 'button';
-          btn.addEventListener('click', () => focusStore(s));
-          li.appendChild(btn);
-        } else {
-          li.appendChild(el('span', 'store-name-plain', s.name));
-        }
-        if (s.address) li.appendChild(el('div', 'store-addr', s.address));
-        if (s.link) {
-          const a = el('a', 'store-site', 'Website');
-          a.href = s.link;
-          a.target = '_blank';
-          a.rel = 'noopener';
-          li.appendChild(a);
-        }
-        ul.appendChild(li);
-      });
-      col.appendChild(ul);
-      grid.appendChild(col);
-    });
+  // venues in the active city's weekly schedule, for "hosts weekly play"
+  function weeklyVenueSet() {
+    const set = new Set();
+    const data = state.cityData && state.cityData[state.activeCity];
+    if (!data || data.error) return set;
+    Object.values(data.events).forEach((list) => list.forEach((ev) => {
+      if (ev.venue) set.add(ev.venue.trim().toLowerCase());
+    }));
+    return set;
   }
 
   function renderStores() {
     const section = document.getElementById('stores');
-    const grid = document.getElementById('store-grid');
-    if (!section || !grid) return;
+    const title = document.getElementById('store-city-title');
+    const list = document.getElementById('store-list');
+    if (!section || !list) return;
 
-    // preferred: the Stores tab
+    title.textContent = state.activeCity;
+    list.innerHTML = '';
+
     const sheet = state.stores;
-    if (sheet && !sheet.error && sheet.stores.length > 0) {
-      section.hidden = false;
-      initStoreMap(sheet.stores);
-      const cityOrder = [...window.CONFIG.CITIES];
-      sheet.stores.forEach((s) => { if (s.city && !cityOrder.includes(s.city)) cityOrder.push(s.city); });
-      const groups = [];
-      cityOrder.forEach((city) => {
-        const items = sheet.stores.filter((s) => s.city === city);
-        if (items.length) groups.push({ city, items });
-      });
-      const unplaced = sheet.stores.filter((s) => !s.city);
-      if (unplaced.length) groups.push({ city: 'Elsewhere', items: unplaced });
-      renderStoreList(grid, groups);
+    if (!sheet) {
+      list.appendChild(el('li', 'store-note', 'Reading the store ledger…'));
+      return;
+    }
+    if (sheet.error || sheet.stores.length === 0) {
+      list.appendChild(el('li', 'store-note', 'Couldn’t load the stores right now. Check the Discord.'));
       return;
     }
 
-    // fallback: derive venues from the weekly schedule
-    if (state.loading || !state.cityData) { section.hidden = true; return; }
-    document.getElementById('store-map').hidden = true;
-    const groups = [];
-    window.CONFIG.CITIES.forEach((city) => {
-      const data = state.cityData[city];
-      if (!data || data.error) return;
-      const seen = new Map();
-      Object.values(data.events).forEach((list) => list.forEach((ev) => {
-        const venue = (ev.venue || '').trim();
-        const key = venue.toLowerCase();
-        if (!key || seen.has(key)) return;
-        seen.set(key, { name: venue, address: (ev.suburb || '').trim(), link: '', lat: null, lng: null });
-      }));
-      if (seen.size) groups.push({ city, items: [...seen.values()] });
+    initStoreMap(sheet.stores);
+
+    const hosts = weeklyVenueSet();
+    const hostsWeekly = (s) => {
+      const n = s.name.trim().toLowerCase();
+      for (const v of hosts) { if (v.includes(n) || n.includes(v)) return true; }
+      return false;
+    };
+
+    const items = sheet.stores.filter((s) => s.city === state.activeCity);
+    if (items.length === 0) {
+      list.appendChild(el('li', 'store-note', 'No stores listed for ' + state.activeCity + ' yet.'));
+    }
+    items.forEach((s) => {
+      const li = el('li', 'store-item');
+      if (s.lat != null) {
+        const btn = el('button', 'store-name-btn', s.name);
+        btn.type = 'button';
+        btn.addEventListener('click', () => { state.mapWanted = true; initStoreMap(sheet.stores); focusStore(s); });
+        li.appendChild(btn);
+      } else {
+        li.appendChild(el('span', 'store-name-plain', s.name));
+      }
+      if (s.address) li.appendChild(el('div', 'store-addr', s.address));
+      const foot = el('div', 'store-foot');
+      if (hostsWeekly(s)) foot.appendChild(el('span', 'events-here', 'Hosts weekly play'));
+      if (s.link) {
+        const a = el('a', 'store-site', 'Website');
+        a.href = s.link;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        foot.appendChild(a);
+      }
+      if (foot.childNodes.length) li.appendChild(foot);
+      list.appendChild(li);
     });
-    section.hidden = groups.length === 0;
-    if (groups.length) renderStoreList(grid, groups);
+  }
+
+  // the map's tiles only load once the section approaches the viewport
+  function armMapLazyInit() {
+    const section = document.getElementById('stores');
+    if (!('IntersectionObserver' in window)) {
+      state.mapWanted = true;
+      renderStores();
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        io.disconnect();
+        state.mapWanted = true;
+        renderStores();
+      }
+    }, { rootMargin: '500px 0px' });
+    io.observe(section);
+  }
+
+  // ---- navigation ----
+
+  function wireNav() {
+    const nav = document.querySelector('.site-nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+
+    const links = Array.from(document.querySelectorAll('.nav-links a'));
+    if (!('IntersectionObserver' in window) || links.length === 0) return;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+      });
+    }, { rootMargin: '-35% 0px -55% 0px' });
+    ['schedule', 'decks', 'join', 'stores'].forEach((id) => {
+      const target = document.getElementById(id);
+      if (target) io.observe(target);
+    });
   }
 
   // ---- discord realm-status card ----
@@ -490,12 +585,15 @@
   async function init() {
     wireViewToggle();
     renderViewToggle();
+    wireNav();
+    armMapLazyInit();
     window.addEventListener('resize', positionCityMarker);
     window.addEventListener('load', positionCityMarker);
     renderTabs();
     renderGrid();
     renderMeta();
     renderSpecial();
+    renderStores();
     renderDiscordCard();
 
     const [cityData, specialData, storesData, discordResult] = await Promise.all([
