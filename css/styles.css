@@ -78,10 +78,14 @@ button{ font-family:var(--font-text); }
   padding:8px 20px;
 }
 .nav-brand{
+  display:inline-flex; align-items:center; gap:11px;
   font-family:var(--font-display); font-weight:700;
   font-size:22px; line-height:1;
   color:#F2E6CC; text-decoration:none;
   padding:6px 0;
+}
+.nav-emblem{
+  height:36px; width:auto; flex:none; display:block;
 }
 .nav-brand:hover{ color:var(--gold); }
 .nav-mark{ color:var(--ember); font-size:15px; }
@@ -653,7 +657,8 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible{ transform:translateX(-50%) t
   .dispatch{ grid-template-columns:1fr; gap:8px; }
   .deck-fan{ margin-right:0; margin-bottom:-40px; }
   .store-explorer{ grid-template-columns:1fr; }
-  .nav-brand{ font-size:19px; }
+  .nav-brand{ font-size:19px; gap:9px; }
+  .nav-emblem{ height:30px; }
   .nav-links a{ font-size:13.5px; }
   .nav-links{ gap:2px 16px; }
 }
