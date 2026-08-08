@@ -81,6 +81,21 @@ automatically moves into the collapsed "Past events" archive at the bottom
 of the page — so the tab doubles as a permanent record of everything the
 community has run.
 
+## Featured decks
+
+The card fan in "From the Australian Meta" is driven by a sheet tab
+named exactly `Featured Decks`:
+
+```
+Card | Deck | Pilot | Link
+```
+
+Card must be one of the fan's five avatars (Imposter, Necromancer,
+Pathfinder, Archimago, Avatar of Air); Link is the deck's Curiosa URL.
+Hovering a card shows the deck and pilot, clicking opens the deck.
+Update the rows as the meta shifts — cards without a matching row stay
+decorative.
+
 ## Store locator
 
 The "Find a Local Store" section reads a sheet tab named exactly `Stores`:

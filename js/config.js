@@ -6,6 +6,7 @@ window.CONFIG = {
   CITIES: ['Sydney', 'Canberra', 'Melbourne', 'Perth', 'Adelaide', 'Brisbane', 'Hobart'],
   SPECIAL_EVENTS_TAB: 'Special Events',
   STORES_TAB: 'Stores',
+  FEATURED_DECKS_TAB: 'Featured Decks',
   DISCORD_GUILD_ID: '1454028745001402485',
   DISCORD_INVITE_URL: 'https://discord.gg/eyPp9FKpxU',
 };

@@ -363,6 +363,50 @@
     }
   }
 
+  // ---- featured decks tab ----
+  // Header: Card | Deck | Pilot | Link. Card names the fan artwork
+  // (Imposter, Necromancer, Pathfinder, Archimago, Avatar of Air).
+
+  async function fetchFeaturedDecks() {
+    try {
+      const { rows, colLabels } = await fetchTabFormatted(window.CONFIG.FEATURED_DECKS_TAB);
+      const findMap = (arr) => {
+        const lower = arr.map((c) => c.trim().toLowerCase());
+        if (!lower.includes('card') || !lower.includes('deck')) return null;
+        const map = {};
+        lower.forEach((h, i) => { if (h && map[h] == null) map[h] = i; });
+        return map;
+      };
+      let colMap = findMap(colLabels);
+      let headerIdx = -1;
+      if (!colMap) {
+        for (let r = 0; r < rows.length; r++) {
+          colMap = findMap(rows[r]);
+          if (colMap) { headerIdx = r; break; }
+        }
+      }
+      if (!colMap) return { decks: [], error: true };
+
+      const col = (row, name) => (colMap[name] != null ? (row[colMap[name]] || '').trim() : '');
+      const decks = [];
+      for (let r = headerIdx + 1; r < rows.length; r++) {
+        const row = rows[r];
+        const card = col(row, 'card');
+        if (!card) continue;
+        const link = col(row, 'link');
+        decks.push({
+          card,
+          deck: col(row, 'deck'),
+          pilot: col(row, 'pilot'),
+          link: /^https?:\/\//i.test(link) ? link : '',
+        });
+      }
+      return { decks };
+    } catch (err) {
+      return { decks: [], error: true };
+    }
+  }
+
   async function fetchAllCities() {
     const result = {};
     await Promise.all(window.CONFIG.CITIES.map(async (city) => {
@@ -376,5 +420,5 @@
     return result;
   }
 
-  window.SheetData = { fetchAllCities, fetchSpecialEvents, fetchStores, parseCell, parseSheetRows };
+  window.SheetData = { fetchAllCities, fetchSpecialEvents, fetchStores, fetchFeaturedDecks, parseCell, parseSheetRows };
 })();

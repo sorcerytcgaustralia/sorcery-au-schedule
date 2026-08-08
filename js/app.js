@@ -39,6 +39,7 @@
     cityData: null,
     special: null,
     stores: null,
+    featured: null,
     archivePage: 0,
     loading: true,
     mapWanted: false,
@@ -521,6 +522,46 @@
     io.observe(section);
   }
 
+  // ---- featured decks fan ----
+  // The fan's five avatars become links to the community's featured
+  // decks on Curiosa; hover or focus reveals deck and pilot.
+
+  const FAN_SLOTS = ['fan-air', 'fan-archimago', 'fan-pathfinder', 'fan-necromancer', 'fan-imposter'];
+
+  function renderFan() {
+    const fan = document.querySelector('.deck-fan');
+    const caption = document.getElementById('fan-caption');
+    const data = state.featured;
+    if (!fan || !caption || !data || data.error || data.decks.length === 0) return;
+
+    const defaultCaption = 'The decks of the season. Open one on Curiosa.';
+    caption.textContent = defaultCaption;
+
+    FAN_SLOTS.forEach((slot) => {
+      const node = fan.querySelector('.' + slot);
+      if (!node || node.tagName === 'A') return;
+      // slot key, e.g. "fan-air" -> matches "Avatar of Air"
+      const key = slot.replace('fan-', '').replace('-', ' ');
+      const deck = data.decks.find((d) => d.card.toLowerCase().includes(key)) || null;
+      if (!deck || !deck.link) return;
+
+      const a = document.createElement('a');
+      a.className = node.className;
+      a.href = deck.link;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      const label = [deck.deck, deck.pilot].filter(Boolean).join(' · ');
+      a.setAttribute('aria-label', (label || deck.card) + ' — view deck on Curiosa');
+      const show = () => { caption.textContent = label + '  ·  ' + deck.card; };
+      const hide = () => { caption.textContent = defaultCaption; };
+      a.addEventListener('mouseenter', show);
+      a.addEventListener('mouseleave', hide);
+      a.addEventListener('focus', show);
+      a.addEventListener('blur', hide);
+      node.replaceWith(a);
+    });
+  }
+
   // ---- navigation ----
 
   function wireNav() {
@@ -623,16 +664,18 @@
     renderStores();
     renderDiscordCard();
 
-    const [cityData, specialData, storesData, discordResult] = await Promise.all([
+    const [cityData, specialData, storesData, featuredData, discordResult] = await Promise.all([
       window.SheetData.fetchAllCities(),
       window.SheetData.fetchSpecialEvents(),
       window.SheetData.fetchStores(),
+      window.SheetData.fetchFeaturedDecks(),
       window.DiscordWidget.fetchDiscordWidget(),
     ]);
 
     state.cityData = cityData;
     state.special = specialData;
     state.stores = storesData;
+    state.featured = featuredData;
     state.loading = false;
     state.discord = discordResult;
 
@@ -641,6 +684,7 @@
     renderMeta();
     renderSpecial();
     renderStores();
+    renderFan();
     renderDiscordCard();
   }
 

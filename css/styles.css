@@ -452,6 +452,22 @@ button{ font-family:var(--font-text); }
 .fan-air{ background-image:url(../project/assets/cards/avatar-of-air.webp); transform:translateX(calc(-50% + 58px)) rotate(16deg); }
 .fan-imposter{ background-image:url(../project/assets/cards/imposter.webp); transform:translateX(-50%) translateY(-12px); }
 
+/* when the fan is data-driven, each card is a link that lifts on its own */
+a.fan-card{ display:block; cursor:pointer; }
+a.fan-card:hover, a.fan-card:focus-visible{ z-index:3; }
+a.fan-archimago:hover, a.fan-archimago:focus-visible{ transform:translateX(calc(-50% - 58px)) rotate(-16deg) translateY(-16px); }
+a.fan-pathfinder:hover, a.fan-pathfinder:focus-visible{ transform:translateX(calc(-50% - 31px)) rotate(-8deg) translateY(-16px); }
+a.fan-necromancer:hover, a.fan-necromancer:focus-visible{ transform:translateX(calc(-50% + 31px)) rotate(8deg) translateY(-16px); }
+a.fan-air:hover, a.fan-air:focus-visible{ transform:translateX(calc(-50% + 58px)) rotate(16deg) translateY(-16px); }
+a.fan-imposter:hover, a.fan-imposter:focus-visible{ transform:translateX(-50%) translateY(-28px); }
+.fan-caption{
+  margin:14px 0 0;
+  text-align:center;
+  font-size:13.5px; font-style:italic;
+  color:var(--parch-muted);
+  min-height:21px;
+}
+
 /* shared action button (Discord, Curiosa) */
 .action-btn{
   display:inline-flex; align-items:center; gap:9px;
@@ -649,11 +665,11 @@ button{ font-family:var(--font-text); }
   .city-marker{ transition:transform .28s ease, width .28s ease; }
   .view-enter{ animation:viewIn .2s ease; }
   .fan-card{ transition:transform .25s ease; }
-  .deck-fan:hover .fan-archimago{ transform:translateX(calc(-50% - 66px)) rotate(-19deg); }
-  .deck-fan:hover .fan-pathfinder{ transform:translateX(calc(-50% - 37px)) rotate(-10deg); }
-  .deck-fan:hover .fan-necromancer{ transform:translateX(calc(-50% + 37px)) rotate(10deg); }
-  .deck-fan:hover .fan-air{ transform:translateX(calc(-50% + 66px)) rotate(19deg); }
-  .deck-fan:hover .fan-imposter{ transform:translateX(-50%) translateY(-24px); }
+  .deck-fan:hover span.fan-archimago{ transform:translateX(calc(-50% - 66px)) rotate(-19deg); }
+  .deck-fan:hover span.fan-pathfinder{ transform:translateX(calc(-50% - 37px)) rotate(-10deg); }
+  .deck-fan:hover span.fan-necromancer{ transform:translateX(calc(-50% + 37px)) rotate(10deg); }
+  .deck-fan:hover span.fan-air{ transform:translateX(calc(-50% + 66px)) rotate(19deg); }
+  .deck-fan:hover span.fan-imposter{ transform:translateX(-50%) translateY(-24px); }
 }
 @media (prefers-reduced-motion: reduce){
   .spinner{ animation:none; border-top-color:var(--rule-strong); }
