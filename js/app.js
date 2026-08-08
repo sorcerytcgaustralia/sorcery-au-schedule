@@ -352,9 +352,10 @@
 
   let storeMap = null;
   const storeMarkers = new Map();
-  // fixed Australia-wide opening view; sheet edits never reframe the map
-  const STORE_MAP_BOUNDS = [[-42.88, 115.89], [-26.63, 152.96]];
-  const STORE_MAP_FIT = { padding: [28, 28] };
+  // fixed Australia-wide opening view, framed by hand; sheet edits and
+  // container size never reframe it
+  const STORE_MAP_CENTER = [-28.188244, 133.462569];
+  const STORE_MAP_ZOOM = 4;
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -397,10 +398,7 @@
         maxZoom: 19,
       }).addTo(storeMap);
       mapEl.classList.add('is-live');
-      window.addEventListener('resize', () => {
-        storeMap.invalidateSize();
-        storeMap.fitBounds(STORE_MAP_BOUNDS, STORE_MAP_FIT);
-      });
+      window.addEventListener('resize', () => storeMap.invalidateSize());
     }
 
     storeMarkers.forEach((m) => m.remove());
@@ -425,7 +423,7 @@
       storeMarkers.set(s.name.toLowerCase(), marker);
     });
 
-    if (firstInit) storeMap.fitBounds(STORE_MAP_BOUNDS, STORE_MAP_FIT);
+    if (firstInit) storeMap.setView(STORE_MAP_CENTER, STORE_MAP_ZOOM);
   }
 
   function focusStore(store) {
