@@ -432,7 +432,9 @@ button{ font-family:var(--font-text); }
 .pager-label{ font-size:13.5px; color:var(--parch-muted); opacity:.8; }
 
 /* ---------- dispatches ---------- */
-.community{ padding:54px 20px 30px; overflow-x:clip; }
+/* no top padding: the first dispatch already brings its own, and the two
+   stacking made this boundary twice as tall as every other one */
+.community{ padding:0 20px 30px; overflow-x:clip; }
 .community-inner{ max-width:var(--measure); margin:0 auto; }
 .dispatch{
   display:grid; grid-template-columns:minmax(0,7fr) minmax(0,5fr);
