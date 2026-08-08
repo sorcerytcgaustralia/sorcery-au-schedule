@@ -2,7 +2,7 @@
    Field guide to organised play: 70% editorial structure,
    20% artwork and material texture, 10% repeated magical detail.
    The ✦ compass mark is the one recurring motif: hero, selected city,
-   today, special-events heading, footer. Display face (Grenze Gotisch)
+   today, special-events heading, footer. Display face (Marcellus SC)
    appears only on the masthead and section headings. */
 
 /* ---------- tokens ---------- */
@@ -21,7 +21,7 @@
   --blurple:#8891E0;        /* discord indicator only */
   --rule:rgba(255,255,255,.13);
   --rule-strong:rgba(255,255,255,.27);
-  --font-display:'Grenze Gotisch',serif;
+  --font-display:'Marcellus SC',serif;
   --font-text:'Spectral',Georgia,serif;
   --measure:880px;
   --nav-h:65px;   /* measured and republished by wireNav() */
@@ -81,7 +81,7 @@ button{ font-family:var(--font-text); }
 }
 .nav-brand{
   display:inline-flex; align-items:center; gap:11px;
-  font-family:var(--font-display); font-weight:700;
+  font-family:var(--font-display); font-weight:400;
   font-size:22px; line-height:1;
   color:#F1ECE4; text-decoration:none;
   padding:6px 0;
@@ -126,7 +126,7 @@ button{ font-family:var(--font-text); }
 .masthead-title{
   margin:0;
   max-width:560px;
-  font-family:var(--font-display); font-weight:700;
+  font-family:var(--font-display); font-weight:400;
   font-size:clamp(40px,6.6vw,66px); line-height:.96;
   color:#F1ECE4;
   overflow-wrap:break-word;
@@ -158,7 +158,7 @@ button{ font-family:var(--font-text); }
 .schedule-inner{ max-width:var(--measure); margin:0 auto; }
 .section-title{
   margin:0;
-  font-family:var(--font-display); font-weight:700;
+  font-family:var(--font-display); font-weight:400;
   font-size:clamp(27px,3.8vw,36px); line-height:1.05;
   color:#F1ECE4;
 }
@@ -437,7 +437,7 @@ button{ font-family:var(--font-text); }
 .dispatch + .dispatch{ border-top:1px solid var(--rule); }
 .dispatch h2{
   margin:0 0 12px;
-  font-family:var(--font-display); font-weight:700;
+  font-family:var(--font-display); font-weight:400;
   font-size:clamp(26px,3.6vw,33px); line-height:1.05;
   color:#F1ECE4;
 }
@@ -554,7 +554,7 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible{ transform:translateX(-50%) t
 .stores-inner{ max-width:var(--measure); margin:0 auto; }
 .stores h2{
   margin:0 0 20px;
-  font-family:var(--font-display); font-weight:700;
+  font-family:var(--font-display); font-weight:400;
   font-size:clamp(26px,3.6vw,33px); line-height:1.05;
   color:#F1ECE4;
 }
