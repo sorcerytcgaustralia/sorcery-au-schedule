@@ -556,6 +556,22 @@
 
   function wireNav() {
     const nav = document.querySelector('.site-nav');
+
+    // publish the sticky nav's real height so anchor targets can clear it.
+    // It changes on wrap (narrow screens) and when the display font
+    // arrives after first paint, so observe the element itself.
+    const measureNav = () => {
+      const h = Math.ceil(nav.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--nav-h', h + 'px');
+    };
+    measureNav();
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(measureNav).observe(nav);
+    } else {
+      window.addEventListener('resize', measureNav);
+      window.addEventListener('load', measureNav);
+    }
+
     window.addEventListener('scroll', () => {
       nav.classList.toggle('scrolled', window.scrollY > 10);
     }, { passive: true });

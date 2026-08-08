@@ -22,6 +22,12 @@
   --font-display:'Grenze Gotisch',serif;
   --font-text:'Spectral',Georgia,serif;
   --measure:880px;
+  --nav-h:65px;   /* measured and republished by wireNav() */
+}
+
+/* every nav target clears the sticky nav, with breathing room */
+.masthead, .schedule-section, .dispatch, .stores{
+  scroll-margin-top:calc(var(--nav-h) + 18px);
 }
 
 /* ---------- base ---------- */
@@ -142,7 +148,6 @@ button{ font-family:var(--font-text); }
   background:var(--umber);
   border-bottom:1px solid var(--rule);
   padding:38px 20px 52px;
-  scroll-margin-top:20px;
 }
 .schedule-inner{ max-width:var(--measure); margin:0 auto; }
 .section-title{
@@ -407,8 +412,6 @@ button{ font-family:var(--font-text); }
   padding:34px 0 38px;
 }
 .dispatch + .dispatch{ border-top:1px solid var(--rule); }
-.dispatch{ scroll-margin-top:16px; }
-.stores{ scroll-margin-top:16px; }
 .dispatch h2{
   margin:0 0 12px;
   font-family:var(--font-display); font-weight:700;
