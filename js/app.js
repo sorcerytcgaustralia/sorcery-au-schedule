@@ -534,8 +534,11 @@
     const data = state.featured;
     if (!fan || !caption || !data || data.error || data.decks.length === 0) return;
 
-    const defaultCaption = 'The decks of the season. Open one on Curiosa.';
-    caption.textContent = defaultCaption;
+    const touchOnly = window.matchMedia && window.matchMedia('(hover: none)').matches;
+    const clearPeek = () => {
+      fan.querySelectorAll('.is-peeked').forEach((c) => c.classList.remove('is-peeked'));
+      caption.textContent = '';
+    };
 
     FAN_SLOTS.forEach((slot) => {
       const node = fan.querySelector('.' + slot);
@@ -553,13 +556,30 @@
       const label = [deck.deck, deck.pilot].filter(Boolean).join(' · ');
       a.setAttribute('aria-label', (label || deck.card) + ' — view deck on Curiosa');
       const show = () => { caption.textContent = label + '  ·  ' + deck.card; };
-      const hide = () => { caption.textContent = defaultCaption; };
+      const hide = () => { caption.textContent = ''; };
       a.addEventListener('mouseenter', show);
       a.addEventListener('mouseleave', hide);
       a.addEventListener('focus', show);
       a.addEventListener('blur', hide);
+
+      // touch: first tap peeks the card and its caption, second tap opens
+      if (touchOnly) {
+        a.addEventListener('click', (e) => {
+          if (a.classList.contains('is-peeked')) return; // second tap: follow link
+          e.preventDefault();
+          clearPeek();
+          a.classList.add('is-peeked');
+          show();
+        });
+      }
       node.replaceWith(a);
     });
+
+    if (touchOnly) {
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest || !e.target.closest('.deck-fan')) clearPeek();
+      });
+    }
   }
 
   // ---- navigation ----
