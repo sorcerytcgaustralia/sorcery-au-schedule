@@ -241,10 +241,22 @@ button{ font-family:var(--font-text); }
   margin-top:9px; padding-top:13px;
   border-top:1px dashed var(--rule);
 }
+.agenda-head{
+  display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+}
 .agenda-type{
   font-size:17.5px; font-weight:600; line-height:1.35;
   color:#F2E6CC;
 }
+.cal-icon{
+  flex:none;
+  background:none; border:none; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:40px; height:40px; margin:-8px -11px 0 0;
+  color:var(--parch-muted);
+  transition:color .15s ease;
+}
+.cal-icon:hover{ color:var(--gold); }
 .agenda-venue{
   font-size:15.5px; color:var(--parch-soft); line-height:1.5;
 }

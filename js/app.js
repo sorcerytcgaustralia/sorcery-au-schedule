@@ -137,9 +137,29 @@
     setTimeout(() => focusStore(store), 450);
   }
 
+  const CAL_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">' +
+    '<rect x="3" y="5" width="18" height="16" rx="2"/>' +
+    '<path d="M8 3v4M16 3v4M3 10h18M12 14v4M10 16h4"/></svg>';
+
   function renderAgendaEvent(ev, dayIdx) {
     const item = el('div', 'agenda-event');
-    item.appendChild(el('div', 'agenda-type', ev.type));
+
+    // title row carries the calendar action at its right edge
+    const head = el('div', 'agenda-head');
+    head.appendChild(el('div', 'agenda-type', ev.type));
+    // only weekly events can be booked as a true repeat: the sheet says an
+    // event is fortnightly or monthly but not which fortnight or which week
+    if (window.Calendar && window.Calendar.canExportWeekly(ev)) {
+      const cal = el('button', 'cal-icon');
+      cal.type = 'button';
+      cal.innerHTML = CAL_ICON;
+      cal.title = 'Add to calendar';
+      cal.setAttribute('aria-label', 'Add ' + ev.type + ' at ' + ev.venue + ' to calendar');
+      cal.addEventListener('click', () => window.Calendar.addWeekly(ev, state.activeCity, dayIdx));
+      head.appendChild(cal);
+    }
+    item.appendChild(head);
 
     // venue links through to the store explorer when we know the store
     const venueText = ev.venue + (ev.suburb ? ', ' + ev.suburb : '');
@@ -160,14 +180,6 @@
     if (ev.time) line.appendChild(el('span', null, ev.time));
     if (ev.freq && ev.freq !== 'weekly') line.appendChild(el('span', 'freq-tag', freqLabel(ev.freq)));
     if (ev.note) line.appendChild(el('span', 'agenda-note-inline', ev.note));
-    // only weekly events can be booked as a true repeat: the sheet says an
-    // event is fortnightly or monthly but not which fortnight or which week
-    if (window.Calendar && window.Calendar.canExportWeekly(ev)) {
-      const cal = el('button', 'cal-link', 'Add to calendar');
-      cal.type = 'button';
-      cal.addEventListener('click', () => window.Calendar.addWeekly(ev, state.activeCity, dayIdx));
-      line.appendChild(cal);
-    }
     if (line.childNodes.length) item.appendChild(line);
     return item;
   }
