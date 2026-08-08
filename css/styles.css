@@ -262,7 +262,8 @@ button{ font-family:var(--font-text); }
 }
 .agenda-time-line .freq-tag{ font-weight:600; color:var(--gold); }
 .agenda-time-line .agenda-note-inline{ font-style:italic; }
-.agenda-time-line > span:not(:first-child)::before{ content:' · '; font-style:normal; font-weight:400; color:var(--parch-muted); }
+.agenda-time-line > *:not(:first-child)::before{ content:'· '; font-style:normal; font-weight:400; color:var(--parch-muted); }
+.agenda-time-line{ display:flex; flex-wrap:wrap; gap:0 6px; }
 
 .schedule-meta{
   margin:16px 0 0;
@@ -334,6 +335,19 @@ button{ font-family:var(--font-text); }
 }
 .tier-gem-grand{ background:var(--gold); }
 .tier-gem-cornerstone{ background:var(--red); }
+
+.cal-link{
+  background:none; border:none; cursor:pointer;
+  padding:0; font-size:inherit; color:var(--parch-muted);
+  border-bottom:1px dotted var(--rule-strong);
+}
+.cal-link:hover{ color:var(--gold); border-bottom-style:solid; }
+.feature-actions{
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 20px;
+  margin-top:12px;
+}
+.feature-actions .cal-link{ font-size:14.5px; }
+.feature-actions .special-link{ margin-top:0; }
 
 .special-link{
   display:inline-block; margin-top:12px;

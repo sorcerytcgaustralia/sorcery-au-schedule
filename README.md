@@ -81,6 +81,19 @@ automatically moves into the collapsed "Past events" archive at the bottom
 of the page — so the tab doubles as a permanent record of everything the
 community has run.
 
+## Add to calendar
+
+Events carry an "Add to calendar" link that downloads an `.ics` file,
+with the correct timezone for the event's city (Perth, Adelaide,
+Brisbane and the eastern cities all differ, and daylight saving is
+handled).
+
+Weekly events export as a genuine repeating booking. **Fortnightly and
+monthly events deliberately get no link**: the sheet says an event is
+fortnightly but not *which* fortnight, so any recurrence the site
+generated would be wrong about half the time. Special events always
+get one, since they carry exact dates.
+
 ## Featured decks
 
 The card fan in "From the Australian Meta" is driven by a sheet tab

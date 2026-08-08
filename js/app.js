@@ -137,7 +137,7 @@
     setTimeout(() => focusStore(store), 450);
   }
 
-  function renderAgendaEvent(ev) {
+  function renderAgendaEvent(ev, dayIdx) {
     const item = el('div', 'agenda-event');
     item.appendChild(el('div', 'agenda-type', ev.type));
 
@@ -160,6 +160,14 @@
     if (ev.time) line.appendChild(el('span', null, ev.time));
     if (ev.freq && ev.freq !== 'weekly') line.appendChild(el('span', 'freq-tag', freqLabel(ev.freq)));
     if (ev.note) line.appendChild(el('span', 'agenda-note-inline', ev.note));
+    // only weekly events can be booked as a true repeat: the sheet says an
+    // event is fortnightly or monthly but not which fortnight or which week
+    if (window.Calendar && window.Calendar.canExportWeekly(ev)) {
+      const cal = el('button', 'cal-link', 'Add to calendar');
+      cal.type = 'button';
+      cal.addEventListener('click', () => window.Calendar.addWeekly(ev, state.activeCity, dayIdx));
+      line.appendChild(cal);
+    }
     if (line.childNodes.length) item.appendChild(line);
     return item;
   }
@@ -187,7 +195,7 @@
       } else if (empty) {
         body.appendChild(el('p', 'agenda-note', 'No regular events'));
       } else {
-        events.forEach((ev) => body.appendChild(renderAgendaEvent(ev)));
+        events.forEach((ev) => body.appendChild(renderAgendaEvent(ev, i)));
       }
       row.appendChild(body);
       agenda.appendChild(row);
@@ -239,13 +247,21 @@
       main.appendChild(foot);
     }
 
+    const actions = el('div', 'feature-actions');
     if (ev.link) {
       const a = el('a', 'special-link', 'View event information');
       a.href = ev.link;
       a.target = '_blank';
       a.rel = 'noopener';
-      main.appendChild(a);
+      actions.appendChild(a);
     }
+    if (window.Calendar) {
+      const cal = el('button', 'cal-link', 'Add to calendar');
+      cal.type = 'button';
+      cal.addEventListener('click', () => window.Calendar.addSpecial(ev));
+      actions.appendChild(cal);
+    }
+    if (actions.childNodes.length) main.appendChild(actions);
 
     card.appendChild(main);
     return card;
