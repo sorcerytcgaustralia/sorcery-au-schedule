@@ -445,13 +445,20 @@
 
     located.forEach((s) => {
       const dimmed = s.city && s.city !== state.activeCity;
-      const marker = L.circleMarker([s.lat, s.lng], {
-        radius: dimmed ? 6 : 8,
-        color: '#C85F26',
-        weight: 2,
-        fillColor: '#C85F26',
-        fillOpacity: dimmed ? 0.25 : 0.55,
-        opacity: dimmed ? 0.45 : 1,
+      // a divIcon marker rather than a circleMarker: it looks the same but
+      // sits in the tab order and opens on Enter, so the map is reachable
+      // without a mouse and needs no duplicate list beside it
+      const marker = L.marker([s.lat, s.lng], {
+        icon: L.divIcon({
+          className: 'store-pin' + (dimmed ? ' is-dim' : ''),
+          html: '<span class="store-pin-dot"></span>',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+          popupAnchor: [0, -9],
+        }),
+        title: s.name,
+        alt: s.name + (s.city ? ', ' + s.city : ''),
+        riseOnHover: true,
       }).addTo(storeMap);
       const weekly = storeWeeklyLines(s);
       const popup = '<strong>' + escapeHtml(s.name) + '</strong>' +
@@ -526,37 +533,30 @@
 
     const items = sheet.stores.filter((s) => s.city === state.activeCity);
     if (items.length === 0) {
+      list.hidden = false;
       list.appendChild(el('li', 'store-note', 'No stores listed for ' + state.activeCity + ' yet.'));
       return;
     }
 
-    // The map carries the detail in its popups, so the list is just names —
-    // it exists to give keyboard and screen reader users a way in, since
-    // Leaflet's markers aren't focusable. If the map can't run at all the
-    // list becomes the full listing instead.
-    const mapUsable = !!storeMap && items.some((s) => s.lat != null);
-    list.className = mapUsable ? 'store-list is-compact' : 'store-list';
+    // With a working map there is no list at all — the pins are focusable
+    // and their popups carry the address, website and weekly play. The list
+    // only appears as the full listing if the map can't run.
+    if (storeMap && items.some((s) => s.lat != null)) {
+      list.hidden = true;
+      return;
+    }
 
+    list.hidden = false;
     items.forEach((s) => {
       const li = el('li', 'store-item');
-      if (s.lat != null && mapUsable) {
-        const btn = el('button', 'store-name-btn', s.name);
-        btn.type = 'button';
-        btn.setAttribute('aria-label', 'Show ' + s.name + ' on the map');
-        btn.addEventListener('click', () => { state.mapWanted = true; initStoreMap(sheet.stores); focusStore(s); });
-        li.appendChild(btn);
-      } else {
-        li.appendChild(el('span', 'store-name-plain', s.name));
-      }
-      if (!mapUsable) {
-        if (s.address) li.appendChild(el('div', 'store-addr', s.address));
-        if (s.link) {
-          const a = el('a', 'store-site', 'Website');
-          a.href = s.link;
-          a.target = '_blank';
-          a.rel = 'noopener';
-          li.appendChild(a);
-        }
+      li.appendChild(el('span', 'store-name-plain', s.name));
+      if (s.address) li.appendChild(el('div', 'store-addr', s.address));
+      if (s.link) {
+        const a = el('a', 'store-site', 'Website');
+        a.href = s.link;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        li.appendChild(a);
       }
       list.appendChild(li);
     });

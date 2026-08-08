@@ -563,28 +563,33 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible{ transform:translateX(-50%) t
   font-size:16px; font-weight:600;
   color:var(--gold);
 }
+/* only rendered when the map is unavailable */
 .store-list{
   list-style:none; margin:18px 0 0; padding:0;
   display:flex; flex-direction:column; gap:14px;
 }
-/* alongside a working map the list is names only, set as a single row */
-.store-list.is-compact{
-  flex-direction:row; flex-wrap:wrap; gap:10px 26px;
-  align-items:baseline;
-}
+.store-list[hidden]{ display:none; }
 .store-item{
   font-size:15px; color:var(--parch-soft); line-height:1.45;
 }
 .store-note{ font-size:14.5px; font-style:italic; color:var(--parch-muted); }
-.store-name-btn{
-  background:none; border:none; cursor:pointer;
-  padding:0; text-align:left;
-  font-size:16px; font-weight:600;
-  color:var(--parchment);
-  border-bottom:1px solid transparent;
-}
-.store-name-btn:hover{ color:var(--gold); border-bottom-color:var(--rule-strong); }
 .store-name-plain{ font-size:16px; font-weight:600; color:var(--parchment); }
+
+/* map pins: drawn as circles, but real markers so they take focus */
+.store-pin-dot{
+  display:block; width:16px; height:16px; margin:2px;
+  border-radius:50%; box-sizing:border-box;
+  background:rgba(210,102,31,.55);
+  border:2px solid var(--ember);
+}
+.store-pin.is-dim .store-pin-dot{
+  width:12px; height:12px; margin:4px;
+  opacity:.45;
+}
+.store-pin:focus-visible{ outline:none; }
+.store-pin:focus-visible .store-pin-dot{
+  outline:2px solid var(--gold); outline-offset:3px;
+}
 .store-addr{ font-size:13.5px; color:var(--parch-muted); line-height:1.45; }
 .store-site{
   font-size:13px; color:var(--gold); text-decoration:none;
