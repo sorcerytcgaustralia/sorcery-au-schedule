@@ -33,9 +33,14 @@
     } catch (e) { return null; }
   }
 
+  const ALL_CITIES = 'All';
+
   const state = {
     view: 'weekly',
     activeCity: cityFromURL() || window.CONFIG.CITIES[0],
+    // the store explorer tracks the same city, but can also sit on "All",
+    // which the weekly agenda has no equivalent for
+    storeCity: cityFromURL() || window.CONFIG.CITIES[0],
     cityData: null,
     special: null,
     stores: null,
@@ -50,6 +55,7 @@
   // one city selection drives the schedule, the store list and the map
   function setCity(city) {
     state.activeCity = city;
+    state.storeCity = city;
     state.cityPicked = true;
     renderTabs();
     renderGrid();
@@ -109,15 +115,29 @@
     });
   }
 
+  // picking a city in the store explorer still drives the whole page; only
+  // "All" is store-only, since the agenda shows one city at a time
+  function setStoreCity(value) {
+    if (value !== ALL_CITIES) { setCity(value); return; }
+    state.storeCity = ALL_CITIES;
+    state.cityPicked = true;
+    renderTabs();
+    renderStores();
+    frameCityOnMap();
+  }
+
   function renderTabs() {
     document.querySelectorAll('.city-tabs').forEach((wrap) => {
+      const isStore = wrap.id === 'store-city-tabs';
+      const current = isStore ? state.storeCity : state.activeCity;
+      const values = isStore ? [ALL_CITIES].concat(window.CONFIG.CITIES) : window.CONFIG.CITIES;
       wrap.innerHTML = '';
-      window.CONFIG.CITIES.forEach((city) => {
-        const active = city === state.activeCity;
+      values.forEach((city) => {
+        const active = city === current;
         const btn = el('button', 'city-tab' + (active ? ' active' : ''), city);
         btn.type = 'button';
         btn.setAttribute('aria-pressed', String(active));
-        btn.addEventListener('click', () => setCity(city));
+        btn.addEventListener('click', () => (isStore ? setStoreCity(city) : setCity(city)));
         wrap.appendChild(btn);
       });
       wrap.appendChild(el('span', 'city-marker'));
@@ -444,7 +464,7 @@
     storeMarkers.clear();
 
     located.forEach((s) => {
-      const dimmed = s.city && s.city !== state.activeCity;
+      const dimmed = state.storeCity !== ALL_CITIES && s.city && s.city !== state.storeCity;
       // a divIcon marker rather than a circleMarker: it looks the same but
       // sits in the tab order and opens on Enter, so the map is reachable
       // without a mouse and needs no duplicate list beside it
@@ -472,7 +492,7 @@
     // opens on the hand-framed Australia view unless a city was chosen
     // before the map came into range, in which case open on that city
     if (firstInit) {
-      const b = state.cityPicked && cityBounds(state.activeCity);
+      const b = state.cityPicked && cityBounds(state.storeCity);
       if (b) storeMap.fitBounds(b, CITY_FIT);
       else storeMap.setView(STORE_MAP_CENTER, STORE_MAP_ZOOM);
     }
@@ -480,7 +500,7 @@
 
   function cityBounds(city) {
     const sheet = state.stores;
-    if (!sheet || sheet.error || !window.L) return null;
+    if (!sheet || sheet.error || !window.L || city === ALL_CITIES) return null;
     const pts = sheet.stores
       .filter((s) => s.city === city && s.lat != null && s.lng != null)
       .map((s) => [s.lat, s.lng]);
@@ -493,7 +513,7 @@
     if (!storeMap) return;
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     storeMap.closePopup();
-    const b = cityBounds(state.activeCity);
+    const b = cityBounds(state.storeCity);
     if (b) {
       if (reduced) storeMap.fitBounds(b, CITY_FIT);
       else storeMap.flyToBounds(b, Object.assign({ duration: 0.7 }, CITY_FIT));
@@ -531,10 +551,12 @@
 
     initStoreMap(sheet.stores);
 
-    const items = sheet.stores.filter((s) => s.city === state.activeCity);
+    const items = state.storeCity === ALL_CITIES
+      ? sheet.stores
+      : sheet.stores.filter((s) => s.city === state.storeCity);
     if (items.length === 0) {
       list.hidden = false;
-      list.appendChild(el('li', 'store-note', 'No stores listed for ' + state.activeCity + ' yet.'));
+      list.appendChild(el('li', 'store-note', 'No stores listed for ' + state.storeCity + ' yet.'));
       return;
     }
 

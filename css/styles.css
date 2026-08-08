@@ -204,7 +204,6 @@ button{ font-family:var(--font-text); }
   color:var(--gold);
   font-weight:600;
 }
-.city-tab.active::before{ content:'✦ '; color:var(--ember); font-size:11px; }
 .city-marker{
   position:absolute; top:0; left:0;
   height:2px; width:0;
@@ -513,15 +512,11 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible{ transform:translateX(-50%) t
   font-size:19px; color:var(--parchment);
 }
 .hall-count strong{ font-size:26px; font-weight:600; font-variant-numeric:tabular-nums; }
-/* avatars as a loose gathering rather than a dashboard row */
-.avatars{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 5px; }
-.avatar{ width:26px; height:26px; border-radius:50%; background:var(--umber-raised); }
-.avatars .avatar:nth-child(3n){ transform:translateY(-4px); }
-.avatars .avatar:nth-child(4n+1){ transform:translateY(3px); }
-.avatars .avatar:nth-child(5n){ width:30px; height:30px; }
+.avatars{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.avatar{ width:27px; height:27px; border-radius:50%; flex:none; background:var(--umber-raised); }
 .avatar-more{
-  display:inline-flex; align-items:center; justify-content:center;
-  min-width:26px; height:26px; padding:0 8px; border-radius:13px;
+  display:inline-flex; align-items:center; justify-content:center; flex:none;
+  min-width:27px; height:27px; padding:0 8px; border-radius:14px;
   background:rgba(255,255,255,.10); color:var(--parch-soft); font-size:11.5px;
 }
 .voice-line{
