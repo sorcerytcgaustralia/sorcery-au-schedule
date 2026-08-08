@@ -29,6 +29,7 @@
     try {
       const p = new URLSearchParams(location.search).get('city');
       if (!p) return null;
+      if (p.toLowerCase() === 'all') return 'All';
       return window.CONFIG.CITIES.find((c) => c.toLowerCase() === p.toLowerCase()) || null;
     } catch (e) { return null; }
   }
@@ -130,7 +131,7 @@
     document.querySelectorAll('.city-tabs').forEach((wrap) => {
       const isStore = wrap.id === 'store-city-tabs';
       const current = isStore ? state.storeCity : state.activeCity;
-      const values = isStore ? [ALL_CITIES].concat(window.CONFIG.CITIES) : window.CONFIG.CITIES;
+      const values = [ALL_CITIES].concat(window.CONFIG.CITIES);
       wrap.innerHTML = '';
       values.forEach((city) => {
         const active = city === current;
@@ -172,6 +173,11 @@
   function renderAgendaEvent(ev, dayIdx) {
     const item = el('div', 'agenda-event');
 
+    // showing every city at once: name the city, or the day is a jumble
+    if (state.activeCity === ALL_CITIES && ev.city) {
+      item.appendChild(el('div', 'agenda-city', ev.city));
+    }
+
     // title row carries the calendar action at its right edge
     const head = el('div', 'agenda-head');
     head.appendChild(el('div', 'agenda-type', ev.type));
@@ -183,7 +189,9 @@
       cal.innerHTML = CAL_ICON;
       cal.title = 'Add to calendar';
       cal.setAttribute('aria-label', 'Add ' + ev.type + ' at ' + ev.venue + ' to calendar');
-      cal.addEventListener('click', () => window.Calendar.addWeekly(ev, state.activeCity, dayIdx));
+      // the event's own city, so a Perth event booked from "All" still
+      // exports against Perth time
+      cal.addEventListener('click', () => window.Calendar.addWeekly(ev, ev.city || state.activeCity, dayIdx));
       head.appendChild(cal);
     }
     item.appendChild(head);
@@ -211,15 +219,41 @@
     return item;
   }
 
+  // minutes past midnight, for ordering a day that mixes cities
+  function startMinutes(time) {
+    const m = String(time || '').match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+    if (!m) return 24 * 60 + 1;            // untimed events sort last
+    let h = parseInt(m[1], 10);
+    const mer = (m[3] || '').toLowerCase();
+    if (mer === 'pm' && h < 12) h += 12;
+    if (mer === 'am' && h === 12) h = 0;
+    return h * 60 + parseInt(m[2], 10);
+  }
+
+  // every event carries its own city, so "All" can label them and the
+  // calendar export still uses the right timezone
+  function eventsForDay(key) {
+    if (!state.cityData) return [];
+    const collect = (cityName) => {
+      const c = state.cityData[cityName];
+      if (!c || c.error) return [];
+      return (c.events[key] || []).map((ev) => Object.assign({}, ev, { city: cityName }));
+    };
+    if (state.activeCity !== ALL_CITIES) return collect(state.activeCity);
+    const all = [];
+    window.CONFIG.CITIES.forEach((c) => all.push(...collect(c)));
+    all.sort((a, b) => (startMinutes(a.time) - startMinutes(b.time)) || a.city.localeCompare(b.city));
+    return all;
+  }
+
   function renderGrid() {
     const agenda = document.getElementById('week-grid');
     agenda.innerHTML = '';
     const idx = todayIndex();
-    const city = (!state.loading && state.cityData) ? state.cityData[state.activeCity] : null;
 
     DAY_DEFS.forEach(([key, label], i) => {
       const isToday = i === idx;
-      const events = city ? (city.events[key] || []) : [];
+      const events = state.loading ? [] : eventsForDay(key);
       const empty = events.length === 0;
       const row = el('div', 'agenda-day' + (isToday ? ' is-today' : '') + (empty ? ' is-empty' : ''));
 
@@ -246,6 +280,15 @@
     meta.innerHTML = '';
     if (state.loading || !state.cityData) {
       meta.textContent = 'Loading the schedule…';
+      return;
+    }
+    if (state.activeCity === ALL_CITIES) {
+      const total = DAY_DEFS.reduce((n, [key]) => n + eventsForDay(key).length, 0);
+      meta.appendChild(document.createTextNode('Showing '));
+      meta.appendChild(el('span', 'city-name', 'every city'));
+      meta.appendChild(document.createTextNode(
+        ' · ' + total + (total === 1 ? ' regular event' : ' regular events') + ' across Australia'
+      ));
       return;
     }
     const city = state.cityData[state.activeCity] || {};
