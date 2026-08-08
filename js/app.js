@@ -43,16 +43,19 @@
     archivePage: 0,
     loading: true,
     mapWanted: false,
+    cityPicked: false,
     discord: { status: 'loading' },
   };
 
   // one city selection drives the schedule, the store list and the map
   function setCity(city) {
     state.activeCity = city;
+    state.cityPicked = true;
     renderTabs();
     renderGrid();
     renderMeta();
     renderStores();
+    frameCityOnMap();
     try {
       const u = new URL(location.href);
       u.searchParams.set('city', city);
@@ -389,6 +392,9 @@
   // container size never reframe it
   const STORE_MAP_CENTER = [-28.188244, 133.462569];
   const STORE_MAP_ZOOM = 4;
+  // capped so a lone store, or two side by side, lands on the city rather
+  // than the street
+  const CITY_FIT = { padding: [55, 55], maxZoom: 11 };
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -456,7 +462,39 @@
       storeMarkers.set(s.name.toLowerCase(), marker);
     });
 
-    if (firstInit) storeMap.setView(STORE_MAP_CENTER, STORE_MAP_ZOOM);
+    // opens on the hand-framed Australia view unless a city was chosen
+    // before the map came into range, in which case open on that city
+    if (firstInit) {
+      const b = state.cityPicked && cityBounds(state.activeCity);
+      if (b) storeMap.fitBounds(b, CITY_FIT);
+      else storeMap.setView(STORE_MAP_CENTER, STORE_MAP_ZOOM);
+    }
+  }
+
+  function cityBounds(city) {
+    const sheet = state.stores;
+    if (!sheet || sheet.error || !window.L) return null;
+    const pts = sheet.stores
+      .filter((s) => s.city === city && s.lat != null && s.lng != null)
+      .map((s) => [s.lat, s.lng]);
+    return pts.length ? L.latLngBounds(pts) : null;
+  }
+
+  // frame the selected city's stores; cities with none fall back to the
+  // default view rather than leaving the map somewhere unrelated
+  function frameCityOnMap() {
+    if (!storeMap) return;
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    storeMap.closePopup();
+    const b = cityBounds(state.activeCity);
+    if (b) {
+      if (reduced) storeMap.fitBounds(b, CITY_FIT);
+      else storeMap.flyToBounds(b, Object.assign({ duration: 0.7 }, CITY_FIT));
+    } else if (reduced) {
+      storeMap.setView(STORE_MAP_CENTER, STORE_MAP_ZOOM);
+    } else {
+      storeMap.flyTo(STORE_MAP_CENTER, STORE_MAP_ZOOM, { duration: 0.7 });
+    }
   }
 
   function focusStore(store) {
@@ -465,17 +503,6 @@
     if (!marker || store.lat == null) return;
     storeMap.flyTo([store.lat, store.lng], 14, { duration: 0.8 });
     marker.openPopup();
-  }
-
-  // venues in the active city's weekly schedule, for "hosts weekly play"
-  function weeklyVenueSet() {
-    const set = new Set();
-    const data = state.cityData && state.cityData[state.activeCity];
-    if (!data || data.error) return set;
-    Object.values(data.events).forEach((list) => list.forEach((ev) => {
-      if (ev.venue) set.add(ev.venue.trim().toLowerCase());
-    }));
-    return set;
   }
 
   function renderStores() {
@@ -497,38 +524,40 @@
 
     initStoreMap(sheet.stores);
 
-    const hosts = weeklyVenueSet();
-    const hostsWeekly = (s) => {
-      const n = s.name.trim().toLowerCase();
-      for (const v of hosts) { if (v.includes(n) || n.includes(v)) return true; }
-      return false;
-    };
-
     const items = sheet.stores.filter((s) => s.city === state.activeCity);
     if (items.length === 0) {
       list.appendChild(el('li', 'store-note', 'No stores listed for ' + state.activeCity + ' yet.'));
+      return;
     }
+
+    // The map carries the detail in its popups, so the list is just names —
+    // it exists to give keyboard and screen reader users a way in, since
+    // Leaflet's markers aren't focusable. If the map can't run at all the
+    // list becomes the full listing instead.
+    const mapUsable = !!storeMap && items.some((s) => s.lat != null);
+    list.className = mapUsable ? 'store-list is-compact' : 'store-list';
+
     items.forEach((s) => {
       const li = el('li', 'store-item');
-      if (s.lat != null) {
+      if (s.lat != null && mapUsable) {
         const btn = el('button', 'store-name-btn', s.name);
         btn.type = 'button';
+        btn.setAttribute('aria-label', 'Show ' + s.name + ' on the map');
         btn.addEventListener('click', () => { state.mapWanted = true; initStoreMap(sheet.stores); focusStore(s); });
         li.appendChild(btn);
       } else {
         li.appendChild(el('span', 'store-name-plain', s.name));
       }
-      if (s.address) li.appendChild(el('div', 'store-addr', s.address));
-      const foot = el('div', 'store-foot');
-      if (hostsWeekly(s)) foot.appendChild(el('span', 'events-here', 'Hosts weekly play'));
-      if (s.link) {
-        const a = el('a', 'store-site', 'Website');
-        a.href = s.link;
-        a.target = '_blank';
-        a.rel = 'noopener';
-        foot.appendChild(a);
+      if (!mapUsable) {
+        if (s.address) li.appendChild(el('div', 'store-addr', s.address));
+        if (s.link) {
+          const a = el('a', 'store-site', 'Website');
+          a.href = s.link;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          li.appendChild(a);
+        }
       }
-      if (foot.childNodes.length) li.appendChild(foot);
       list.appendChild(li);
     });
   }
