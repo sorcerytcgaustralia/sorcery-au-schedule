@@ -574,6 +574,13 @@ button{ font-family:var(--font-text); }
 }
 .leaflet-popup-content{ font-size:14px; line-height:1.5; }
 .leaflet-popup-content a{ color:var(--gold); }
+.leaflet-popup-content .popup-week{
+  margin-top:8px; padding-top:8px;
+  border-top:1px solid rgba(184,138,60,.25);
+  font-size:12.5px; line-height:1.55;
+  color:var(--parch-muted);
+}
+.leaflet-popup-content .popup-site{ margin-top:8px; }
 .leaflet-popup-tip{ background:var(--umber-raised); }
 .leaflet-container a.leaflet-popup-close-button{ color:var(--parch-muted); }
 .leaflet-bar a{

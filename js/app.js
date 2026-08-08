@@ -355,6 +355,34 @@
   const STORE_MAP_BOUNDS = [[-42.88, 115.89], [-26.63, 152.96]];
   const STORE_MAP_FIT = { padding: [28, 28] };
 
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  // weekly events hosted at this store, for the map popup
+  function storeWeeklyLines(store) {
+    const lines = [];
+    if (!state.cityData) return lines;
+    const n = store.name.trim().toLowerCase();
+    const cities = (store.city && state.cityData[store.city]) ? [store.city] : Object.keys(state.cityData);
+    cities.forEach((city) => {
+      const data = state.cityData[city];
+      if (!data || data.error) return;
+      DAY_DEFS.forEach(([key, label]) => {
+        (data.events[key] || []).forEach((ev) => {
+          const v = (ev.venue || '').trim().toLowerCase();
+          if (!v || !(v.includes(n) || n.includes(v))) return;
+          lines.push(
+            label.slice(0, 3) + ' · ' + ev.type +
+            (ev.time ? ' · ' + ev.time : '') +
+            (ev.freq && ev.freq !== 'weekly' ? ' (' + freqLabel(ev.freq) + ')' : '')
+          );
+        });
+      });
+    });
+    return lines;
+  }
+
   function initStoreMap(stores) {
     const mapEl = document.getElementById('store-map');
     const located = stores.filter((s) => s.lat != null && s.lng != null);
@@ -387,9 +415,11 @@
         fillOpacity: dimmed ? 0.25 : 0.55,
         opacity: dimmed ? 0.45 : 1,
       }).addTo(storeMap);
-      const popup = '<strong>' + s.name + '</strong>' +
-        (s.address ? '<br>' + s.address : '') +
-        (s.link ? '<br><a href="' + s.link + '" target="_blank" rel="noopener">Website</a>' : '');
+      const weekly = storeWeeklyLines(s);
+      const popup = '<strong>' + escapeHtml(s.name) + '</strong>' +
+        (s.address ? '<br>' + escapeHtml(s.address) : '') +
+        (weekly.length ? '<div class="popup-week">' + weekly.map((l) => '<div>' + escapeHtml(l) + '</div>').join('') + '</div>' : '') +
+        (s.link ? '<div class="popup-site"><a href="' + escapeHtml(s.link) + '" target="_blank" rel="noopener">Website</a></div>' : '');
       marker.bindPopup(popup);
       storeMarkers.set(s.name.toLowerCase(), marker);
     });
