@@ -161,9 +161,11 @@
     }
 
     const where = [ev.venue, ev.suburb, city].filter(Boolean).join(', ');
+    // name the timezone: away from home the calendar grid shows only the
+    // viewer's local time, so the event's own hours belong in the details
     const desc = [
       ev.venue ? 'Venue: ' + ev.venue + (ev.suburb ? ', ' + ev.suburb : '') : '',
-      ev.time ? 'Times: ' + ev.time : '',
+      ev.time ? 'Times: ' + ev.time + ' (' + city + ' time)' : '',
       ev.note || '',
       'Schedule: ' + SITE,
     ].filter(Boolean).join('\n');
@@ -196,7 +198,7 @@
     const where = [ev.venue, ev.city].filter(Boolean).join(', ');
     const desc = [
       ev.venue ? 'Venue: ' + ev.venue : '',
-      ev.time ? 'Times: ' + ev.time : '',
+      ev.time ? 'Times: ' + ev.time + (ev.city ? ' (' + ev.city + ' time)' : '') : '',
       ev.format ? 'Format: ' + ev.format : '',
       ev.entry ? 'Entry: ' + ev.entry : '',
       ev.link ? 'Details: ' + ev.link : '',
