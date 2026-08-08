@@ -524,21 +524,15 @@
 
   // ---- featured decks fan ----
   // The fan's five avatars become links to the community's featured
-  // decks on Curiosa; hover or focus reveals deck and pilot.
+  // decks on Curiosa. Deck and pilot ride on the tooltip and the
+  // accessible name, so the fan needs no caption line of its own.
 
   const FAN_SLOTS = ['fan-air', 'fan-archimago', 'fan-pathfinder', 'fan-necromancer', 'fan-imposter'];
 
   function renderFan() {
     const fan = document.querySelector('.deck-fan');
-    const caption = document.getElementById('fan-caption');
     const data = state.featured;
-    if (!fan || !caption || !data || data.error || data.decks.length === 0) return;
-
-    const touchOnly = window.matchMedia && window.matchMedia('(hover: none)').matches;
-    const clearPeek = () => {
-      fan.querySelectorAll('.is-peeked').forEach((c) => c.classList.remove('is-peeked'));
-      caption.textContent = '';
-    };
+    if (!fan || !data || data.error || data.decks.length === 0) return;
 
     FAN_SLOTS.forEach((slot) => {
       const node = fan.querySelector('.' + slot);
@@ -554,32 +548,10 @@
       a.target = '_blank';
       a.rel = 'noopener';
       const label = deck.deck + (deck.pilot ? ' by ' + deck.pilot : '');
+      a.title = label;
       a.setAttribute('aria-label', (label || deck.card) + ' — view deck on Curiosa');
-      const show = () => { caption.textContent = label; };
-      const hide = () => { caption.textContent = ''; };
-      a.addEventListener('mouseenter', show);
-      a.addEventListener('mouseleave', hide);
-      a.addEventListener('focus', show);
-      a.addEventListener('blur', hide);
-
-      // touch: first tap peeks the card and its caption, second tap opens
-      if (touchOnly) {
-        a.addEventListener('click', (e) => {
-          if (a.classList.contains('is-peeked')) return; // second tap: follow link
-          e.preventDefault();
-          clearPeek();
-          a.classList.add('is-peeked');
-          show();
-        });
-      }
       node.replaceWith(a);
     });
-
-    if (touchOnly) {
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest || !e.target.closest('.deck-fan')) clearPeek();
-      });
-    }
   }
 
   // ---- navigation ----
