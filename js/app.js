@@ -553,9 +553,9 @@
       a.href = deck.link;
       a.target = '_blank';
       a.rel = 'noopener';
-      const label = [deck.deck, deck.pilot].filter(Boolean).join(' · ');
+      const label = deck.deck + (deck.pilot ? ' by ' + deck.pilot : '');
       a.setAttribute('aria-label', (label || deck.card) + ' — view deck on Curiosa');
-      const show = () => { caption.textContent = label + '  ·  ' + deck.card; };
+      const show = () => { caption.textContent = label; };
       const hide = () => { caption.textContent = ''; };
       a.addEventListener('mouseenter', show);
       a.addEventListener('mouseleave', hide);

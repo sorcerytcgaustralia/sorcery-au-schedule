@@ -461,11 +461,11 @@ a.fan-necromancer:hover, a.fan-necromancer:focus-visible, a.fan-necromancer.is-p
 a.fan-air:hover, a.fan-air:focus-visible, a.fan-air.is-peeked{ transform:translateX(calc(-50% + 58px)) rotate(16deg) translateY(-16px); }
 a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked{ transform:translateX(-50%) translateY(-28px); }
 .fan-caption{
-  margin:14px 0 0;
+  margin:0 0 10px;
   text-align:center;
-  font-size:13.5px; font-style:italic;
-  color:var(--parch-muted);
-  min-height:21px;
+  font-size:14px; font-style:italic;
+  color:var(--parch-soft);
+  min-height:22px;
 }
 
 /* shared action button (Discord, Curiosa) */
