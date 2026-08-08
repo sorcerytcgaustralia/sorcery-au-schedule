@@ -111,12 +111,6 @@ button{ font-family:var(--font-text); }
   width:100%; max-width:var(--measure); margin:0 auto;
   padding:56px 20px 36px;
 }
-.hero-kicker{
-  margin:0 0 10px;
-  font-size:12.5px; font-weight:600;
-  letter-spacing:.18em; text-transform:uppercase;
-  color:var(--gold);
-}
 .masthead-title{
   margin:0;
   max-width:560px;
@@ -437,14 +431,12 @@ button{ font-family:var(--font-text); }
 .text-link::after{ content:' →'; }
 .text-link:hover{ color:var(--parchment); border-bottom-color:var(--ember); }
 
-/* the deck fan is a physical object: it crosses the grid and the
-   section boundary below, adding depth without shadows or panels */
-.dispatch-art{ position:relative; z-index:2; }
+/* deck fan: breaks slightly out of the grid to the right */
+.dispatch-art{ position:relative; }
 .deck-fan{
   position:relative;
   height:252px;
   margin-right:-46px;
-  margin-bottom:-64px;
 }
 .fan-card{
   position:absolute; left:50%; bottom:10px;
@@ -574,12 +566,6 @@ button{ font-family:var(--font-text); }
   border:1px solid var(--rule-strong);
   background:#0d0a08;
 }
-.map-pin{
-  color:var(--ember);
-  font-size:19px; line-height:20px; text-align:center;
-  text-shadow:0 1px 4px rgba(0,0,0,.9);
-}
-.map-pin-dim{ opacity:.45; font-size:15px; line-height:20px; }
 .leaflet-container{ background:#0d0a08; font-family:var(--font-text); }
 .leaflet-popup-content-wrapper{
   background:var(--umber-raised); color:var(--parchment);
@@ -618,14 +604,9 @@ button{ font-family:var(--font-text); }
   border-top:1px solid var(--rule);
   padding:30px 20px 46px;
 }
-.footer-mark{
-  text-align:center;
-  color:var(--ember); font-size:13px;
-  margin:0 0 22px;
-}
-.footer-inner{ max-width:var(--measure); margin:0 auto; }
-.footer-p{ color:var(--parch-muted); font-size:14.5px; line-height:1.6; margin:0 0 14px; max-width:580px; }
-.footer-disclaimer{ color:var(--parch-muted); opacity:.75; font-size:13px; line-height:1.55; margin:0 0 8px; max-width:580px; }
+.footer-inner{ max-width:var(--measure); margin:0 auto; text-align:center; }
+.footer-p{ color:var(--parch-muted); font-size:14.5px; line-height:1.6; margin:0 auto 14px; max-width:580px; }
+.footer-disclaimer{ color:var(--parch-muted); opacity:.75; font-size:13px; line-height:1.55; margin:0 auto 8px; max-width:580px; }
 .footer-disclaimer:last-child{ margin-bottom:0; }
 .discord-link{ color:var(--gold); text-decoration:none; border-bottom:1px solid var(--rule-strong); }
 

@@ -355,16 +355,6 @@
   const STORE_MAP_BOUNDS = [[-42.88, 115.89], [-26.63, 152.96]];
   const STORE_MAP_FIT = { padding: [28, 28] };
 
-  function makePin(dimmed) {
-    return L.divIcon({
-      className: 'map-pin' + (dimmed ? ' map-pin-dim' : ''),
-      html: '✦',
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
-      popupAnchor: [0, -8],
-    });
-  }
-
   function initStoreMap(stores) {
     const mapEl = document.getElementById('store-map');
     const located = stores.filter((s) => s.lat != null && s.lng != null);
@@ -389,7 +379,14 @@
 
     located.forEach((s) => {
       const dimmed = s.city && s.city !== state.activeCity;
-      const marker = L.marker([s.lat, s.lng], { icon: makePin(dimmed) }).addTo(storeMap);
+      const marker = L.circleMarker([s.lat, s.lng], {
+        radius: dimmed ? 6 : 8,
+        color: '#C85F26',
+        weight: 2,
+        fillColor: '#C85F26',
+        fillOpacity: dimmed ? 0.25 : 0.55,
+        opacity: dimmed ? 0.45 : 1,
+      }).addTo(storeMap);
       const popup = '<strong>' + s.name + '</strong>' +
         (s.address ? '<br>' + s.address : '') +
         (s.link ? '<br><a href="' + s.link + '" target="_blank" rel="noopener">Website</a>' : '');
