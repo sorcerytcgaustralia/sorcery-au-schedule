@@ -646,6 +646,117 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked{ tr
   .store-map{ height:300px; }
 }
 
+/* ---------- hall of fame ---------- */
+.hall{
+  background:var(--umber);
+  padding:44px 20px 60px;
+  min-height:60vh;
+}
+.hall-inner{ max-width:var(--measure); margin:0 auto; }
+.hall-title{
+  margin:0 0 10px;
+  font-family:var(--font-display); font-weight:400;
+  font-size:clamp(30px,5vw,46px); line-height:1.02;
+  color:#F1ECE4;
+}
+.hall-standfirst{
+  margin:0 0 34px; max-width:520px;
+  font-size:16.5px; line-height:1.6; color:var(--parch-soft);
+}
+.hall-note{ font-size:16px; font-style:italic; color:var(--parch-muted); padding:20px 0; }
+
+.hall-event{
+  border-top:1px solid var(--rule);
+  padding:26px 0 30px;
+}
+.hall-event:last-child{ border-bottom:1px solid var(--rule); }
+.hall-name-row{ display:flex; align-items:baseline; gap:10px; }
+.hall-event-name{
+  margin:0;
+  font-family:var(--font-display); font-weight:400;
+  font-size:clamp(22px,3vw,28px); line-height:1.1;
+  color:#F1ECE4;
+}
+.tier-grand .hall-event-name{ color:var(--gold); }
+.hall-event-meta{ margin:5px 0 20px; font-size:14.5px; color:var(--parch-muted); }
+
+/* champion: the card-frame treatment special events use, so the flourish
+   is a repeat of the site's own language rather than a new invention */
+.champion{
+  position:relative;
+  background:
+    radial-gradient(120% 160% at 12% -30%, rgba(199,154,75,.13), transparent 62%),
+    var(--umber-raised);
+  border-top:3px double var(--rule-strong);
+  border-bottom:3px double var(--rule-strong);
+  clip-path:polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+  padding:20px 24px 22px;
+  margin-bottom:20px;
+}
+.champion-label{
+  margin:0 0 6px;
+  font-size:12px; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--gold);
+}
+.champion-name{
+  margin:0;
+  font-family:var(--font-display); font-weight:400;
+  font-size:clamp(24px,3.6vw,34px); line-height:1.1;
+  color:#F6E8C8;
+}
+.champion-deck{
+  display:inline-block; margin-top:12px;
+  font-size:14.5px; color:var(--gold); text-decoration:none;
+  border-bottom:1px solid var(--rule-strong);
+  padding-bottom:1px;
+}
+.champion-deck::after{ content:' →'; }
+.champion-deck:hover{ color:#F6E8C8; border-bottom-color:var(--gold); }
+
+.podium{
+  list-style:none; margin:0; padding:0;
+  display:flex; flex-direction:column; gap:11px;
+}
+.podium-row{
+  display:grid; grid-template-columns:52px 1fr; gap:14px;
+  align-items:baseline;
+}
+.podium-rank{
+  font-family:var(--font-display); font-weight:400;
+  font-size:17px; color:var(--parch-muted);
+  font-variant-numeric:tabular-nums;
+}
+/* silver and bronze: tournament shorthand everyone already reads */
+.place-2 .podium-rank{ color:#C9C6C0; }
+.place-3 .podium-rank{ color:#B5794A; }
+.podium-player{
+  font-size:17px; color:var(--parchment); text-decoration:none;
+  border-bottom:1px solid var(--rule);
+  padding-bottom:1px; justify-self:start;
+}
+a.podium-player:hover{ color:var(--gold); border-bottom-color:var(--rule-strong); }
+
+.top-eight{ margin-top:22px; }
+.top-eight-label{
+  margin:0 0 9px;
+  font-size:13px; font-weight:600; letter-spacing:.06em;
+  color:var(--parch-muted);
+}
+.top-eight-list{
+  list-style:none; margin:0; padding:0;
+  display:flex; flex-wrap:wrap; gap:8px 22px;
+}
+.top-eight-player{
+  font-size:15px; color:var(--parch-soft); text-decoration:none;
+  border-bottom:1px solid var(--rule);
+}
+a.top-eight-player:hover{ color:var(--gold); border-bottom-color:var(--rule-strong); }
+
+@media (max-width:520px){
+  .podium-row{ grid-template-columns:44px 1fr; gap:10px; }
+}
+
 /* ---------- footer ---------- */
 .site-footer{
   background:#0E0E0E;

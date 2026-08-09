@@ -280,6 +280,19 @@
         let end = parseSpecialDate(col(row, ['end date', 'end', 'until', 'to']));
         if (!end && parts.length > 1) end = parseSpecialDate(parts[1]);
         if (!end || end < start) end = start;
+        // placings live in paired columns: 1st_place / 1st_deck ... 8th
+        const results = [];
+        ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'].forEach((ord, i) => {
+          const player = col(row, [ord + '_place']);
+          if (!player) return;
+          const deck = col(row, [ord + '_deck']);
+          results.push({
+            place: i + 1,
+            player,
+            deck: /^https?:\/\//i.test(deck) ? deck : '',
+          });
+        });
+
         const link = col(row, ['link', 'url']);
         const inferTier = (s) => /grand\s*contest/i.test(s) ? 'grand' : (/cornerstone/i.test(s) ? 'cornerstone' : '');
         events.push(Object.assign({
@@ -292,6 +305,7 @@
           format: col(row, ['format']),
           entry: col(row, ['entry', 'entry fee', 'cost']),
           link: /^https?:\/\//i.test(link) ? link : '',
+          results,
         }, specialDateLabels(start, end)));
       }
 
