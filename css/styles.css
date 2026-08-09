@@ -488,12 +488,12 @@ button{ font-family:var(--font-text); }
 
 /* when the fan is data-driven, each card is a link that lifts on its own */
 a.fan-card{ display:block; cursor:pointer; }
-a.fan-card:hover, a.fan-card:focus-visible{ z-index:3; }
-a.fan-archimago:hover, a.fan-archimago:focus-visible{ transform:translateX(calc(-50% - 58px)) rotate(-16deg) translateY(-16px); }
-a.fan-pathfinder:hover, a.fan-pathfinder:focus-visible{ transform:translateX(calc(-50% - 31px)) rotate(-8deg) translateY(-16px); }
-a.fan-necromancer:hover, a.fan-necromancer:focus-visible{ transform:translateX(calc(-50% + 31px)) rotate(8deg) translateY(-16px); }
-a.fan-air:hover, a.fan-air:focus-visible{ transform:translateX(calc(-50% + 58px)) rotate(16deg) translateY(-16px); }
-a.fan-imposter:hover, a.fan-imposter:focus-visible{ transform:translateX(-50%) translateY(-28px); }
+a.fan-card:hover, a.fan-card:focus-visible, a.fan-card.is-peeked{ z-index:3; }
+a.fan-archimago:hover, a.fan-archimago:focus-visible, a.fan-archimago.is-peeked{ transform:translateX(calc(-50% - 58px)) rotate(-16deg) translateY(-16px); }
+a.fan-pathfinder:hover, a.fan-pathfinder:focus-visible, a.fan-pathfinder.is-peeked{ transform:translateX(calc(-50% - 31px)) rotate(-8deg) translateY(-16px); }
+a.fan-necromancer:hover, a.fan-necromancer:focus-visible, a.fan-necromancer.is-peeked{ transform:translateX(calc(-50% + 31px)) rotate(8deg) translateY(-16px); }
+a.fan-air:hover, a.fan-air:focus-visible, a.fan-air.is-peeked{ transform:translateX(calc(-50% + 58px)) rotate(16deg) translateY(-16px); }
+a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked{ transform:translateX(-50%) translateY(-28px); }
 
 /* shared action button (Discord, Curiosa) */
 .action-btn{

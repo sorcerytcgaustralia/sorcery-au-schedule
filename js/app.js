@@ -657,6 +657,12 @@
     const data = state.featured;
     if (!fan || !data || data.error || data.decks.length === 0) return;
 
+    // Without hover there's no way to see which card you're about to open —
+    // the fan overlaps them heavily. So on touch the first tap lifts the
+    // card clear of its neighbours and the second one follows the link.
+    const touchOnly = window.matchMedia && window.matchMedia('(hover: none)').matches;
+    const clearPeek = () => fan.querySelectorAll('.is-peeked').forEach((c) => c.classList.remove('is-peeked'));
+
     FAN_SLOTS.forEach((slot) => {
       const node = fan.querySelector('.' + slot);
       if (!node || node.tagName === 'A') return;
@@ -673,8 +679,24 @@
       const label = deck.deck + (deck.pilot ? ' by ' + deck.pilot : '');
       a.title = label;
       a.setAttribute('aria-label', (label || deck.card) + ' — view deck on Curiosa');
+
+      if (touchOnly) {
+        a.addEventListener('click', (e) => {
+          if (a.classList.contains('is-peeked')) return;   // second tap: follow the link
+          e.preventDefault();
+          clearPeek();
+          a.classList.add('is-peeked');
+        });
+      }
       node.replaceWith(a);
     });
+
+    // tapping anywhere else puts the lifted card back
+    if (touchOnly) {
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest || !e.target.closest('.deck-fan')) clearPeek();
+      });
+    }
   }
 
   // ---- navigation ----
