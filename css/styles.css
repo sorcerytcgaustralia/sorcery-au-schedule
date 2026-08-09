@@ -719,7 +719,7 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked{ tr
   display:flex; flex-direction:column; gap:11px;
 }
 .podium-row{
-  display:grid; grid-template-columns:52px 1fr; gap:14px;
+  display:grid; grid-template-columns:52px 1fr auto; gap:4px 14px;
   align-items:baseline;
 }
 .podium-rank{
@@ -730,12 +730,17 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked{ tr
 /* silver and bronze: tournament shorthand everyone already reads */
 .place-2 .podium-rank{ color:#C9C6C0; }
 .place-3 .podium-rank{ color:#B5794A; }
-.podium-player{
-  font-size:17px; color:var(--parchment); text-decoration:none;
+.podium-player{ font-size:17px; color:var(--parchment); }
+
+/* one shared "View deck" affordance for every entrant */
+.deck-link{
+  font-size:13.5px; color:var(--gold); text-decoration:none;
   border-bottom:1px solid var(--rule);
-  padding-bottom:1px; justify-self:start;
+  padding-bottom:1px; white-space:nowrap;
+  justify-self:start;
 }
-a.podium-player:hover{ color:var(--gold); border-bottom-color:var(--rule-strong); }
+.deck-link::after{ content:' →'; }
+.deck-link:hover{ color:#F6E8C8; border-bottom-color:var(--rule-strong); }
 
 .top-eight{ margin-top:22px; }
 .top-eight-label{
@@ -745,16 +750,18 @@ a.podium-player:hover{ color:var(--gold); border-bottom-color:var(--rule-strong)
 }
 .top-eight-list{
   list-style:none; margin:0; padding:0;
-  display:flex; flex-wrap:wrap; gap:8px 22px;
+  display:flex; flex-direction:column; gap:9px;
 }
-.top-eight-player{
-  font-size:15px; color:var(--parch-soft); text-decoration:none;
-  border-bottom:1px solid var(--rule);
+.top-eight-row{
+  display:grid; grid-template-columns:1fr auto; gap:4px 14px;
+  align-items:baseline;
 }
-a.top-eight-player:hover{ color:var(--gold); border-bottom-color:var(--rule-strong); }
+.top-eight-player{ font-size:15px; color:var(--parch-soft); }
 
 @media (max-width:520px){
-  .podium-row{ grid-template-columns:44px 1fr; gap:10px; }
+  .podium-row{ grid-template-columns:44px 1fr; gap:3px 10px; }
+  .podium-row .deck-link{ grid-column:2; }
+  .top-eight-row{ grid-template-columns:1fr; }
 }
 
 /* ---------- footer ---------- */

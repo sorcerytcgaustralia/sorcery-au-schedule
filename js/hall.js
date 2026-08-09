@@ -15,13 +15,15 @@
     return e;
   }
 
-  function deckLink(entry, className) {
-    if (!entry.deck) return el('span', className, entry.player);
-    const a = el('a', className, entry.player);
+  // the name stays plain text and the deck is its own link, so an entrant
+  // with no deck recorded simply has nothing after their name
+  function deckLink(entry) {
+    if (!entry.deck) return null;
+    const a = el('a', 'deck-link', 'View deck');
     a.href = entry.deck;
     a.target = '_blank';
     a.rel = 'noopener';
-    a.title = 'View deck on Curiosa';
+    a.setAttribute('aria-label', 'View ' + entry.player + '’s deck on Curiosa');
     return a;
   }
 
@@ -62,7 +64,9 @@
       runners.forEach((r) => {
         const li = el('li', 'podium-row place-' + r.place);
         li.appendChild(el('span', 'podium-rank', RANKS[r.place - 1]));
-        li.appendChild(deckLink(r, 'podium-player'));
+        li.appendChild(el('span', 'podium-player', r.player));
+        const link = deckLink(r);
+        if (link) li.appendChild(link);
         ol.appendChild(li);
       });
       card.appendChild(ol);
@@ -73,8 +77,10 @@
       wrap.appendChild(el('h3', 'top-eight-label', 'Also in the top eight'));
       const ul = el('ul', 'top-eight-list');
       rest.forEach((r) => {
-        const li = el('li');
-        li.appendChild(deckLink(r, 'top-eight-player'));
+        const li = el('li', 'top-eight-row');
+        li.appendChild(el('span', 'top-eight-player', r.player));
+        const link = deckLink(r);
+        if (link) li.appendChild(link);
         ul.appendChild(li);
       });
       wrap.appendChild(ul);
