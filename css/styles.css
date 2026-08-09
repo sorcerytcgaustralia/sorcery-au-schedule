@@ -646,6 +646,44 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked{ tr
   .store-map{ height:300px; }
 }
 
+/* hall of fame teaser: sits where the deck fan and Discord panel do,
+   showing the most recent result instead of a static image */
+.hall-teaser{
+  background:
+    radial-gradient(120% 150% at 14% -25%, rgba(199,154,75,.10), transparent 62%),
+    var(--umber-raised);
+  border-top:3px double var(--rule-strong);
+  border-bottom:3px double var(--rule-strong);
+  clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+  padding:18px 20px 20px;
+}
+.teaser-label{
+  margin:0 0 8px;
+  font-size:11.5px; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+  color:var(--parch-muted);
+}
+.teaser-event{
+  margin:0;
+  font-family:var(--font-display); font-weight:400;
+  font-size:20px; line-height:1.15;
+  color:#F1ECE4;
+}
+.teaser-event.tier-grand{ color:var(--gold); }
+.teaser-meta{ margin:4px 0 0; font-size:13.5px; color:var(--parch-muted); }
+.teaser-champion{
+  margin-top:14px; padding-top:13px;
+  border-top:1px solid var(--rule);
+  display:flex; flex-direction:column; gap:2px;
+}
+.teaser-champion-label{
+  font-size:11.5px; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase;
+  color:var(--gold);
+}
+.teaser-champion-name{ font-size:17px; color:#F6E8C8; }
+.teaser-more{ margin:12px 0 0; font-size:13px; color:var(--parch-muted); font-style:italic; }
+
 /* ---------- hall of fame ---------- */
 .hall{
   background:var(--umber);

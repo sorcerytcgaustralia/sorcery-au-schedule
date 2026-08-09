@@ -699,6 +699,41 @@
     }
   }
 
+  // ---- hall of fame teaser ----
+  // The most recently recorded result, standing in for a static image
+  // beside the Hall of Fame copy.
+
+  function renderHallTeaser() {
+    const box = document.getElementById('hall-teaser');
+    const sp = state.special;
+    if (!box) return;
+    if (!sp || sp.error) { box.hidden = true; return; }
+
+    const recorded = sp.upcoming.concat(sp.past)
+      .filter((ev) => ev.results && ev.results.length)
+      .sort((a, b) => b.start - a.start);
+    if (!recorded.length) { box.hidden = true; return; }
+
+    const ev = recorded[0];
+    const champion = ev.results.find((r) => r.place === 1);
+    box.hidden = false;
+    box.innerHTML = '';
+    box.appendChild(el('p', 'teaser-label', 'Latest result'));
+    box.appendChild(el('p', 'teaser-event' + (ev.tier ? ' tier-' + ev.tier : ''), ev.event));
+    box.appendChild(el('p', 'teaser-meta', [ev.dateLabel, ev.city].filter(Boolean).join(' · ')));
+    if (champion) {
+      const c = el('div', 'teaser-champion');
+      c.appendChild(el('span', 'teaser-champion-label', 'Champion'));
+      c.appendChild(el('span', 'teaser-champion-name', champion.player));
+      box.appendChild(c);
+    }
+    const others = ev.results.length - (champion ? 1 : 0);
+    if (others > 0) {
+      box.appendChild(el('p', 'teaser-more',
+        others === 1 ? 'and one more placing recorded' : 'and ' + others + ' more placings recorded'));
+    }
+  }
+
   // ---- navigation ----
 
   function wireNav() {
@@ -731,7 +766,7 @@
         links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
       });
     }, { rootMargin: '-35% 0px -55% 0px' });
-    ['schedule', 'decks', 'join', 'stores'].forEach((id) => {
+    ['schedule', 'decks', 'hall', 'join', 'stores'].forEach((id) => {
       const target = document.getElementById(id);
       if (target) io.observe(target);
     });
@@ -838,6 +873,7 @@
     renderSpecial();
     renderStores();
     renderFan();
+    renderHallTeaser();
     renderDiscordCard();
   }
 
