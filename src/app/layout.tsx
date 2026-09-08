@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { Marcellus_SC, Spectral } from 'next/font/google';
+import { IBM_Plex_Sans, Marcellus_SC, Spectral } from 'next/font/google';
 import { SITE_URL } from '@/lib/config';
 import './globals.css';
 
 const marcellus = Marcellus_SC({ subsets: ['latin'], weight: '400', variable: '--font-marcellus', display: 'swap' });
+const plex = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-plex', display: 'swap' });
 const spectral = Spectral({ subsets: ['latin'], weight: ['400', '600'], style: ['normal', 'italic'], variable: '--font-spectral', display: 'swap' });
 
 const TITLE = 'Sorcery TCG Australia';
@@ -30,7 +31,7 @@ export const viewport: Viewport = { themeColor: '#0f0f10', width: 'device-width'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" className={`${marcellus.variable} ${spectral.variable}`}>
+    <html lang="en-AU" className={`${marcellus.variable} ${spectral.variable} ${plex.variable}`}>
       <body>{children}</body>
     </html>
   );

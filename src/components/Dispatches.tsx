@@ -9,7 +9,7 @@ import { specialDateLabels } from '@/lib/time';
 import { useSiteData } from './SiteDataProvider';
 
 // The fan's five avatars become links to the community's featured decks on
-// Curiosa. Deck and pilot ride on the tooltip and the accessible name.
+// SorceryTCG. Deck and pilot ride on the tooltip and the accessible name.
 const FAN_SLOTS: [string, string][] = [
   ['fan-air', 'air'],
   ['fan-archimago', 'archimago'],
@@ -47,7 +47,7 @@ function DeckFan() {
             target="_blank"
             rel="noopener"
             title={label}
-            aria-label={(label || deck.card) + ', view deck on Curiosa'}
+            aria-label={(label || deck.card) + ', view deck on SorceryTCG'}
             onClick={(e) => {
               // without hover the first tap lifts the card clear of its
               // neighbours, the second one follows the link
@@ -158,14 +158,14 @@ export function Dispatches() {
           <div className="dispatch-copy">
             <h2>From the Australian Meta</h2>
             <p>
-              What is the realm down under playing? We collect the decks coming out of Australia&rsquo;s organised-play scene on <strong>Curiosa.io</strong>: tournament winners, top finishing decks, and community brews, updated as the meta shifts.
+              What is the realm down under playing? We collect the decks coming out of Australia&rsquo;s organised-play scene on <strong>SorceryTCG</strong>: tournament winners, top finishing decks, and community brews, updated as the meta shifts.
             </p>
             <a href={CURIOSA_PROFILE_URL} target="_blank" rel="noopener" className="action-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="4" width="13" height="17" rx="2" />
                 <path d="M8 4V3a1 1 0 0 1 1-1h10a2 2 0 0 1 2 2v14a1 1 0 0 1-1 1h-1" />
               </svg>
-              Browse the decks on Curiosa
+              Browse the decks on SorceryTCG
             </a>
           </div>
           <div className="dispatch-art">

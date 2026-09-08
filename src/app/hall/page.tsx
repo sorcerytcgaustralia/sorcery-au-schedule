@@ -21,7 +21,7 @@ export default function HallPage() {
         <section className="hall" aria-label="Hall of Fame">
           <div className="hall-inner">
             <h1 className="hall-title">Hall of Fame</h1>
-            <p className="hall-standfirst">Every tournament the community has run, and the sorcerers who took it. Decks link through to Curiosa.</p>
+            <p className="hall-standfirst">Every tournament the community has run, and the sorcerers who took it. Decks link through to SorceryTCG.</p>
             <HallList />
           </div>
         </section>

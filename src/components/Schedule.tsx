@@ -239,7 +239,7 @@ export function Schedule({ onVenue }: { onVenue: (venue: string) => void }) {
     <section id="schedule" className="schedule-section" aria-label="Event schedule">
       <div className="schedule-inner">
         <div className="schedule-head">
-          <h2 className="section-title">Organised Play</h2>
+          <h2 className="section-title">Organised Play Schedule</h2>
           <div className="view-toggle" role="tablist" aria-label="Schedule view">
             <button type="button" role="tab" className={'view-tab' + (view === 'weekly' ? ' active' : '')} aria-selected={view === 'weekly'} onClick={() => setView('weekly')}>
               Weekly events

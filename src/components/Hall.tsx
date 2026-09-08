@@ -16,7 +16,7 @@ const RANKS = ['1st', '2nd', '3rd', '4th'];
 function DeckLink({ entry }: { entry: Placing }) {
   if (!entry.deck) return null;
   return (
-    <a className="deck-link" href={entry.deck} target="_blank" rel="noopener" aria-label={`View ${entry.player}’s deck on Curiosa`}>
+    <a className="deck-link" href={entry.deck} target="_blank" rel="noopener" aria-label={`View ${entry.player}’s deck on SorceryTCG`}>
       View deck
     </a>
   );
