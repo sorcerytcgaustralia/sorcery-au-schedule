@@ -284,13 +284,18 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked { t
 .stores h2 { margin-bottom: 20px; }
 .store-map { height: 480px; border: 1px solid var(--line-2); background: #0b0b0c; position: relative; overflow: hidden; margin-top: 18px; }
 .store-map .map-note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; color: var(--parch-muted); font-size: 14px; font-style: italic; }
-.store-list { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
-.store-list[hidden] { display: none; }
-.store-item { font-size: 15px; color: var(--parch-soft); line-height: 1.45; }
-.store-note { font-size: 14.5px; font-style: italic; color: var(--parch-muted); }
-.store-name-plain { font-size: 16.5px; font-weight: 600; color: var(--parchment); }
+.store-list { margin-top: 26px; }
+.store-group + .store-group { margin-top: 28px; }
+.store-group-name { font-family: var(--font-display); font-weight: 400; font-size: 19px; letter-spacing: 0.02em; color: var(--parch-soft); margin-bottom: 4px; }
+.store-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0 clamp(20px, 3vw, 40px); }
+.store-item { display: flex; flex-direction: column; gap: 3px; padding: 14px 0 16px; border-top: 1px solid var(--line); }
+.store-note { font-size: 14.5px; font-style: italic; color: var(--parch-muted); padding: 14px 0; }
+.store-name-plain { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; font-size: 16.5px; font-weight: 600; color: var(--parchment); }
+.store-name-plain:hover:not(:disabled) { color: var(--ember); }
+.store-name-plain:disabled { cursor: default; }
 .store-addr { font-size: 14px; color: var(--parch-muted); }
-.store-site { font-family: var(--font-info); font-size: 12.5px; }
+.store-week { display: flex; flex-direction: column; margin-top: 3px; font-family: var(--font-info); font-size: 12.5px; color: var(--parch-soft); line-height: 1.6; }
+.store-site { font-family: var(--font-info); font-size: 12.5px; margin-top: 4px; align-self: flex-start; }
 .store-pin-dot { display: block; width: 14px; height: 14px; margin: 3px; border-radius: 50%; box-sizing: border-box; background: var(--ember); border: 3px solid var(--ink); box-shadow: 0 0 0 1px var(--ember); }
 .store-pin.is-dim .store-pin-dot { opacity: 0.4; }
 .store-pin:focus-visible { outline: none; }

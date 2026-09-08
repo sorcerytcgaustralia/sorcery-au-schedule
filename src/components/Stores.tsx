@@ -26,7 +26,6 @@ export const Stores = forwardRef<StoresHandle>(function Stores(_, ref) {
   const { data, storeCity, cityPicked, setStoreCity } = useSiteData();
   const [focus, setFocus] = useState<Store | null>(null);
   const [focusSeq, setFocusSeq] = useState(0);
-  const [mapLive, setMapLive] = useState(false);
 
   // weekly events hosted at this store, for the map popup
   const weeklyLines = useCallback(
@@ -65,33 +64,52 @@ export const Stores = forwardRef<StoresHandle>(function Stores(_, ref) {
 
   const items = storeCity === ALL ? data.stores : data.stores.filter((s) => s.city === storeCity);
   const unreadable = data.failed.includes('stores') && data.stores.length === 0;
-  const listHidden = mapLive && items.some((s) => s.lat != null);
+  const groups = storeCity === ALL ? CITIES.map((c) => [c, items.filter((s) => s.city === c)] as const).filter(([, list]) => list.length) : [[storeCity, items] as const];
 
   return (
     <section id="stores" className="stores" aria-label="Find a local store">
       <div className="stores-inner">
         <h2>Find a Local Store</h2>
         <CityTabs current={storeCity} onPick={setStoreCity} label="City for stores" />
-        <StoreMap stores={data.stores} city={storeCity} cityPicked={cityPicked} weeklyLines={weeklyLines} focus={focus} focusSeq={focusSeq} onLive={() => setMapLive(true)} />
-        <ul className="store-list" hidden={listHidden}>
+        <StoreMap stores={data.stores} city={storeCity} cityPicked={cityPicked} weeklyLines={weeklyLines} focus={focus} focusSeq={focusSeq} onLive={() => undefined} />
+        <div className="store-list">
           {unreadable ? (
-            <li className="store-note">Couldn&rsquo;t load the stores right now. Check the Discord.</li>
+            <p className="store-note">Couldn&rsquo;t load the stores right now. Check the Discord.</p>
           ) : items.length === 0 ? (
-            <li className="store-note">No stores listed for {storeCity === ALL ? 'any city' : storeCity} yet.</li>
+            <p className="store-note">No stores listed for {storeCity === ALL ? 'any city' : storeCity} yet.</p>
           ) : (
-            items.map((s) => (
-              <li className="store-item" key={s.name + s.city}>
-                <span className="store-name-plain">{s.name}</span>
-                {s.address && <div className="store-addr">{s.address}</div>}
-                {s.link && (
-                  <a className="store-site" href={s.link} target="_blank" rel="noopener">
-                    Website
-                  </a>
-                )}
-              </li>
+            groups.map(([city, list]) => (
+              <div key={city} className="store-group">
+                {storeCity === ALL && <h3 className="store-group-name">{city}</h3>}
+                <ul className="store-items">
+                  {list.map((s) => {
+                    const week = weeklyLines(s);
+                    return (
+                      <li className="store-item" key={s.name + s.city}>
+                        <button type="button" className="store-name-plain" onClick={() => focusStore(s)} disabled={s.lat == null} title={s.lat == null ? 'No map position in the sheet yet' : 'Show on the map'}>
+                          {s.name}
+                        </button>
+                        {s.address && <div className="store-addr">{s.address}</div>}
+                        {week.length > 0 && (
+                          <div className="store-week">
+                            {week.map((l, i) => (
+                              <span key={i}>{l}</span>
+                            ))}
+                          </div>
+                        )}
+                        {s.link && (
+                          <a className="store-site" href={s.link} target="_blank" rel="noopener">
+                            Website
+                          </a>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             ))
           )}
-        </ul>
+        </div>
       </div>
     </section>
   );
