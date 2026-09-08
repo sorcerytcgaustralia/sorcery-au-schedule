@@ -1,28 +1,49 @@
-# Sorcery TCG Australia — Organised Play Schedule
+# Realm of Oz
 
-A static site for the Sorcery: Contested Realm community in Australia. It shows
-the weekly organised-play schedule for 7 cities (Sydney, Canberra, Melbourne,
-Perth, Adelaide, Brisbane, Hobart) plus a live "who's online" Discord card.
-Fan-made, community-run, not affiliated with Erik's Curiosa.
+The community website of Sorcery: Contested Realm players in Australia,
+live at https://realmofoz.com. Weekly organised play in seven cities,
+tournaments and their results, featured decks on Curiosa, local stores and
+the Discord. Fan-made and community-run, not affiliated with Erik's Curiosa.
 
-No build step. No backend. Just static files that fetch live data straight
-from the browser.
+Built with Next.js as a fully static site and served by Cloudflare Workers
+static assets. There is no server and no database: every fact on the page
+comes from one shared Google Sheet that organisers edit directly.
 
 ## How the data flows
 
-- **Schedule** — read live from the [Google Sheet](https://docs.google.com/spreadsheets/d/1DZiYwc0o4YKxtS_bn86jfXyIQKpV92XGhEJaL503uS8/edit) on every page load, via Google's public `gviz` JSON endpoint (no API key). The sheet must stay shared as **"Anyone with the link" → Viewer** or the fetch will fail for visitors.
-- **Discord realm-status card** — read live from Discord's public widget JSON (`https://discord.com/api/guilds/<id>/widget.json`), which requires **Server Settings → Widget → Enable Server Widget** to be turned on in the Discord server.
+```
+Google Sheet  --(build time)-->  src/data/site-data.json  -->  static HTML
+     |                                                            |
+     +-------------------(in the browser, every visit)------------+
+```
 
-If either source is unreachable, the site falls back to a plain "check the
-Discord" message instead of breaking.
+1. **At build time** `scripts/fetch-data.ts` reads every tab of the
+   [sheet](https://docs.google.com/spreadsheets/d/1DZiYwc0o4YKxtS_bn86jfXyIQKpV92XGhEJaL503uS8/edit)
+   through Google's public `gviz` endpoint, parses it, and writes
+   `src/data/site-data.json`. The pages are rendered from that snapshot, so
+   the first paint, link previews and search engines all see real content.
+   A tab that cannot be read keeps its previous snapshot; if the sheet is
+   unreachable altogether the committed snapshot is kept and the build
+   still succeeds.
+2. **In the browser**, after the page loads, the same parser re-reads the
+   sheet and swaps in anything that changed. An edit to the sheet is live
+   for visitors within a minute, without a deploy.
+3. **Every six hours** GitHub Actions rebuilds `main` so the snapshot itself
+   stays fresh.
 
-## Updating the schedule
+The Discord presence card reads Discord's public widget JSON in the browser
+(needs **Server Settings > Widget > Enable Server Widget** on the server).
 
-Just edit the Google Sheet — the site re-reads it on every visit, nothing to
-redeploy.
+The sheet must stay shared as **Anyone with the link, Viewer**, or both the
+build and the browser refresh will fail and the site will show its last
+snapshot.
 
-Each city has its own tab. Below the `MON…SUN` header row, put each event in
-the cell under its day, one line per field:
+## Editing the schedule
+
+Edit the sheet. That is the whole workflow.
+
+Each city has its own tab. Below the `MON ... SUN` header row, put each event
+in the cell under its day, one line per field:
 
 ```
 Event type
@@ -33,129 +54,94 @@ Suburb            <- optional, only if you want it shown separately
 Any extra note for players
 ```
 
-- Frequency word in `(parentheses)` should be `weekly`, `fortnightly`,
-  `monthly`, or left out entirely (treated as "check dates").
-- To put more than one event in the same day's cell, leave a blank line and
-  start the next event the same way (Type / Venue / Time / …).
+- The frequency in `(parentheses)` should be `weekly`, `fortnightly`,
+  `monthly`, or left out (shown as "check dates"). Only weekly events get
+  an "add to calendar" button and count for the "next table" callout: the
+  sheet does not say which fortnight a fortnightly event falls on.
+- To stack a second event in the same cell, leave a blank line and start
+  again with the type line.
 - A row whose first cell is `Updated: DD/MM/YY` sets that city's
-  "last updated" date — add one at the bottom of each city's events.
+  "sheet updated" date.
 
-The parser (`js/sheet-data.js`) is tolerant of this free-text shape, but it's
-a heuristic, not a strict format — keeping each field on its own line gives
-the most reliable result. If venue and suburb are run together on one line
-(e.g. `Mighty Cool Games Hornsby`), the site just shows it as one venue name;
-put the suburb on its own line if you want it broken out.
+The parser (`src/lib/sheet/parse.ts`) is a heuristic and is tested against
+a real export of the sheet in `src/lib/sheet/parse.test.ts`. Keeping each
+field on its own line gives the most reliable result.
 
-## Special events (one-off tournaments, launches, regionals)
+### Special Events tab
 
-The site has a **Weekly Events / Special Events** toggle above the schedule.
-The Special Events page reads a sheet tab named exactly `Special Events`,
-which works as an append-only ledger — one event per row, and rows are
-**never deleted**. Header row (order doesn't matter, names do):
+Append-only ledger, one event per row, rows never deleted. Header names
+matter, order does not:
 
 ```
-Date | End Date | Event | City | Venue | Time | Format | Entry | Link
+Date | End Date | Event | City | Venue | Time | Format | Entry | Link | Tier | 1st_place | 1st_deck | ... | 8th_place | 8th_deck
 ```
 
-- **Date** — `DD/MM/YY` or `DD/MM/YYYY`. Date and Event are the only
-  required fields.
-- **End Date** — optional, for multi-day events (e.g. a weekend regional).
-  The event stays visible until the end date passes. Use this column for
-  ranges rather than typing "03/10/26 - 04/10/26" into Date — Google's
-  API silently drops non-date text from a date-formatted column, and the
-  event would vanish from the site.
-- **Event** — the event name shown on the card.
-- **City / Venue / Time / Format / Entry** — optional; shown on the card
-  when present. Entry is free text (e.g. `$45`, `Free`).
-- **Link** — optional full URL (`https://…`); renders as an
-  "Event details" button.
-- **Tier** — optional. Cornerstone events get red-trimmed cards with a
-  red gem by the name; Grand Contest events get gold-illuminated cards
-  with a gold gem. The site infers this from the event name
-  automatically; add a `Tier` column (a picker with `Cornerstone` /
-  `Grand Contest` works well) only if an event's name doesn't contain
-  those words.
+- **Date** is `DD/MM/YY`; Date and Event are the only required fields.
+- **End Date** keeps a multi-day event visible until it ends. Use it rather
+  than a text range in Date: Google drops non-date text from a date-typed
+  column.
+- **Tier** is inferred from the name (`Cornerstone`, `Grand Contest`); add
+  the column only when the name does not say.
+- **Placings** in `1st_place` / `1st_deck` pairs put the event in the Hall
+  of Fame. Deck cells should be Curiosa URLs.
 
-Upcoming events are listed soonest-first. Once an event's date passes, it
-automatically moves into the collapsed "Past events" archive at the bottom
-of the page — so the tab doubles as a permanent record of everything the
-community has run.
+Upcoming events are the Notices section; past ones move to the collapsed
+ledger and, if they have placings, to the Hall of Fame.
 
-## Add to calendar
-
-Events carry an "Add to calendar" link that downloads an `.ics` file,
-with the correct timezone for the event's city (Perth, Adelaide,
-Brisbane and the eastern cities all differ, and daylight saving is
-handled).
-
-Weekly events export as a genuine repeating booking. **Fortnightly and
-monthly events deliberately get no link**: the sheet says an event is
-fortnightly but not *which* fortnight, so any recurrence the site
-generated would be wrong about half the time. Special events always
-get one, since they carry exact dates.
-
-## Featured decks
-
-The card fan in "From the Australian Meta" is driven by a sheet tab
-named exactly `Featured Decks`:
-
-```
-Card | Deck | Pilot | Link
-```
-
-Card must be one of the fan's five avatars (Imposter, Necromancer,
-Pathfinder, Archimago, Avatar of Air); Link is the deck's Curiosa URL.
-Hovering a card shows the deck and pilot, clicking opens the deck.
-Update the rows as the meta shifts — cards without a matching row stay
-decorative.
-
-## Store locator
-
-The "Find a Local Store" section reads a sheet tab named exactly `Stores`:
+### Stores tab
 
 ```
 Store | City | Address | Website | Lat | Lng
 ```
 
-- **Store** is the only required field. City groups the list to match the
-  schedule's city tabs.
-- **Lat / Lng** place the store on the map (decimal degrees, e.g.
-  `-33.87222` / `151.20522`). Look them up on openstreetmap.org: search
-  the address, right-click the spot, "Show address" shows the
-  coordinates. Rows without coordinates still appear in the list.
-- **Website** must be a full `https://` URL.
+Lat/Lng (decimal degrees) place the store on the map; look them up on
+openstreetmap.org (search the address, right-click, "Show address"). Venue
+names in the weekly schedule that match a store name become links to it.
 
-If the tab is missing entirely, the site falls back to listing venue
-names derived from the weekly schedule (no map).
-
-## Project structure
+### Featured Decks tab
 
 ```
-index.html          page structure
-css/styles.css       all styling
-js/config.js         sheet ID, city list, Discord server ID/invite — edit here to retarget
-js/sheet-data.js      fetches + parses the Google Sheet
-js/discord-widget.js  fetches the Discord widget JSON
-js/app.js             renders everything, wires up city tabs
-project/assets/       source art (river-of-flame.jpg, screamer.png) used directly by the page
-project/, chats/      the original Claude Design handoff bundle, kept for reference
+Card | Deck | Pilot | Link
 ```
 
-## Hosting on GitHub Pages (free)
+Card is one of the five avatars in the fan (Imposter, Necromancer,
+Pathfinder, Archimago, Avatar of Air); Link is the deck's Curiosa URL.
 
-1. Push this repo to GitHub.
-2. Repo **Settings → Pages → Source**: deploy from branch, pick `main` and
-   `/ (root)`.
-3. Done — no build, no Actions workflow needed. GitHub serves `index.html`
-   as-is.
-
-## Local preview
-
-Any static file server works, e.g.:
+## Developing
 
 ```
-python3 -m http.server 8000
+npm install
+npm run dev          # http://localhost:3000, hot reload
+npm test             # parser tests against the real sheet export
+npm run typecheck
+npm run build        # fetches the sheet, then writes the static site to out/
 ```
 
-then open `http://localhost:8000`. Note the schedule and Discord card need
-real network access to `docs.google.com` and `discord.com` to load.
+Set `SKIP_SHEET_FETCH=1` to build from the committed snapshot without
+touching the network (handy in a sandbox that cannot reach Google).
+
+```
+src/app/                 routes: /, /hall, /schedule/<city>, 404, robots, sitemap
+src/components/          one file per section of the page
+src/lib/config.ts        sheet ID, city list, Discord IDs, timezones
+src/lib/sheet/           gviz client, parsers, loader, tests
+src/lib/time.ts          city-local clocks, "next table" proximity
+src/lib/calendar.ts      .ics export with real VTIMEZONE blocks
+src/data/site-data.json  build-time snapshot (last known good)
+scripts/fetch-data.ts    refreshes the snapshot before every build
+public/art/              artwork used by the pages
+project/, chats/         the original design handoff, kept for reference
+```
+
+## Deploying
+
+`.github/workflows/deploy.yml` runs on every push:
+
+- `main` deploys to production with `wrangler deploy`.
+- any other branch uploads a preview version (`wrangler versions upload`)
+  whose URL is printed in the job log, without touching production.
+- a schedule rebuilds `main` every six hours.
+
+It needs two repository secrets, `CLOUDFLARE_API_TOKEN` (Workers Scripts:
+Edit, scoped to the account) and `CLOUDFLARE_ACCOUNT_ID`. The custom domain
+is bound to the `realmofoz` Worker in the Cloudflare dashboard.

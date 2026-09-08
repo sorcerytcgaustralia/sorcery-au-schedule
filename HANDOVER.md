@@ -1,149 +1,120 @@
-# Handover — Sorcery TCG Australia Schedule Site
+# Handover notes
 
-A reference doc so anyone (including future-you, or a future Claude session)
-can pick this project back up, understand how it works, and troubleshoot it
-without re-deriving everything from scratch.
+Technical context for whoever picks this project up next, human or
+assistant. Read `README.md` first for how the data and the deploy work;
+this file is the layer underneath.
 
 ## What this is
 
-A static website showing the weekly Sorcery: Contested Realm organised-play
-schedule for 7 Australian cities, plus a live "who's online" Discord card.
-No backend, no build step — it's plain HTML/CSS/JS that fetches live data
-straight from the visitor's browser.
+Realm of Oz, https://realmofoz.com: a static Next.js site for the Sorcery:
+Contested Realm community in Australia. Repo:
+`https://github.com/sorcerytcgaustralia/sorcery-au-schedule`.
 
-- **Live site:** `https://realmofoz.com/`
-- **Repo:** `https://github.com/sorcerytcgaustralia/sorcery-au-schedule`
-- **Hosting:** Cloudflare Workers static assets, deployed from
-  `.github/workflows/deploy.yml` on every push to `main` (see `wrangler.jsonc`)
-- **Data source 1 — schedule:** Google Sheet
-  `https://docs.google.com/spreadsheets/d/1DZiYwc0o4YKxtS_bn86jfXyIQKpV92XGhEJaL503uS8/edit`
-  read live via Google's public `gviz` JSON endpoint (no API key, no backend).
-  Must stay shared **"Anyone with the link" → Viewer**.
-- **Data source 2 — Discord card:** Discord's public widget JSON
-  (`https://discord.com/api/guilds/<id>/widget.json`). Requires
-  **Server Settings → Widget → Enable Server Widget** turned on in the
-  Discord server.
+- **Hosting:** Cloudflare Workers static assets (`wrangler.jsonc`, assets
+  directory `./out`, no Worker script). Deployed by GitHub Actions.
+- **Data:** one public Google Sheet, read at build time into
+  `src/data/site-data.json` and again in the browser after load.
+- **Live data in the browser:** Discord widget JSON for the presence card.
 
-If either source is unreachable, the site falls back to a plain "check the
-Discord" message rather than breaking.
+## History
 
-## Project structure
+1. Original site: hand-written HTML/CSS/JS on GitHub Pages under
+   `/sorcery-au-schedule/`, reading the sheet purely in the browser.
+2. September 2026: moved hosting to Cloudflare Workers under realmofoz.com.
+3. September 2026: rebuilt on Next.js with a new design ("the community
+   gazette"), build-time snapshot plus browser refresh, a TypeScript port
+   of the sheet parser with tests, per-city pages, and preview deploys.
+
+## Design intent
+
+The page is set like a periodical, not a product landing page. If you add
+a section, keep to the system rather than importing a new one:
+
+- **Three typefaces, three jobs.** Fraunces (display: nameplate, section
+  titles, big dates and champion names; the `opsz`, `SOFT` and `WONK` axes
+  are on so it sets soft and slightly irregular), Instrument Sans (reading
+  and UI), IBM Plex Mono (labels, times, anything that reads like a
+  timetable). Tokens live in `:root` in `src/app/globals.css`.
+- **Two grounds.** Warm ink for most of the page, cream paper for Notices
+  and the Hall of Fame, so the page "turns". Sections alternate on purpose.
+- **Section furniture.** A mono section number, a Fraunces title with an
+  italic second half, a right-aligned mono note, a double rule. Every
+  section uses the same head.
+- **One live number on the nameplate.** The "next table" callout is the
+  only animated element (a pulsing dot). Everything else is still.
+- **Four element colours** (fire, water, earth, air) are a quiet key for
+  event types, as small rotated squares, not badges.
+- **The emblem is the O in "Oz"** on the nameplate. Keep it.
+- No em dashes anywhere in copy or code, by request.
+
+## Where things are
 
 ```
-index.html          page structure (masthead, weekly agenda + special events, community section, footer)
-css/styles.css       all styling
-js/config.js         sheet ID, city list, Discord server ID/invite — edit here to retarget
-js/sheet-data.js      fetches + parses the Google Sheet (gviz JSON), free-text cell parser
-js/discord-widget.js  fetches the Discord widget JSON, shapes it for the card
-js/app.js             renders everything, wires up city tabs, bootstraps on page load
-.nojekyll            disables Jekyll processing on GitHub Pages
-README.md            day-to-day "how to edit the schedule" guide for non-technical editors
-project/, chats/      original Claude Design handoff bundle, kept for reference only
+src/components/SiteDataProvider.tsx   snapshot -> state, browser refresh, the one city selection
+src/components/Masthead.tsx           nameplate, dateline, "next table"
+src/components/WeekBoard.tsx          city index + seven day rows
+src/components/Notices.tsx            special events (upcoming + past ledger)
+src/components/Decks.tsx              featured decks + the card fan
+src/components/Hall.tsx               Hall preview on the home page and the /hall ledger
+src/components/Community.tsx          Discord presence + "how this page stays true"
+src/components/Stores.tsx, StoreMap.tsx   list + lazy Leaflet map (CARTO dark tiles)
+src/lib/events.ts                     selectors: events per day, next table, store matching
+src/lib/time.ts                       city-local clocks via Intl, proximity, date labels
 ```
 
-Read `README.md` first for the day-to-day "how do I update the schedule"
-instructions (the sheet's free-text cell format, frequency keywords, the
-`Updated: DD/MM/YY` row convention, etc). This document is the deeper
-technical/troubleshooting layer underneath that.
+Routes are static. `/schedule/<city>` renders the home page pinned to that
+city and carries its own title and description; the city buttons rewrite
+the URL with `history.replaceState` so any selection is shareable. The old
+`?city=Sydney` query still works on `/`.
 
-## How the schedule parsing works
+## How the sheet parsing works
 
-`js/sheet-data.js` fetches each city's tab from the Sheet as JSON
-(`gviz/tq?tqx=out:json&sheet=<CityName>`) and runs each day's cell through
-`parseCell(raw)` — a small state machine, not a strict format parser. It:
+`src/lib/sheet/parse.ts` is a small state machine, not a strict format
+parser. For each day cell it treats the first line as the event type, then
+venue lines until a line containing `H:MM`, then an optional
+`(frequency ...)` parenthetical, then notes. A second event in the same
+cell is detected by looking ahead up to three lines for a time pattern
+before any parenthesis. The Discord boilerplate line
+`(Check on the Sorcery TCG Australia Discord)` is dropped on purpose.
 
-- Splits each cell into lines, treats the first non-time-like line as the
-  event "type", looks for a `HH:MM - HH:MM`-style time line, and a
-  `(weekly|fortnightly|monthly)` parenthetical for frequency.
-- Supports **multiple events in one cell** (e.g. Melbourne's Saturday) by
-  using a lookahead heuristic (`looksLikeNewEventStart`) that peeks up to 3
-  lines ahead for a time-pattern before a frequency-parenthesis, to decide
-  whether a blank line starts a new event block or is just spacing inside
-  prose. This was validated against the real exported sheet data
-  (`project/data_raw.json`) for all 7 cities before launch.
-- Falls back to scanning the type/note text for frequency words
-  (`inferFreqFromText`) when there's no explicit `(weekly)`-style tag.
-- Strips the boilerplate "(Check on the Sorcery TCG Australia Discord)"
-  parenthetical out of notes — matches the original design's editorial
-  choice, not a bug if you see it disappear.
-- A row whose first cell is `Updated: DD/MM/YY` sets that city's "last
-  updated" date. If a tab has more than one such row (happened with
-  Brisbane during testing), the **last** one found wins.
+`src/lib/sheet/parse.test.ts` runs the parser against
+`project/data_raw.json`, the real sheet export from launch, and pins the
+event count per city and a few tricky cells (stacked events, suburb lines,
+a non-frequency parenthetical, a weekday prefix on the time). Run
+`npm test` after touching the parser.
 
-If you add a new city or change a tab name, update `CITIES` in
-`js/config.js` to match the sheet's tab names exactly (case-sensitive).
+## Snapshot and refresh
+
+- `scripts/fetch-data.ts` runs as `prebuild`. It merges: a tab that fails
+  keeps its previous snapshot section; total failure keeps the file as is.
+  So `src/data/site-data.json` is always the last known good data and is
+  committed.
+- In the browser `SiteDataProvider` calls the same loader and applies the
+  same merge, then shows "Live from the sheet" or "Showing the last
+  snapshot" in the board footer.
+- The clock (`now`) is `null` until after hydration, so server and client
+  markup match; anything date-dependent (today marker, day numbers, "next
+  table", relative dates) renders once mounted.
 
 ## Known environment quirks
 
-- **This was built inside a sandboxed Claude Code session that could not
-  reach `google.com` or `discord.com` at all** (outbound network policy
-  blocked those domains entirely, including plain `https://www.google.com`).
-  This is a sandbox limitation, not a real-world issue — once deployed,
-  visitors' browsers reach both fine. It just meant testing had to rely on
-  the graceful-fallback path (loading → error state) rather than live data,
-  plus the user manually confirming the Sheet's public sharing worked in an
-  incognito browser.
-- The 2026 editorial redesign replaced the seven-column week grid with a
-  vertical agenda (`.agenda-day` rows in `renderGrid()`); the display face
-  (Grenze Gotisch) is reserved for the masthead title and the two community
-  headings, with all UI text in Spectral. Design tokens live in `:root`
-  at the top of `css/styles.css`.
+- Claude Code sandboxes (and some CI runners) cannot reach
+  `docs.google.com`, `discord.com` or the CARTO tile servers. Build with
+  `SKIP_SHEET_FETCH=1` there; the committed snapshot is used. GitHub
+  Actions can reach all three, so production builds fetch the real sheet.
+- `next/font/google` downloads the three fonts at build time from Google
+  Fonts and self-hosts them in `out/_next/static/media`. That needs network
+  at build time but nothing at runtime.
+- Leaflet is imported dynamically inside `StoreMap` and only once the
+  section is near the viewport, so it never runs during the static build.
 
-## Local preview
-
-No build step needed. From the repo root:
-
-```
-python3 -m http.server 8000
-```
-
-Then open `http://localhost:8000`. Note the schedule and Discord card need
-real network access to `docs.google.com` and `discord.com` to load — if
-you're testing somewhere with restricted network access, you'll see the
-fallback "check the Discord" states instead, which is expected.
-
-## Deploying changes
-
-GitHub Pages serves directly from `main`, root folder — there is no build
-or Actions step. Any push to `main` updates the live site within a minute
-or two. To enable Pages on a fresh clone of this repo: **Settings → Pages →
-Source: Deploy from a branch → Branch: `main`, folder `/ (root)` → Save.**
-
-## Troubleshooting checklist
+## Troubleshooting
 
 | Symptom | Likely cause |
 |---|---|
-| Schedule grid stuck on "Loading…" or shows the error fallback for every city | Sheet sharing got changed away from "Anyone with the link"; or the Sheet ID in `js/config.js` is wrong; or a tab was renamed and no longer matches `CITIES` in `js/config.js` |
-| One city errors but others are fine | That city's tab name doesn't match `CITIES` exactly, or the tab was deleted/renamed |
-| Discord card shows the static fallback ("Come on in") instead of live data | Server Widget got disabled (Server Settings → Widget), or `DISCORD_GUILD_ID` in `js/config.js` is wrong |
-| An event is missing or merged into the wrong day | Check the raw cell in the Sheet — the parser is heuristic; keeping each field (type/venue/suburb/time/frequency/note) on its own line, and using a blank line between stacked events in the same cell, gives the most reliable result |
-| Frequency badge shows "Check dates" when it shouldn't | No `(weekly)`/`(fortnightly)`/`(monthly)` parenthetical present and the fallback text-scan didn't find a frequency keyword either — add the parenthetical explicitly |
-| Site looks fine locally but not on GitHub Pages | Check Settings → Pages is actually enabled and pointed at `main` / root; check browser console for 404s (path casing issues are case-sensitive on GitHub Pages even though some local dev servers aren't) |
-
-## Getting a local copy on your machine
-
-This project currently only exists in: (a) the GitHub repo, and (b) whatever
-cloud session created it. To get a working local copy on your own computer:
-
-```
-cd C:\Users\micro\Desktop\STA
-git clone https://github.com/sorcerytcgaustralia/sorcery-au-schedule.git .
-```
-
-(Or clone into a fresh `STA` folder if it doesn't exist yet:
-`git clone https://github.com/sorcerytcgaustralia/sorcery-au-schedule.git C:\Users\micro\Desktop\STA`)
-
-That gives you the full commit history and all files. From then on, `git
-pull` in that folder will fetch any updates made elsewhere (including by a
-future Claude Code session working against this same repo).
-
-## Picking this back up with Claude Code
-
-To resume work on this project in a future session, either:
-- Point Claude Code at the cloned local folder (`C:\Users\micro\Desktop\STA`), or
-- Start a new Claude Code on the web session with this GitHub repo as the source.
-
-Either way, start by pointing the assistant at this `HANDOVER.md` and the
-`README.md` — between the two, there's enough context to make changes,
-debug data issues, or extend the site without re-discovering the parsing
-heuristics or sandbox quirks from scratch.
+| Board shows "Showing the last snapshot" for everyone | Sheet sharing changed away from "Anyone with the link", or a tab was renamed (names in `src/lib/config.ts` are case-sensitive) |
+| One city is empty | Its tab name no longer matches `CITIES`, or the `MON ... SUN` header row is missing |
+| An event merged into another or landed on the wrong day | Free-text cell shape; keep type / venue / time / (freq) on separate lines, blank line between stacked events |
+| "Next table" says nothing is listed | Only weekly events with a parseable `H:MM` time count |
+| Deploy fails at "Build" | Read the log: the fetch script prints which tab failed; a total failure still builds. A type error or failing parser test stops the deploy on purpose |
+| Preview URL not printed | Preview uploads only run for pushes to non-main branches; look for the `versions upload` step output |

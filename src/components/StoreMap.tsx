@@ -1,0 +1,133 @@
+'use client';
+
+// Leaflet only runs in the browser and only once the section is near the
+// viewport, so the library and the tiles cost nothing on first paint.
+
+import { useEffect, useRef, useState } from 'react';
+import type * as Leaflet from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import type { Store } from '@/lib/sheet/types';
+import { ALL, type CityChoice } from '@/lib/events';
+
+// fixed Australia-wide opening view, framed by hand
+const AU_CENTER: [number, number] = [-28.19, 133.46];
+const AU_ZOOM = 4;
+const CITY_FIT = { padding: [55, 55] as [number, number], maxZoom: 11 };
+
+const esc = (s: string) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
+
+export interface StoreMapProps {
+  stores: Store[];
+  city: CityChoice;
+  weeklyLines: (store: Store) => string[];
+  focus: Store | null;
+  focusSeq: number;
+}
+
+export function StoreMap({ stores, city, weeklyLines, focus, focusSeq }: StoreMapProps) {
+  const el = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<Leaflet.Map | null>(null);
+  const leafletRef = useRef<typeof Leaflet | null>(null);
+  const markers = useRef(new globalThis.Map<string, Leaflet.Marker>());
+  const armed = useRef(false);
+  const [ready, setReady] = useState(false);
+
+  const located = stores.filter((s) => s.lat != null && s.lng != null);
+
+  // create the map when the section scrolls near
+  useEffect(() => {
+    const node = el.current;
+    if (!node) return;
+    const start = async () => {
+      if (armed.current) return;
+      armed.current = true;
+      const L = await import('leaflet');
+      if (!el.current) return;
+      const m = L.map(el.current, { scrollWheelZoom: false, zoomSnap: 0.25, zoomDelta: 1 });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 19,
+      }).addTo(m);
+      m.setView(AU_CENTER, AU_ZOOM);
+      leafletRef.current = L;
+      mapRef.current = m;
+      setReady(true);
+      setTimeout(() => m.invalidateSize(), 0);
+    };
+    if (!('IntersectionObserver' in window)) {
+      start();
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          start();
+        }
+      },
+      { rootMargin: '500px 0px' },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, []);
+
+  // markers follow the store list and the selected city
+  useEffect(() => {
+    const m = mapRef.current;
+    const L = leafletRef.current;
+    if (!ready || !m || !L) return;
+    markers.current.forEach((mk) => mk.remove());
+    markers.current.clear();
+    located.forEach((s) => {
+      const dimmed = city !== ALL && s.city && s.city !== city;
+      // a divIcon marker rather than a circleMarker: it looks the same but
+      // sits in the tab order and opens on Enter
+      const marker = L.marker([s.lat as number, s.lng as number], {
+        icon: L.divIcon({ className: 'store-pin' + (dimmed ? ' pin-dim' : ''), html: '<span class="pin"></span>', iconSize: [20, 20], iconAnchor: [10, 10], popupAnchor: [0, -9] }),
+        title: s.name,
+        alt: s.name + (s.city ? ', ' + s.city : ''),
+        riseOnHover: true,
+      }).addTo(m);
+      const weekly = weeklyLines(s);
+      marker.bindPopup(
+        '<strong>' + esc(s.name) + '</strong>' +
+          (s.address ? '<br>' + esc(s.address) : '') +
+          (weekly.length ? '<div class="popup-week">' + weekly.map((l) => '<div>' + esc(l) + '</div>').join('') + '</div>' : '') +
+          (s.link ? '<div style="margin-top:8px"><a href="' + esc(s.link) + '" target="_blank" rel="noopener">Website</a></div>' : ''),
+      );
+      markers.current.set(s.name.toLowerCase(), marker);
+    });
+  }, [ready, stores, city, weeklyLines, located]);
+
+  // frame the selected city's stores
+  useEffect(() => {
+    const m = mapRef.current;
+    const L = leafletRef.current;
+    if (!ready || !m || !L) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    m.closePopup();
+    const pts = stores.filter((s) => city !== ALL && s.city === city && s.lat != null && s.lng != null).map((s) => [s.lat as number, s.lng as number] as [number, number]);
+    if (pts.length) {
+      const b = L.latLngBounds(pts);
+      if (reduced) m.fitBounds(b, CITY_FIT);
+      else m.flyToBounds(b, { ...CITY_FIT, duration: 0.7 });
+    } else if (reduced) m.setView(AU_CENTER, AU_ZOOM);
+    else m.flyTo(AU_CENTER, AU_ZOOM, { duration: 0.7 });
+  }, [ready, city, stores]);
+
+  // a venue click from the schedule or the list lands on that pin
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!ready || !m || !focus || focus.lat == null || focusSeq === 0) return;
+    const marker = markers.current.get(focus.name.toLowerCase());
+    m.flyTo([focus.lat, focus.lng as number], 14, { duration: 0.8 });
+    if (marker) setTimeout(() => marker.openPopup(), 850);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, focusSeq]);
+
+  return (
+    <div className="map" ref={el} role="application" aria-label="Store locations map">
+      {!ready && located.length === 0 && <p className="map-note">No store has coordinates in the sheet yet, so there is nothing to pin.</p>}
+    </div>
+  );
+}

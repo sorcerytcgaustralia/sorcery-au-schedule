@@ -1,0 +1,226 @@
+{
+  "cities": {
+    "Sydney": {
+      "events": {
+        "MON": [],
+        "TUE": [
+          {
+            "type": "Constructed · Weekly Play",
+            "venue": "Good Games Town Hall",
+            "suburb": "",
+            "time": "18:30 to 22:00",
+            "freq": "weekly",
+            "note": ""
+          }
+        ],
+        "WED": [],
+        "THU": [
+          {
+            "type": "Constructed · Weekly Play",
+            "venue": "Mighty Cool Games Hornsby",
+            "suburb": "",
+            "time": "18:00 to 22:00",
+            "freq": "weekly",
+            "note": ""
+          }
+        ],
+        "FRI": [
+          {
+            "type": "Casual Play",
+            "venue": "Fluke And Box",
+            "suburb": "Springwood",
+            "time": "17:00 to 19:00",
+            "freq": "weekly",
+            "note": ""
+          }
+        ],
+        "SAT": [],
+        "SUN": []
+      },
+      "updated": "12 May 2026"
+    },
+    "Canberra": {
+      "events": {
+        "MON": [
+          {
+            "type": "Weekly Sorcery Casual Constructed",
+            "venue": "Good Games Belconnen",
+            "suburb": "",
+            "time": "18:00 to 20:30",
+            "freq": "weekly",
+            "note": "Entry fee $13 - all participants receive two booster packs. Register your interest on the Sorcery Play Network!"
+          }
+        ],
+        "TUE": [],
+        "WED": [],
+        "THU": [],
+        "FRI": [
+          {
+            "type": "Weekly Learn to Play and Casual Constructed",
+            "venue": "Good Games Woden",
+            "suburb": "",
+            "time": "18:00 to 21:00",
+            "freq": "weekly",
+            "note": "with the exception of where M:TG prerelease events are on Entry fee $13 - all participants receive two booster packs from either Beta or Gothic. Register your interest on the Sorcery Play Network!"
+          }
+        ],
+        "SAT": [],
+        "SUN": []
+      },
+      "updated": "21 May 2026"
+    },
+    "Melbourne": {
+      "events": {
+        "MON": [
+          {
+            "type": "Casual Constructed",
+            "venue": "Zen Collective Southbank",
+            "suburb": "",
+            "time": "17:30 to 21:00",
+            "freq": "weekly",
+            "note": ""
+          }
+        ],
+        "TUE": [],
+        "WED": [],
+        "THU": [],
+        "FRI": [
+          {
+            "type": "Casual Constructed",
+            "venue": "Blacklist Cards and Collectables",
+            "suburb": "",
+            "time": "18:00 to 23:00",
+            "freq": "fortnightly",
+            "note": ""
+          },
+          {
+            "type": "Monthly Tournament",
+            "venue": "Games Portal",
+            "suburb": "",
+            "time": "from 18:00",
+            "freq": "monthly",
+            "note": "check discord for dates!"
+          }
+        ],
+        "SAT": [],
+        "SUN": [
+          {
+            "type": "Constructed · Sealed · Draft",
+            "venue": "Plenty of Games",
+            "suburb": "",
+            "time": "11:00 to 15:00",
+            "freq": "fortnightly",
+            "note": ""
+          }
+        ]
+      },
+      "updated": "25 May 2026"
+    },
+    "Perth": {
+      "events": {
+        "MON": [],
+        "TUE": [],
+        "WED": [],
+        "THU": [],
+        "FRI": [],
+        "SAT": [
+          {
+            "type": "Friday Night Sorcery",
+            "venue": "Beskar Forge Gaming",
+            "suburb": "",
+            "time": "from 14:00",
+            "freq": "weekly",
+            "note": ""
+          }
+        ],
+        "SUN": []
+      },
+      "updated": "3 June 2026"
+    },
+    "Adelaide": {
+      "events": {
+        "MON": [],
+        "TUE": [],
+        "WED": [],
+        "THU": [],
+        "FRI": [],
+        "SAT": [
+          {
+            "type": "Draft · Sealed",
+            "venue": "Good Games Adelaide",
+            "suburb": "",
+            "time": "17:00 to 21:00",
+            "freq": "fortnightly",
+            "note": ""
+          },
+          {
+            "type": "Draft · Sealed",
+            "venue": "Good Games Modbury",
+            "suburb": "",
+            "time": "12:00 to 17:00",
+            "freq": "irregular",
+            "note": "not regular!"
+          }
+        ],
+        "SUN": []
+      },
+      "updated": "27 December 2025"
+    },
+    "Brisbane": {
+      "events": {
+        "MON": [],
+        "TUE": [
+          {
+            "type": "Organised Weekly Play",
+            "venue": "Heretics Haven",
+            "suburb": "Nambour",
+            "time": "18:30 to 22:00",
+            "freq": "weekly",
+            "note": ""
+          }
+        ],
+        "WED": [],
+        "THU": [],
+        "FRI": [
+          {
+            "type": "Organised Weekly Play",
+            "venue": "Dark Magician Games",
+            "suburb": "Ipswich",
+            "time": "18:30 to 22:00",
+            "freq": "weekly",
+            "note": ""
+          }
+        ],
+        "SAT": [],
+        "SUN": []
+      },
+      "updated": "6 June 2026"
+    },
+    "Hobart": {
+      "events": {
+        "MON": [],
+        "TUE": [],
+        "WED": [
+          {
+            "type": "Limited · Draft · Constructed",
+            "venue": "Good Games Hobart",
+            "suburb": "",
+            "time": "18:00 to 21:00",
+            "freq": "weekly",
+            "note": ""
+          }
+        ],
+        "THU": [],
+        "FRI": [],
+        "SAT": [],
+        "SUN": []
+      },
+      "updated": "29 January 2026"
+    }
+  },
+  "special": [],
+  "stores": [],
+  "featured": [],
+  "fetchedAt": "2026-09-08T09:11:40.122Z",
+  "failed": []
+}

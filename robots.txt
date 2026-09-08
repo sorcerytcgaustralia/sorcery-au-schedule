@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://realmofoz.com/sitemap.xml

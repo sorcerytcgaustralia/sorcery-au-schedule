@@ -1,17 +1,28 @@
-# Deploys the site to Cloudflare Workers static assets on every push to main.
-# The site has no build step: the repo root is the deploy artifact
-# (see wrangler.jsonc and .assetsignore), so this installs wrangler and deploys.
+# Builds the site and deploys it to Cloudflare Workers static assets.
+#
+# - push to main: full production deploy at realmofoz.com
+# - push to any other branch: uploads a preview version and prints its
+#   *-realmofoz.<subdomain>.workers.dev URL in the job log, without
+#   touching production
+# - every 6 hours: rebuilds main so the build-time snapshot of the Google
+#   Sheet stays fresh for first paint and search engines (the browser
+#   re-reads the sheet on every visit regardless)
 name: Deploy to Cloudflare
 
 on:
   push:
-    branches: [main]
+  schedule:
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,8 +36,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Deploy
+      - name: Test the sheet parser
+        run: npm test
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build (fetches the Google Sheet snapshot first)
+        run: npm run build
+
+      - name: Deploy to production
+        if: github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      - name: Upload preview version
+        if: github.ref != 'refs/heads/main' && github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: versions upload --preview-alias ${{ github.ref_name }}

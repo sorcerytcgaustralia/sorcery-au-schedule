@@ -1,17 +1,14 @@
 {
   // Cloudflare Workers static assets config for realmofoz.com.
-  // No Worker script: the site is plain static HTML/CSS/JS, so Cloudflare
-  // serves the files directly from the assets directory below.
+  // No Worker script: `next build` writes a fully static site to ./out
+  // (output: 'export' in next.config.ts) and Cloudflare serves it as is.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "realmofoz",
   "compatibility_date": "2026-09-08",
   "assets": {
-    // The repo root is the deploy artifact: there is no build step.
-    // .assetsignore (gitignore syntax) keeps repo housekeeping files out
-    // of the upload.
-    "directory": "./",
+    "directory": "./out",
     // Multi-page static site, not a client-routed SPA: unknown paths get
-    // the styled 404.html with a real 404 status.
+    // Next's exported 404.html with a real 404 status.
     "not_found_handling": "404-page"
   }
 }

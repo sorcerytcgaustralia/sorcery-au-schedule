@@ -1,11 +1,33 @@
 {
   "name": "realmofoz",
   "private": true,
-  "description": "Sorcery TCG Australia community site, deployed to Cloudflare Workers static assets",
+  "description": "Sorcery TCG Australia community site, built with Next.js and deployed to Cloudflare Workers static assets",
   "scripts": {
-    "deploy": "wrangler deploy"
+    "dev": "next dev",
+    "prebuild": "tsx scripts/fetch-data.ts",
+    "build": "next build",
+    "start": "npx serve out",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "fetch-data": "tsx scripts/fetch-data.ts",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler versions upload"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "next": "^16.3.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.0",
     "wrangler": "^4.0.0"
   }
 }
