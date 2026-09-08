@@ -21,43 +21,52 @@ Contested Realm community in Australia. Repo:
 1. Original site: hand-written HTML/CSS/JS on GitHub Pages under
    `/sorcery-au-schedule/`, reading the sheet purely in the browser.
 2. September 2026: moved hosting to Cloudflare Workers under realmofoz.com.
-3. September 2026: rebuilt on Next.js keeping the original design and
-   UX, with a build-time snapshot plus browser refresh, a TypeScript port
-   of the sheet parser with tests, and preview deploys per branch.
+3. September 2026: rebuilt on Next.js with a build-time snapshot plus
+   browser refresh, a TypeScript port of the sheet parser with tests, and
+   preview deploys per branch.
+4. September 2026: redesigned as the Register of the Realm (see Design
+   intent).
 
-## Design intent
+## Design intent: the Register of the Realm
 
-The page is the original site's structure and interaction, kept on
-purpose: hero, Organised Play (Weekly / Special toggle, All plus seven
-city tabs, seven-day agenda), the three dispatches (decks, Hall of Fame,
-community with the live Discord card), the store explorer, the footer.
-If you add something, keep to this system:
+Read the design document first (Phase 1 critique, three directions, the
+chosen system): it is the brief this page is built to. In short:
 
-- **Two typefaces, two jobs.** Marcellus SC for the nav brand, the
-  masthead title and section headings; Spectral for everything else.
-- **Near-black ground, one warm orange.** The orange (`--ember`) is the
-  only accent: links, the active tab, today, buttons. Gold is reserved for
-  Grand Contest events, red for Cornerstone. Tokens live in `:root` in
-  `src/app/globals.css`.
-- **No glyphs, no ornaments.** No decorative symbols, section marks,
-  emoji, arrows in copy, double rules, clipped corners or stamps. Featured
-  panels get a hairline border and a soft shadow instead. Icons are drawn
-  SVG only where they mark an action (calendar, Discord, Curiosa).
-- **Motion is the fan lifting and the city marker sliding.** Nothing else.
-- **The Discord card exists to show how many people are live**, to entice
-  participation. Keep it prominent.
+- **The chart of the realm is the identity and the place selector.** Seven
+  cities at their true relative positions on a 44 by 20 degree graticule
+  (`src/lib/chart.ts`), with coastal routes and coordinates. Selecting a
+  city sets the place for the whole page; the live line, the register and
+  the places follow. There is no coastline on purpose: the community is the
+  seven places, not the landmass.
+- **One register of time.** Weekly tables and special tournaments are one
+  stream on a ruled spine: this week (only days that have tables, starting
+  from today), coming up, recorded. The week ribbon carries a needle at the
+  real day and hour; it moves each minute.
+- **Three faces, three jobs.** Marcellus SC for the identity, places and
+  champions; Spectral for reading; IBM Plex Sans for anything that is a
+  measurement (times, coordinates, labels, the record table).
+- **Ink ground, one ember.** Gold only for Grand Contest, red only for
+  Cornerstone. No gradients as decoration, no glow, no glyphs, no
+  ornaments, no eyebrow labels above headings, no numbered sections.
+- **Artwork as works.** River of Flame is Plate I, full bleed and captioned;
+  the avatars are a catalogue with museum labels (card, artist, the deck
+  recorded against it). Only artwork already in the repo is used.
+- **Motion explains state.** Marks arrive and routes draw once on load; the
+  spine draws with scroll; the needle is live; entries rise in. Nothing
+  scales on hover. Everything honours prefers-reduced-motion.
 - No em dashes anywhere in copy or code, by request.
 
 ## Where things are
 
 ```
 src/components/SiteDataProvider.tsx   snapshot -> state, browser refresh, the one city selection
-src/components/Masthead.tsx           hero art, title, two hero links
-src/components/Schedule.tsx           Weekly / Special toggle, agenda, special events + archive
-src/components/CityTabs.tsx           the shared city row with its travelling marker
-src/components/Dispatches.tsx         decks fan, Hall of Fame teaser, community + Discord card
-src/components/Hall.tsx               the /hall ledger
-src/components/Stores.tsx, StoreMap.tsx   city-synced store explorer, lazy Leaflet map (CARTO tiles)
+src/components/Realm.tsx, Chart.tsx   the statement, the live line, the Discord note, the chart
+src/components/Register.tsx           week ribbon with needle, the spine: this week, coming up, recorded
+src/components/Plate.tsx              Plate I, River of Flame
+src/components/Meta.tsx               the avatar catalogue with deck labels
+src/components/Record.tsx             the record table (home) and the full record (/hall)
+src/components/Places.tsx, StoreMap.tsx   places with their stores, lazy Leaflet map (CARTO tiles)
+src/lib/chart.ts                      projection, city points, routes, label sides
 src/lib/events.ts                     selectors: events per day, special events split, store matching
 src/lib/time.ts                       city-local clocks via Intl, proximity, date labels
 ```

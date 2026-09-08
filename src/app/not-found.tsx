@@ -5,11 +5,13 @@ export default function NotFound() {
   return (
     <>
       <SiteNav home={false} />
-      <main className="lost">
-        <h1 className="hall-title">Lost in the realm</h1>
-        <p>
-          That page does not exist, or has wandered off the map. Try the <Link href="/">home page</Link> or the <Link href="/hall">Hall of Fame</Link>.
-        </p>
+      <main className="page">
+        <div className="page-inner">
+          <h1 className="statement">Off the chart</h1>
+          <p className="lede">
+            That page does not exist. Try <Link href="/">the Realm</Link> or <Link href="/hall">the Record</Link>.
+          </p>
+        </div>
       </main>
     </>
   );

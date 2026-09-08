@@ -54,3 +54,24 @@ export function cityFromSlug(slug: string): City | null {
 // site's domain in the CARTO dashboard rather than treating it as secret.
 export const CARTO_API_KEY = 'cb1_31mt_1_39d2b8072d479aab38014672';
 export const CARTO_TILE_URL = `https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`;
+
+// City positions for the chart of the realm (decimal degrees).
+export const CITY_COORDS: Record<City, { lat: number; lng: number }> = {
+  Sydney: { lat: -33.87, lng: 151.21 },
+  Canberra: { lat: -35.28, lng: 149.13 },
+  Melbourne: { lat: -37.81, lng: 144.96 },
+  Perth: { lat: -31.95, lng: 115.86 },
+  Adelaide: { lat: -34.93, lng: 138.6 },
+  Brisbane: { lat: -27.47, lng: 153.03 },
+  Hobart: { lat: -42.88, lng: 147.33 },
+};
+
+// Card artists, for the catalogue labels on the plates.
+export const ART_CREDITS: Record<string, string> = {
+  'River of Flame': 'Ian Miller',
+  Imposter: 'Séverine Pineaux',
+  'Avatar of Air': 'Séverine Pineaux',
+  Necromancer: 'Brian Smith',
+  Pathfinder: 'Drew Tucker',
+  Archimago: 'Rodney Matthews',
+};

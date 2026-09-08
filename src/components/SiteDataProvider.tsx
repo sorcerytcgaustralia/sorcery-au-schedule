@@ -42,8 +42,8 @@ function cityFromURL(): CityChoice | null {
 
 export function SiteDataProvider({ snapshot, children }: { snapshot: SiteData; children: ReactNode }) {
   const [data, setData] = useState<SiteData>(snapshot);
-  const [activeCity, setActiveCity] = useState<CityChoice>(CITIES[0]);
-  const [storeCity, setStoreCityState] = useState<CityChoice>(CITIES[0]);
+  const [activeCity, setActiveCity] = useState<CityChoice>(ALL);
+  const [storeCity, setStoreCityState] = useState<CityChoice>(ALL);
   const [cityPicked, setCityPicked] = useState(false);
   const [refresh, setRefresh] = useState<RefreshState>('idle');
   const [now, setNow] = useState<Date | null>(null);

@@ -85,8 +85,9 @@ Date | End Date | Event | City | Venue | Time | Format | Entry | Link | Tier | 1
 - **Placings** in `1st_place` / `1st_deck` pairs put the event in the Hall
   of Fame. Deck cells should be Curiosa URLs.
 
-Upcoming events show under the Special events tab; past ones move to the
-collapsed Past events archive and, if they have placings, to the Hall of Fame.
+Upcoming events appear in the register under Coming up; events with
+placings enter the Record (the last three on the home page, all of them
+at /hall).
 
 ### Stores tab
 
@@ -104,8 +105,9 @@ names in the weekly schedule that match a store name become links to it.
 Card | Deck | Pilot | Link
 ```
 
-Card is one of the five avatars in the fan (Imposter, Necromancer,
-Pathfinder, Archimago, Avatar of Air); Link is the deck's Curiosa URL.
+Card is one of the five avatars in the catalogue (Imposter, Necromancer,
+Pathfinder, Archimago, Avatar of Air); Link is the deck's Curiosa URL. The
+deck, pilot and link appear on that avatar's museum label.
 
 ## Developing
 

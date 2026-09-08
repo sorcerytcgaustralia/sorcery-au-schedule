@@ -2,24 +2,28 @@
 
 import { useRef } from 'react';
 import type { SiteData } from '@/lib/sheet/types';
-import { Dispatches } from './Dispatches';
 import { Footer } from './Footer';
-import { Masthead } from './Masthead';
-import { Schedule } from './Schedule';
+import { Meta } from './Meta';
+import { Places, type PlacesHandle } from './Places';
+import { Plate } from './Plate';
+import { Realm } from './Realm';
+import { RecordPreview } from './Record';
+import { Register } from './Register';
 import { SiteDataProvider } from './SiteDataProvider';
 import { SiteNav } from './SiteNav';
-import { Stores, type StoresHandle } from './Stores';
 
 export function HomePage({ snapshot }: { snapshot: SiteData }) {
-  const stores = useRef<StoresHandle>(null);
+  const places = useRef<PlacesHandle>(null);
   return (
     <SiteDataProvider snapshot={snapshot}>
       <SiteNav />
-      <Masthead />
+      <Realm />
       <main>
-        <Schedule onVenue={(venue) => stores.current?.showVenue(venue)} />
-        <Dispatches />
-        <Stores ref={stores} />
+        <Register onVenue={(venue) => places.current?.showVenue(venue)} />
+        <Plate />
+        <Meta />
+        <RecordPreview />
+        <Places ref={places} />
       </main>
       <Footer />
     </SiteDataProvider>
