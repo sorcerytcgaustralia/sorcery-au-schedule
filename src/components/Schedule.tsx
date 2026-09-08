@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { addSpecialToCalendar, addWeeklyToCalendar, canExportWeekly } from '@/lib/calendar';
 import { ALL, eventsForDay, findStoreForVenue, splitSpecial, type PlacedEvent } from '@/lib/events';
 import { DAY_KEYS, DAY_NAMES, type SpecialEvent } from '@/lib/sheet/types';
-import { specialDateLabels, todayIso } from '@/lib/time';
+import { formatClock, parseTimes, specialDateLabels, todayIso } from '@/lib/time';
 import { CalendarButton } from './CalendarButton';
 import { CityTabs } from './CityTabs';
 import { useSiteData } from './SiteDataProvider';
@@ -13,34 +13,56 @@ const FREQ_LABELS: Record<string, string> = { weekly: 'Weekly', fortnightly: 'Fo
 const freqLabel = (f: string) => FREQ_LABELS[f] || FREQ_LABELS.irregular;
 const ARCHIVE_PAGE_SIZE = 10;
 
+function startLabel(time: string): { big: string; rest: string } {
+  const t = parseTimes(time);
+  if (!t) return { big: '', rest: time };
+  const big = formatClock(t.start);
+  const rest = time.replace(/^\s*(from\s+)?\d{1,2}:\d{2}\s*(am|pm)?\s*/i, '').replace(/^to\s+/i, 'to ').trim();
+  return { big, rest };
+}
+
 function AgendaEvent({ ev, showCity, onVenue }: { ev: PlacedEvent; showCity: boolean; onVenue: ((venue: string) => void) | null }) {
   const venueText = ev.venue + (ev.suburb ? ', ' + ev.suburb : '');
+  const when = startLabel(ev.time);
   return (
     <div className="agenda-event">
-      {showCity && <div className="agenda-city">{ev.city}</div>}
-      <div className="agenda-head">
-        <div className="agenda-type">{ev.type}</div>
-        {/* only weekly events can be booked as a true repeat: the sheet says an
-            event is fortnightly or monthly but not which fortnight or which week */}
-        {canExportWeekly(ev) && <CalendarButton className="cal-icon" label={`Add ${ev.type} at ${ev.venue} to calendar`} onClick={() => addWeeklyToCalendar(ev, ev.city, ev.dayIdx)} />}
+      <div className="agenda-when">
+        {when.big ? (
+          <>
+            <span className="agenda-start">{when.big}</span>
+            {when.rest && <span className="agenda-until">{when.rest}</span>}
+          </>
+        ) : (
+          <span className="agenda-until">{ev.time || 'Time TBC'}</span>
+        )}
       </div>
-      {/* venue links through to the store explorer when we know the store */}
-      {onVenue ? (
-        <div className="agenda-venue">
-          <button type="button" className="agenda-venue-link" title="Find this store on the map" onClick={() => onVenue(ev.venue)}>
-            {venueText}
-          </button>
+      <div className="agenda-main">
+        <div className="agenda-type">
+          {ev.type}
+          {showCity && <span className="agenda-city">{ev.city}</span>}
         </div>
-      ) : (
-        <div className="agenda-venue">{venueText}</div>
-      )}
-      {(ev.time || ev.freq !== 'weekly' || ev.note) && (
-        <div className="agenda-time-line">
-          {ev.time && <span>{ev.time}</span>}
-          {ev.freq !== 'weekly' && <span className="freq-tag">{freqLabel(ev.freq)}</span>}
-          {ev.note && <span className="agenda-note-inline">{ev.note}</span>}
-        </div>
-      )}
+        {/* venue links through to the store explorer when we know the store */}
+        {ev.venue && (
+          <div className="agenda-venue">
+            {onVenue ? (
+              <button type="button" className="agenda-venue-link" title="Find this store on the map" onClick={() => onVenue(ev.venue)}>
+                {venueText}
+              </button>
+            ) : (
+              venueText
+            )}
+          </div>
+        )}
+        {(ev.freq !== 'weekly' || ev.note) && (
+          <div className="agenda-time-line">
+            {ev.freq !== 'weekly' && <span className="freq-tag">{freqLabel(ev.freq)}</span>}
+            {ev.note && <span className="agenda-note-inline">{ev.note}</span>}
+          </div>
+        )}
+      </div>
+      {/* only weekly events can be booked as a true repeat: the sheet says an
+          event is fortnightly or monthly but not which fortnight or which week */}
+      {canExportWeekly(ev) ? <CalendarButton className="cal-icon" label={`Add ${ev.type} at ${ev.venue} to calendar`} onClick={() => addWeeklyToCalendar(ev, ev.city, ev.dayIdx)} /> : <span className="cal-slot" />}
     </div>
   );
 }
@@ -66,11 +88,10 @@ function WeeklyView({ onVenue }: { onVenue: (venue: string) => void }) {
               <div className="agenda-day-head">
                 <span className="agenda-day-name">{DAY_NAMES[key]}</span>
                 {isToday && <span className="today-flag">Today</span>}
+                {empty && <span className="agenda-note">No regular events</span>}
               </div>
               <div className="agenda-day-body">
-                {empty ? (
-                  <p className="agenda-note">No regular events</p>
-                ) : (
+                {empty ? null : (
                   events.map((ev, k) => <AgendaEvent key={ev.city + k} ev={ev} showCity={showCity} onVenue={findStoreForVenue(data.stores, ev.venue) ? onVenue : null} />)
                 )}
               </div>
@@ -101,7 +122,7 @@ function SpecialFeature({ ev }: { ev: SpecialEvent }) {
   return (
     <article className={'special-feature' + (ev.tier ? ' tier-' + ev.tier : '')}>
       <div className="feature-date">
-        <div className="feature-date-day">{d.dayLabel}</div>
+        <div className={'feature-date-day' + (d.dayLabel.includes(' ') ? ' is-range' : '')}>{d.dayLabel}</div>
         <div className="feature-date-month">{d.monthLabel}</div>
       </div>
       <div className="feature-main">
