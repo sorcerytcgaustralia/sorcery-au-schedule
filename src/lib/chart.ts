@@ -1,37 +1,25 @@
-// The chart of the realm: an equirectangular projection of the populated
-// south of the continent, 112E to 156E and 25S to 45S, onto an 880 by 400
-// drawing. Only the seven cities, a graticule and coastal routes are drawn;
-// there is no coastline, because the community is the seven places, not
-// the landmass.
+// The map of the realm: the seven cities placed on the coast of Australia
+// (see australia.ts, generated from Natural Earth 50m). Equirectangular,
+// with longitude compressed by the cosine of the mid latitude so the
+// continent keeps its shape.
 
 import { CITIES, CITY_COORDS, type City } from './config';
+import { MAP_BOUNDS, MAP_H, MAP_W } from './australia';
 
-export const CHART_W = 880;
-export const CHART_H = 400;
-const LNG0 = 112;
-const LNG1 = 156;
-const LAT0 = -25;
-const LAT1 = -45;
+export const CHART_W = MAP_W;
+export const CHART_H = MAP_H;
 
 export function project(lat: number, lng: number): { x: number; y: number } {
+  const { lng0, lng1, lat0, lat1 } = MAP_BOUNDS;
   return {
-    x: ((lng - LNG0) / (LNG1 - LNG0)) * CHART_W,
-    y: ((LAT0 - lat) / (LAT0 - LAT1)) * CHART_H,
+    x: ((lng - lng0) / (lng1 - lng0)) * MAP_W,
+    y: ((lat0 - lat) / (lat0 - lat1)) * MAP_H,
   };
 }
 
 export const CITY_POINTS: Record<City, { x: number; y: number }> = Object.fromEntries(
   CITIES.map((c) => [c, project(CITY_COORDS[c].lat, CITY_COORDS[c].lng)]),
 ) as Record<City, { x: number; y: number }>;
-
-// hairline routes along the coast, west to east
-export const ROUTES: City[][] = [
-  ['Perth', 'Adelaide', 'Melbourne', 'Hobart'],
-  ['Melbourne', 'Canberra', 'Sydney', 'Brisbane'],
-];
-
-export const MERIDIANS = [120, 130, 140, 150];
-export const PARALLELS = [-30, -40];
 
 export function coordLabel(city: City): string {
   const { lat, lng } = CITY_COORDS[city];
@@ -40,13 +28,13 @@ export function coordLabel(city: City): string {
 
 // where a city's label sits relative to its mark, so labels in the crowded
 // south-east never cross each other
-export type LabelSide = 'right' | 'left' | 'below';
+export type LabelSide = 'right' | 'left' | 'below' | 'above';
 export const LABEL_SIDE: Record<City, LabelSide> = {
   Perth: 'right',
-  Adelaide: 'right',
+  Adelaide: 'below',
   Hobart: 'right',
-  Melbourne: 'left',
-  Canberra: 'below',
-  Sydney: 'left',
+  Melbourne: 'below',
+  Canberra: 'left',
+  Sydney: 'right',
   Brisbane: 'left',
 };

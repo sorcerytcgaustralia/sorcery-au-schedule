@@ -1,5 +1,5 @@
 /* Sorcery TCG Australia: the Register of the Realm.
-   A chart of the seven cities is the identity and the place selector; below
+   A map of the realm with its seven cities is the identity and the place selector; below
    it one register of time. Three faces, three jobs: Marcellus SC for the
    identity, places and champions; Spectral for reading; IBM Plex Sans for
    anything that is a measurement. Ink ground, parchment text, one ember. */
@@ -101,33 +101,44 @@ img { display: block; max-width: 100%; }
 .note-avatars { display: inline-flex; margin-left: 10px; vertical-align: middle; }
 .note-avatars img { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ink); margin-left: -6px; background: var(--ink-2); }
 
-/* the chart */
-.chart { position: relative; aspect-ratio: 880 / 400; margin-right: calc(-1 * var(--gutter)); }
-.chart-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.graticule line { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.graticule text { font-family: var(--font-info); font-size: 10.5px; fill: var(--parch-muted); letter-spacing: 0.04em; }
-.routes polyline { fill: none; stroke: var(--line-3); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 6 5; }
-.chart-marks { position: absolute; inset: 0; }
+/* the map of the realm: ink on parchment */
+.map { position: relative; aspect-ratio: 1000 / 775; margin-right: calc(-1 * var(--gutter)); box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.9); }
+.map-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.map .paper { fill: #e6d9bd; }
+.map .frame { fill: none; stroke: #4a3a28; stroke-width: 1; opacity: 0.55; }
+.map .land { fill: #ddcfae; stroke: #3b2c1c; stroke-width: 1.4; stroke-linejoin: round; }
+.map .hatch { fill: none; stroke: #4a3a28; stroke-width: 0.9; opacity: 0.75; stroke-linecap: round; }
+.map .hatch .hatch-2 { opacity: 0.45; stroke-width: 0.7; }
+.map .mountains { fill: none; stroke: #3b2c1c; stroke-width: 1.1; stroke-linejoin: round; stroke-linecap: round; opacity: 0.85; }
+.map .seas text { font-family: var(--font-text); font-style: italic; font-size: 17px; fill: #5a4632; letter-spacing: 0.12em; opacity: 0.85; }
+.map .compass circle { fill: none; stroke: #4a3a28; stroke-width: 1; }
+.map .compass circle:last-of-type { fill: #4a3a28; stroke: none; }
+.map .compass path { fill: #e6d9bd; stroke: #3b2c1c; stroke-width: 1; stroke-linejoin: round; }
+.map .compass path.north { fill: #3b2c1c; }
+.map .compass path.fine { fill: none; stroke-width: 0.7; opacity: 0.7; }
+.map .compass text { font-family: var(--font-display); font-size: 15px; fill: #3b2c1c; }
+.map-marks { position: absolute; inset: 0; }
 .mark {
   position: absolute; transform: translate(-50%, -50%);
   background: none; border: 0; padding: 0; cursor: pointer;
-  display: flex; align-items: center; gap: 10px;
-  color: var(--parchment); text-align: left;
+  display: flex; align-items: center; gap: 8px;
+  color: #2b1f12; text-align: left;
 }
-.mark.is-east { flex-direction: row-reverse; text-align: right; transform: translate(calc(-100% + 5px), -50%); }
-.mark:not(.is-east):not(.is-below) { transform: translate(-5px, -50%); }
-.mark.is-below { flex-direction: column; align-items: center; text-align: center; gap: 6px; transform: translate(-50%, -5px); }
-.mark-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--parchment); flex: none; box-shadow: 0 0 0 4px var(--ink); transition: transform 0.2s var(--ease), background-color 0.2s ease; }
+.mark.side-left { flex-direction: row-reverse; text-align: right; transform: translate(calc(-100% + 5px), -50%); }
+.mark.side-right { transform: translate(-5px, -50%); }
+.mark.side-below { flex-direction: column; align-items: center; text-align: center; gap: 4px; transform: translate(-50%, -5px); }
+.mark.side-above { flex-direction: column-reverse; align-items: center; text-align: center; gap: 4px; transform: translate(-50%, calc(-100% + 5px)); }
+.mark-dot { width: 10px; height: 10px; border-radius: 50%; background: #3b2c1c; flex: none; box-shadow: 0 0 0 2px #e6d9bd, 0 0 0 3px #3b2c1c; transition: transform 0.2s var(--ease), background-color 0.2s ease, box-shadow 0.2s ease; }
 .mark-label { display: flex; flex-direction: column; line-height: 1.05; }
-.mark-name { font-family: var(--font-display); font-size: clamp(13px, 1.7vw, 19px); letter-spacing: 0.02em; transition: color 0.15s ease; }
-.mark-meta { font-family: var(--font-info); font-size: clamp(9px, 1.05vw, 11.5px); color: var(--parch-muted); margin-top: 3px; letter-spacing: 0.02em; }
-.mark:hover .mark-name, .mark.is-hovered .mark-name { color: var(--ember); }
-.mark:hover .mark-dot { transform: scale(1.3); }
-.mark.is-selected .mark-dot { background: var(--ember); box-shadow: 0 0 0 4px var(--ink), 0 0 0 5px var(--ember); }
-.mark.is-selected .mark-name { color: var(--ember); }
-.chart-cartouche { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--line-2); background: var(--ink); text-align: left; }
-.cartouche-title { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.06em; color: var(--parch-soft); }
-.cartouche-sub { font-family: var(--font-info); font-size: 10.5px; letter-spacing: 0.04em; color: var(--parch-muted); font-variant-numeric: tabular-nums; }
+.mark-name { font-family: var(--font-display); font-size: clamp(12px, 1.5vw, 18px); letter-spacing: 0.03em; color: #2b1f12; transition: color 0.15s ease; text-shadow: 0 0 6px #e6d9bd, 0 0 2px #e6d9bd; }
+.mark-meta { font-family: var(--font-info); font-size: clamp(9px, 0.95vw, 11px); color: #6a5640; margin-top: 2px; letter-spacing: 0.02em; text-shadow: 0 0 6px #e6d9bd; }
+.mark:hover .mark-name, .mark.is-hovered .mark-name { color: var(--ember-deep, #b85d1c); }
+.mark:hover .mark-dot { transform: scale(1.25); }
+.mark.is-selected .mark-dot { background: var(--ember); box-shadow: 0 0 0 2px #e6d9bd, 0 0 0 3px var(--ember); }
+.mark.is-selected .mark-name { color: #b85d1c; }
+.cartouche { position: absolute; right: 22px; top: 22px; display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; border: 1px solid #4a3a28; outline: 1px solid #4a3a28; outline-offset: 3px; background: #e6d9bd; color: #2b1f12; }
+.cartouche-title { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.06em; }
+.cartouche-sub { font-family: var(--font-info); font-size: 10.5px; letter-spacing: 0.04em; color: #6a5640; font-variant-numeric: tabular-nums; }
 
 /* ---------- the register ---------- */
 .register { padding: clamp(40px, 6vw, 80px) 0 clamp(48px, 6vw, 88px); border-top: 1px solid var(--line); }
@@ -302,19 +313,15 @@ a.work-art:hover { text-decoration: none; }
 
 /* ---------- motion ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .mark { animation: markIn 0.7s var(--ease) both; }
-  .routes polyline { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: draw 2.2s var(--ease) both; }
-  .chart-cartouche { animation: fadeIn 0.8s ease 1s both; }
+  .mark { animation: markIn 0.6s ease both; }
+  .map { animation: fadeIn 1.2s ease both; }
+  .cartouche { animation: fadeIn 0.8s ease 0.9s both; }
   @supports (animation-timeline: view()) {
     .spine::before { animation: grow linear both; animation-timeline: view(); animation-range: entry 0% cover 70%; }
   }
   .entry, .day { animation: rise 0.5s var(--ease) both; }
 }
-@keyframes markIn { from { opacity: 0; transform: translate(-5px, -50%) scale(0.6); } to { opacity: 1; } }
-.mark.is-east { animation-name: markInEast; }
-@keyframes markInEast { from { opacity: 0; transform: translate(calc(-100% + 5px), -50%) scale(0.6); } to { opacity: 1; } }
-.mark.is-below { animation-name: markInBelow; }
-@keyframes markInBelow { from { opacity: 0; transform: translate(-50%, -5px) scale(0.6); } to { opacity: 1; } }
+@keyframes markIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes fadeIn { from { opacity: 0; } }
 @keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
@@ -334,9 +341,9 @@ a.work-art:hover { text-decoration: none; }
   .nav-links { gap: 0 16px; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
   .nav-links::-webkit-scrollbar { display: none; }
   .realm-inner { grid-template-columns: 1fr; gap: 28px; }
-  .chart { margin-right: 0; order: -1; aspect-ratio: 880 / 440; }
-  .mark-name { font-size: 15px; }
-  .mark-meta { font-size: 10px; }
+  .map { margin-right: 0; order: -1; }
+  .mark-name { font-size: 13px; }
+  .mark-meta { font-size: 9.5px; }
   .live-line { min-height: 0; }
   .entry { grid-template-columns: 76px minmax(0, 1fr); }
   .entry-margin { grid-column: 2; padding-top: 0; flex-direction: row; flex-wrap: wrap; gap: 4px 14px; }
@@ -360,9 +367,10 @@ a.work-art:hover { text-decoration: none; }
 }
 @media (max-width: 520px) {
   .statement { font-size: 38px; }
-  .mark-name { font-size: 12.5px; }
+  .mark-name { font-size: 11px; }
   .mark-meta { display: none; }
   .mark-dot { width: 8px; height: 8px; }
-  .chart-cartouche { display: none; }
+  .map .seas text { font-size: 22px; }
+  .cartouche { display: none; }
   .record th:nth-child(1), .record td.rc-date { display: none; }
 }
