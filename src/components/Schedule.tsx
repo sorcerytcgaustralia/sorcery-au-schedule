@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { CITIES } from '@/lib/config';
 import { addSpecialToCalendar, addWeeklyToCalendar, canExportWeekly } from '@/lib/calendar';
 import { ALL, eventsForDay, findStoreForVenue, splitSpecial, type PlacedEvent } from '@/lib/events';
 import { DAY_KEYS, DAY_NAMES, type SpecialEvent } from '@/lib/sheet/types';
-import { cityTz, nowIn, specialDateLabels, todayIso } from '@/lib/time';
+import { specialDateLabels, todayIso } from '@/lib/time';
 import { CalendarButton } from './CalendarButton';
 import { CityTabs } from './CityTabs';
 import { useSiteData } from './SiteDataProvider';
@@ -50,8 +49,6 @@ function WeeklyView({ onVenue }: { onVenue: (venue: string) => void }) {
   const { data, activeCity, setCity, now, refresh } = useSiteData();
   // today in the visitor's own clock, as the original site did
   const todayIdx = now ? (now.getDay() + 6) % 7 : -1;
-  void cityTz;
-  void nowIn;
   const showCity = activeCity === ALL;
   const total = DAY_KEYS.reduce((n, d) => n + eventsForDay(data, activeCity, d).length, 0);
   const city = activeCity === ALL ? null : data.cities[activeCity];
@@ -164,6 +161,7 @@ function SpecialCard({ ev }: { ev: SpecialEvent }) {
 function SpecialView() {
   const { data, now } = useSiteData();
   const [page, setPage] = useState(0);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const today = todayIso(now ?? new Date(data.fetchedAt));
   const { upcoming, past } = splitSpecial(data.special, today);
   const unreadable = data.failed.includes('special') && data.special.length === 0;
@@ -188,8 +186,8 @@ function SpecialView() {
         )}
       </div>
       {past.length > 0 && (
-        <details className="special-archive">
-          <summary>Past events</summary>
+        <details className="special-archive" open={archiveOpen} onToggle={(e) => setArchiveOpen((e.currentTarget as HTMLDetailsElement).open)}>
+          <summary>{archiveOpen ? 'Hide past events' : `Show past events (${past.length})`}</summary>
           <div className="special-archive-list">
             {past.slice(from, from + ARCHIVE_PAGE_SIZE).map((ev) => (
               <SpecialCard key={ev.start + ev.event} ev={ev} />
@@ -216,7 +214,6 @@ function SpecialView() {
 
 export function Schedule({ onVenue }: { onVenue: (venue: string) => void }) {
   const [view, setView] = useState<'weekly' | 'special'>('weekly');
-  void CITIES;
   return (
     <section id="schedule" className="schedule-section" aria-label="Event schedule">
       <div className="schedule-inner">

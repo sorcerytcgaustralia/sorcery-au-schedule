@@ -256,8 +256,8 @@ img { display: block; max-width: 100%; }
 .feature-date-day { font-size: 36px; font-weight: 600; line-height: 1; color: var(--parchment); font-variant-numeric: tabular-nums; }
 .tier-grand .feature-date-day { color: var(--gold); }
 .feature-date-month { margin-top: 4px; font-size: 14px; color: var(--parch-muted); }
-.feature-name-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.feature-name-row .cal-icon { margin-left: auto; align-self: flex-start; margin-right: -11px; margin-top: -9px; }
+.feature-name-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 10px; }
+.feature-name-row .cal-icon { margin-right: -11px; margin-top: -9px; }
 .feature-name { font-size: 21px; font-weight: 600; line-height: 1.25; color: var(--parchment); }
 .tier-grand .feature-name { color: var(--gold); }
 .tier-cornerstone .feature-name { color: #e8b0a8; }
