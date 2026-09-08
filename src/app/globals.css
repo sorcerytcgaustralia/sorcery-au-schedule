@@ -303,14 +303,15 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked { t
 .hall { padding: clamp(36px, 6vw, 72px) 0 80px; min-height: 60vh; }
 .hall-standfirst { margin: 18px 0 40px; font-size: 18px; color: var(--parch-soft); max-width: 58ch; }
 .hall-note { font-size: 16px; font-style: italic; color: var(--parch-muted); padding: 20px 0; }
-.hall-event { border-top: 1px solid var(--line); padding: 28px 0 32px; }
+.hall-event { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 18px clamp(28px, 5vw, 72px); border-top: 1px solid var(--line); padding: 32px 0 36px; }
 .hall-event:last-child { border-bottom: 1px solid var(--line); }
-.hall-event-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(24px, 3vw, 32px); line-height: 1.05; color: #f3eee5; }
+.hall-event-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.05; color: #f3eee5; text-wrap: balance; }
 .tier-grand .hall-event-name { color: var(--gold); }
-.hall-event-meta { margin: 6px 0 20px; font-family: var(--font-info); font-size: 13px; color: var(--parch-muted); }
-.champion { border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); padding: 18px 0 20px; margin-bottom: 18px; }
+.hall-event-meta { margin-top: 10px; font-family: var(--font-info); font-size: 13px; color: var(--parch-muted); }
+.hall-event-body { min-width: 0; padding-top: 6px; }
+.champion { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
 .champion-label { font-family: var(--font-info); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ember); margin-bottom: 8px; }
-.champion-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 4vw, 40px); line-height: 1; color: #f3eee5; }
+.champion-name { font-size: clamp(21px, 2.2vw, 25px); font-weight: 600; line-height: 1.2; color: #f3eee5; }
 .champion-deck { display: inline-block; margin-top: 12px; font-family: var(--font-info); font-size: 13px; color: var(--ember); }
 .podium { display: flex; flex-direction: column; gap: 10px; }
 .podium-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 4px 14px; align-items: baseline; }
@@ -376,6 +377,8 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked { t
   .deck-fan { margin-right: 0; height: 236px; }
   .hall-teaser, .discord-card { border-bottom: 0; padding-bottom: 8px; }
   .store-map { height: 340px; }
+  .hall-event { grid-template-columns: 1fr; gap: 20px; padding: 28px 0 32px; }
+  .hall-event-body { padding-top: 0; }
   .podium-row { grid-template-columns: 48px 1fr; }
   .podium-row .deck-link { grid-column: 2; }
 }
