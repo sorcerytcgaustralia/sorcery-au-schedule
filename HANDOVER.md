@@ -11,10 +11,10 @@ schedule for 7 Australian cities, plus a live "who's online" Discord card.
 No backend, no build step — it's plain HTML/CSS/JS that fetches live data
 straight from the visitor's browser.
 
-- **Live site:** `https://sorcerytcgaustralia.github.io/sorcery-au-schedule/`
-  (once GitHub Pages is enabled — see below)
+- **Live site:** `https://realmofoz.com/`
 - **Repo:** `https://github.com/sorcerytcgaustralia/sorcery-au-schedule`
-- **Hosting:** GitHub Pages, free, serving directly from the `main` branch
+- **Hosting:** Cloudflare Workers static assets, deployed from
+  `.github/workflows/deploy.yml` on every push to `main` (see `wrangler.jsonc`)
 - **Data source 1 — schedule:** Google Sheet
   `https://docs.google.com/spreadsheets/d/1DZiYwc0o4YKxtS_bn86jfXyIQKpV92XGhEJaL503uS8/edit`
   read live via Google's public `gviz` JSON endpoint (no API key, no backend).

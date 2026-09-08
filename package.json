@@ -1,0 +1,11 @@
+{
+  "name": "realmofoz",
+  "private": true,
+  "description": "Sorcery TCG Australia community site, deployed to Cloudflare Workers static assets",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

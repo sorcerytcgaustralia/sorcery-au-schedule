@@ -7,7 +7,7 @@
 
 (function () {
   const PRODID = '-//Sorcery TCG Australia//Organised Play//EN';
-  const SITE = 'https://sorcerytcgaustralia.github.io/sorcery-au-schedule/';
+  const SITE = 'https://realmofoz.com/';
 
   const CITY_TZ = {
     Sydney: 'Australia/Sydney',
