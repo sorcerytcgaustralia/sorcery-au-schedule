@@ -1,4 +1,4 @@
-# Realm of Oz
+# Sorcery TCG Australia
 
 The community website of Sorcery: Contested Realm players in Australia,
 live at https://realmofoz.com. Weekly organised play in seven cities,
@@ -56,8 +56,8 @@ Any extra note for players
 
 - The frequency in `(parentheses)` should be `weekly`, `fortnightly`,
   `monthly`, or left out (shown as "check dates"). Only weekly events get
-  an "add to calendar" button and count for the "next table" callout: the
-  sheet does not say which fortnight a fortnightly event falls on.
+  an "add to calendar" button: the sheet does not say which
+  fortnight a fortnightly event falls on.
 - To stack a second event in the same cell, leave a blank line and start
   again with the type line.
 - A row whose first cell is `Updated: DD/MM/YY` sets that city's
@@ -85,8 +85,8 @@ Date | End Date | Event | City | Venue | Time | Format | Entry | Link | Tier | 1
 - **Placings** in `1st_place` / `1st_deck` pairs put the event in the Hall
   of Fame. Deck cells should be Curiosa URLs.
 
-Upcoming events are the Notices section; past ones move to the collapsed
-ledger and, if they have placings, to the Hall of Fame.
+Upcoming events show under the Special events tab; past ones move to the
+collapsed Past events archive and, if they have placings, to the Hall of Fame.
 
 ### Stores tab
 
@@ -121,11 +121,11 @@ Set `SKIP_SHEET_FETCH=1` to build from the committed snapshot without
 touching the network (handy in a sandbox that cannot reach Google).
 
 ```
-src/app/                 routes: /, /hall, /schedule/<city>, 404, robots, sitemap
+src/app/                 routes: /, /hall, 404, robots, sitemap
 src/components/          one file per section of the page
 src/lib/config.ts        sheet ID, city list, Discord IDs, timezones
 src/lib/sheet/           gviz client, parsers, loader, tests
-src/lib/time.ts          city-local clocks, "next table" proximity
+src/lib/time.ts          city-local clocks and date labels
 src/lib/calendar.ts      .ics export with real VTIMEZONE blocks
 src/data/site-data.json  build-time snapshot (last known good)
 scripts/fetch-data.ts    refreshes the snapshot before every build

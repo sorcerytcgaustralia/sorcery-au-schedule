@@ -12,7 +12,7 @@ describe('parseCell', () => {
   it('reads the canonical type / venue / time / (frequency) shape', () => {
     const [ev] = parseCell('Constructed - Weekly Play\nGood Games Town Hall\n18:30 - 22:00\n(weekly)');
     expect(ev).toEqual({
-      type: 'Constructed · Weekly Play',
+      type: 'Constructed / Weekly Play',
       venue: 'Good Games Town Hall',
       suburb: '',
       time: '18:30 to 22:00',
@@ -23,7 +23,7 @@ describe('parseCell', () => {
 
   it('keeps a suburb on its own line and strips a leading @', () => {
     const [ev] = parseCell('Draft/Sealed\n@Good Games Adelaide\n17:00 - 21:00\n(fortnightly)');
-    expect(ev.type).toBe('Draft · Sealed');
+    expect(ev.type).toBe('Draft / Sealed');
     expect(ev.venue).toBe('Good Games Adelaide');
     const [withSuburb] = parseCell('Casual Play\n Fluke And Box\nSpringwood\n17:00 - 19:00\n(weekly)\n');
     expect(withSuburb.venue).toBe('Fluke And Box');

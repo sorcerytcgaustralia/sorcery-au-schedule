@@ -1,36 +1,27 @@
 'use client';
 
 import { useRef } from 'react';
-import type { CityChoice } from '@/lib/events';
 import type { SiteData } from '@/lib/sheet/types';
-import { ArtPlate } from './ArtPlate';
-import { Community } from './Community';
-import { Decks } from './Decks';
+import { Dispatches } from './Dispatches';
 import { Footer } from './Footer';
-import { HallPreview } from './Hall';
 import { Masthead } from './Masthead';
-import { Notices } from './Notices';
+import { Schedule } from './Schedule';
 import { SiteDataProvider } from './SiteDataProvider';
 import { SiteNav } from './SiteNav';
 import { Stores, type StoresHandle } from './Stores';
-import { WeekBoard } from './WeekBoard';
 
-export function HomePage({ snapshot, initialCity }: { snapshot: SiteData; initialCity: CityChoice }) {
+export function HomePage({ snapshot }: { snapshot: SiteData }) {
   const stores = useRef<StoresHandle>(null);
   return (
-    <SiteDataProvider snapshot={snapshot} initialCity={initialCity}>
+    <SiteDataProvider snapshot={snapshot}>
       <SiteNav />
       <Masthead />
-      <ArtPlate />
       <main>
-        <WeekBoard onVenue={(venue) => stores.current?.showVenue(venue)} />
-        <Notices />
-        <Decks />
-        <HallPreview />
-        <Community />
+        <Schedule onVenue={(venue) => stores.current?.showVenue(venue)} />
+        <Dispatches />
         <Stores ref={stores} />
       </main>
-      <Footer fetchedAt={snapshot.fetchedAt} />
+      <Footer />
     </SiteDataProvider>
   );
 }

@@ -6,7 +6,7 @@ this file is the layer underneath.
 
 ## What this is
 
-Realm of Oz, https://realmofoz.com: a static Next.js site for the Sorcery:
+Sorcery TCG Australia, https://realmofoz.com: a static Next.js site for the Sorcery:
 Contested Realm community in Australia. Repo:
 `https://github.com/sorcerytcgaustralia/sorcery-au-schedule`.
 
@@ -21,51 +21,50 @@ Contested Realm community in Australia. Repo:
 1. Original site: hand-written HTML/CSS/JS on GitHub Pages under
    `/sorcery-au-schedule/`, reading the sheet purely in the browser.
 2. September 2026: moved hosting to Cloudflare Workers under realmofoz.com.
-3. September 2026: rebuilt on Next.js with a new design ("the community
-   gazette"), build-time snapshot plus browser refresh, a TypeScript port
-   of the sheet parser with tests, per-city pages, and preview deploys.
+3. September 2026: rebuilt on Next.js keeping the original design and
+   UX, with a build-time snapshot plus browser refresh, a TypeScript port
+   of the sheet parser with tests, and preview deploys per branch.
 
 ## Design intent
 
-The page is set like a periodical, not a product landing page. If you add
-a section, keep to the system rather than importing a new one:
+The page is the original site's structure and interaction, kept on
+purpose: hero, Organised Play (Weekly / Special toggle, All plus seven
+city tabs, seven-day agenda), the three dispatches (decks, Hall of Fame,
+community with the live Discord card), the store explorer, the footer.
+If you add something, keep to this system:
 
-- **Three typefaces, three jobs.** Fraunces (display: nameplate, section
-  titles, big dates and champion names; the `opsz`, `SOFT` and `WONK` axes
-  are on so it sets soft and slightly irregular), Instrument Sans (reading
-  and UI), IBM Plex Mono (labels, times, anything that reads like a
-  timetable). Tokens live in `:root` in `src/app/globals.css`.
-- **Two grounds.** Warm ink for most of the page, cream paper for Notices
-  and the Hall of Fame, so the page "turns". Sections alternate on purpose.
-- **Section furniture.** A mono section number, a Fraunces title with an
-  italic second half, a right-aligned mono note, a double rule. Every
-  section uses the same head.
-- **One live number on the nameplate.** The "next table" callout is the
-  only animated element (a pulsing dot). Everything else is still.
-- **Four element colours** (fire, water, earth, air) are a quiet key for
-  event types, as small rotated squares, not badges.
-- **The emblem is the O in "Oz"** on the nameplate. Keep it.
+- **Two typefaces, two jobs.** Marcellus SC for the nav brand, the
+  masthead title and section headings; Spectral for everything else.
+- **Near-black ground, one warm orange.** The orange (`--ember`) is the
+  only accent: links, the active tab, today, buttons. Gold is reserved for
+  Grand Contest events, red for Cornerstone. Tokens live in `:root` in
+  `src/app/globals.css`.
+- **No glyphs, no ornaments.** No decorative symbols, section marks,
+  emoji, arrows in copy, double rules, clipped corners or stamps. Featured
+  panels get a hairline border and a soft shadow instead. Icons are drawn
+  SVG only where they mark an action (calendar, Discord, Curiosa).
+- **Motion is the fan lifting and the city marker sliding.** Nothing else.
+- **The Discord card exists to show how many people are live**, to entice
+  participation. Keep it prominent.
 - No em dashes anywhere in copy or code, by request.
 
 ## Where things are
 
 ```
 src/components/SiteDataProvider.tsx   snapshot -> state, browser refresh, the one city selection
-src/components/Masthead.tsx           nameplate, dateline, "next table"
-src/components/WeekBoard.tsx          city index + seven day rows
-src/components/Notices.tsx            special events (upcoming + past ledger)
-src/components/Decks.tsx              featured decks + the card fan
-src/components/Hall.tsx               Hall preview on the home page and the /hall ledger
-src/components/Community.tsx          Discord presence + "how this page stays true"
-src/components/Stores.tsx, StoreMap.tsx   list + lazy Leaflet map (CARTO dark tiles)
-src/lib/events.ts                     selectors: events per day, next table, store matching
+src/components/Masthead.tsx           hero art, title, two hero links
+src/components/Schedule.tsx           Weekly / Special toggle, agenda, special events + archive
+src/components/CityTabs.tsx           the shared city row with its travelling marker
+src/components/Dispatches.tsx         decks fan, Hall of Fame teaser, community + Discord card
+src/components/Hall.tsx               the /hall ledger
+src/components/Stores.tsx, StoreMap.tsx   city-synced store explorer, lazy Leaflet map (CARTO tiles)
+src/lib/events.ts                     selectors: events per day, special events split, store matching
 src/lib/time.ts                       city-local clocks via Intl, proximity, date labels
 ```
 
-Routes are static. `/schedule/<city>` renders the home page pinned to that
-city and carries its own title and description; the city buttons rewrite
-the URL with `history.replaceState` so any selection is shareable. The old
-`?city=Sydney` query still works on `/`.
+Routes are static: `/`, `/hall`, and the 404 page. Picking a city writes
+`?city=Sydney` into the address bar with `history.replaceState`, so a
+selection is shareable, and the same query opens on that city.
 
 ## How the sheet parsing works
 
@@ -90,11 +89,10 @@ a non-frequency parenthetical, a weekday prefix on the time). Run
   So `src/data/site-data.json` is always the last known good data and is
   committed.
 - In the browser `SiteDataProvider` calls the same loader and applies the
-  same merge, then shows "Live from the sheet" or "Showing the last
-  snapshot" in the board footer.
+  same merge.
 - The clock (`now`) is `null` until after hydration, so server and client
-  markup match; anything date-dependent (today marker, day numbers, "next
-  table", relative dates) renders once mounted.
+  markup match; the Today marker and the upcoming/past split of special
+  events render once mounted.
 
 ## Known environment quirks
 
@@ -102,7 +100,7 @@ a non-frequency parenthetical, a weekday prefix on the time). Run
   `docs.google.com`, `discord.com` or the CARTO tile servers. Build with
   `SKIP_SHEET_FETCH=1` there; the committed snapshot is used. GitHub
   Actions can reach all three, so production builds fetch the real sheet.
-- `next/font/google` downloads the three fonts at build time from Google
+- `next/font/google` downloads the two fonts at build time from Google
   Fonts and self-hosts them in `out/_next/static/media`. That needs network
   at build time but nothing at runtime.
 - Leaflet is imported dynamically inside `StoreMap` and only once the
@@ -115,6 +113,5 @@ a non-frequency parenthetical, a weekday prefix on the time). Run
 | Board shows "Showing the last snapshot" for everyone | Sheet sharing changed away from "Anyone with the link", or a tab was renamed (names in `src/lib/config.ts` are case-sensitive) |
 | One city is empty | Its tab name no longer matches `CITIES`, or the `MON ... SUN` header row is missing |
 | An event merged into another or landed on the wrong day | Free-text cell shape; keep type / venue / time / (freq) on separate lines, blank line between stacked events |
-| "Next table" says nothing is listed | Only weekly events with a parseable `H:MM` time count |
 | Deploy fails at "Build" | Read the log: the fetch script prints which tab failed; a total failure still builds. A type error or failing parser test stops the deploy on purpose |
 | Preview URL not printed | Preview uploads only run for pushes to non-main branches; look for the `versions upload` step output |

@@ -58,7 +58,7 @@ function inferFreqFromText(text: string): Frequency {
 }
 
 function normalizeType(raw: string): string {
-  return raw.replace(/\s*-\s*/g, ' · ').replace(/\s*\/\s*/g, ' · ').trim();
+  return raw.replace(/\s*-\s*/g, ' / ').replace(/\s*\/\s*/g, ' / ').trim();
 }
 
 function normalizeTime(raw: string): string {

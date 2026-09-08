@@ -1,158 +1,91 @@
 'use client';
 
-import Link from 'next/link';
+// Hall of Fame: every special event that has recorded a result.
+//
+// Only the top four are ranked; fifth through eighth are shown together as
+// the rest of the top eight, since below the cut the ordering is a Swiss
+// tiebreak artefact rather than a meaningful placing.
+
 import { recordedResults } from '@/lib/events';
-import type { SpecialEvent } from '@/lib/sheet/types';
+import type { Placing, SpecialEvent } from '@/lib/sheet/types';
 import { specialDateLabels } from '@/lib/time';
-import { TierStamp } from './Notices';
 import { useSiteData } from './SiteDataProvider';
 
 const RANKS = ['1st', '2nd', '3rd', '4th'];
 
-function Podium({ ev }: { ev: SpecialEvent }) {
+function DeckLink({ entry }: { entry: Placing }) {
+  if (!entry.deck) return null;
+  return (
+    <a className="deck-link" href={entry.deck} target="_blank" rel="noopener" aria-label={`View ${entry.player}’s deck on Curiosa`}>
+      View deck
+    </a>
+  );
+}
+
+function HallEvent({ ev }: { ev: SpecialEvent }) {
+  const champion = ev.results.find((r) => r.place === 1);
   const runners = ev.results.filter((r) => r.place > 1 && r.place <= 4);
   const rest = ev.results.filter((r) => r.place > 4);
+  const where = [specialDateLabels(ev.start, ev.end).dateLabel, ev.city, ev.venue].filter(Boolean).join(', ');
   return (
-    <>
+    <article className={'hall-event' + (ev.tier ? ' tier-' + ev.tier : '')}>
+      <div className="hall-event-head">
+        <h2 className="hall-event-name">{ev.event}</h2>
+        <p className="hall-event-meta">{where}</p>
+      </div>
+      {champion && (
+        <div className="champion">
+          <p className="champion-label">Champion</p>
+          <p className="champion-name">{champion.player}</p>
+          {champion.deck && (
+            <a className="champion-deck" href={champion.deck} target="_blank" rel="noopener">
+              View the winning deck
+            </a>
+          )}
+        </div>
+      )}
       {runners.length > 0 && (
         <ol className="podium">
           {runners.map((r) => (
-            <li key={r.place} className={`podium-row p${r.place}`}>
-              <span className="rank">{RANKS[r.place - 1]}</span>
-              <span className="player">{r.player}</span>
-              {r.deck && (
-                <a href={r.deck} target="_blank" rel="noopener" aria-label={`View ${r.player}'s deck on Curiosa`}>
-                  Deck &nearr;
-                </a>
-              )}
+            <li key={r.place} className={`podium-row place-${r.place}`}>
+              <span className="podium-rank">{RANKS[r.place - 1]}</span>
+              <span className="podium-player">{r.player}</span>
+              <DeckLink entry={r} />
             </li>
           ))}
         </ol>
       )}
       {rest.length > 0 && (
-        <div className="top8">
-          {/* below the cut the order is a Swiss tiebreak artefact, so the rest of the top eight is listed together */}
-          <p className="top8-label">Also in the top eight</p>
-          <ul>
+        <div className="top-eight">
+          <h3 className="top-eight-label">Also in the top eight</h3>
+          <ul className="top-eight-list">
             {rest.map((r) => (
-              <li key={r.place}>
-                <span>{r.player}</span>
-                {r.deck && (
-                  <a href={r.deck} target="_blank" rel="noopener">
-                    Deck &nearr;
-                  </a>
-                )}
+              <li key={r.place} className="top-eight-row">
+                <span className="top-eight-player">{r.player}</span>
+                <DeckLink entry={r} />
               </li>
             ))}
           </ul>
         </div>
       )}
-    </>
+    </article>
   );
 }
 
-export function HallPreview() {
+export function HallList() {
   const { data } = useSiteData();
-  const recorded = recordedResults(data.special);
-  const latest = recorded[0];
-  const champion = latest?.results.find((r) => r.place === 1);
-
-  return (
-    <section className="section paper" id="hall" aria-labelledby="hall-title">
-      <div className="wrap">
-        <div className="section-head">
-          <span className="section-no mono">§ 04</span>
-          <h2 className="section-title" id="hall-title">
-            The Hall <em>of Fame</em>
-          </h2>
-          <p className="section-meta mono">
-            {recorded.length} {recorded.length === 1 ? 'tournament' : 'tournaments'} on record.
-            <br />
-            <Link href="/hall">Open the full ledger</Link>
-          </p>
-        </div>
-        <div className="hall-grid">
-          <div>
-            <p className="lede" style={{ color: 'var(--paper-text-2)' }}>
-              Every tournament the community has run, the sorcerers who took it, and the decks they played. Champions, podiums and top eights, kept as a permanent record.
-            </p>
-            <Link className="btn" href="/hall" style={{ background: 'var(--paper-text)', color: 'var(--paper)' }}>
-              Enter the Hall of Fame
-            </Link>
-          </div>
-          {latest ? (
-            <div className="champion-card">
-              <p className="kicker mono">Latest result</p>
-              <p className="event">
-                {latest.event} <TierStamp tier={latest.tier} />
-              </p>
-              <p className="meta">{[specialDateLabels(latest.start, latest.end).dateLabel, latest.city, latest.venue].filter(Boolean).join(' · ')}</p>
-              {champion && (
-                <>
-                  <p className="name-label">Champion</p>
-                  <p className="name">{champion.player}</p>
-                  {champion.deck && (
-                    <p className="meta">
-                      <a href={champion.deck} target="_blank" rel="noopener">
-                        The winning deck on Curiosa &nearr;
-                      </a>
-                    </p>
-                  )}
-                </>
-              )}
-              <Podium ev={latest} />
-            </div>
-          ) : (
-            <p className="empty-note">No results recorded yet. Once an event has its placings entered in the sheet, the champion is named here.</p>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function HallLedger() {
-  const { data } = useSiteData();
-  const recorded = recordedResults(data.special);
-  if (recorded.length === 0) {
-    return <p className="empty-note">No results recorded yet. Once an event has its placings entered in the sheet, it takes its place here.</p>;
+  const events = recordedResults(data.special);
+  if (data.failed.includes('special') && data.special.length === 0) {
+    return <p className="hall-note">Couldn&rsquo;t load the results right now. Check the Discord.</p>;
+  }
+  if (events.length === 0) {
+    return <p className="hall-note">No results recorded yet. Once an event has its placings entered, it will appear here.</p>;
   }
   return (
-    <div>
-      {recorded.map((ev) => {
-        const champion = ev.results.find((r) => r.place === 1);
-        const d = specialDateLabels(ev.start, ev.end);
-        return (
-          <article className="hall-entry" key={ev.start + ev.event}>
-            <div className="when">
-              {d.dateLabel}
-              <br />
-              {[ev.city, ev.venue].filter(Boolean).join(' · ')}
-            </div>
-            <div>
-              <h3 className="name">
-                {ev.event}
-                <TierStamp tier={ev.tier} />
-              </h3>
-              {ev.format && <p className="where">{ev.format}</p>}
-              {champion && (
-                <>
-                  <p className="winner-label">Champion</p>
-                  <p className="winner">
-                    {champion.player}
-                    {champion.deck && (
-                      <a href={champion.deck} target="_blank" rel="noopener">
-                        Winning deck &nearr;
-                      </a>
-                    )}
-                  </p>
-                </>
-              )}
-              <Podium ev={ev} />
-            </div>
-          </article>
-        );
-      })}
+    <div id="hall-list">
+      {events.map((ev) => (
+        <HallEvent key={ev.start + ev.event} ev={ev} />
+      ))}
     </div>
   );
 }

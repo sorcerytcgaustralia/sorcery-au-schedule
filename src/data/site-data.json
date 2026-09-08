@@ -5,7 +5,7 @@
         "MON": [],
         "TUE": [
           {
-            "type": "Constructed · Weekly Play",
+            "type": "Constructed / Weekly Play",
             "venue": "Good Games Town Hall",
             "suburb": "",
             "time": "18:30 to 22:00",
@@ -16,7 +16,7 @@
         "WED": [],
         "THU": [
           {
-            "type": "Constructed · Weekly Play",
+            "type": "Constructed / Weekly Play",
             "venue": "Mighty Cool Games Hornsby",
             "suburb": "",
             "time": "18:00 to 22:00",
@@ -105,7 +105,7 @@
         "SAT": [],
         "SUN": [
           {
-            "type": "Constructed · Sealed · Draft",
+            "type": "Constructed / Sealed / Draft",
             "venue": "Plenty of Games",
             "suburb": "",
             "time": "11:00 to 15:00",
@@ -146,7 +146,7 @@
         "FRI": [],
         "SAT": [
           {
-            "type": "Draft · Sealed",
+            "type": "Draft / Sealed",
             "venue": "Good Games Adelaide",
             "suburb": "",
             "time": "17:00 to 21:00",
@@ -154,7 +154,7 @@
             "note": ""
           },
           {
-            "type": "Draft · Sealed",
+            "type": "Draft / Sealed",
             "venue": "Good Games Modbury",
             "suburb": "",
             "time": "12:00 to 17:00",
@@ -202,7 +202,7 @@
         "TUE": [],
         "WED": [
           {
-            "type": "Limited · Draft · Constructed",
+            "type": "Limited / Draft / Constructed",
             "venue": "Good Games Hobart",
             "suburb": "",
             "time": "18:00 to 21:00",
@@ -221,6 +221,6 @@
   "special": [],
   "stores": [],
   "featured": [],
-  "fetchedAt": "2026-09-08T09:11:40.122Z",
+  "fetchedAt": "2026-09-08T10:06:51.136Z",
   "failed": []
 }

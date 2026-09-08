@@ -20,7 +20,7 @@ export const DISCORD_INVITE_URL = 'https://discord.gg/eyPp9FKpxU';
 export const CURIOSA_PROFILE_URL = 'https://curiosa.io/users/cml4xcf3o00m204l723smuakz';
 
 export const SITE_URL = 'https://realmofoz.com';
-export const SITE_NAME = 'Realm of Oz';
+export const SITE_NAME = 'Sorcery TCG Australia';
 
 // IANA timezones per city: Australia spans three offsets and two daylight
 // saving regimes, so "18:30" means something different in every column.
@@ -48,3 +48,9 @@ export function cityFromSlug(slug: string): City | null {
   const s = slug.toLowerCase();
   return CITIES.find((c) => CITY_SLUG[c] === s) ?? null;
 }
+
+// CARTO basemap key for the store map tiles. Tile keys are sent from the
+// visitor's browser, so this is public by nature; restrict it to the
+// site's domain in the CARTO dashboard rather than treating it as secret.
+export const CARTO_API_KEY = 'cb1_31mt_1_39d2b8072d479aab38014672';
+export const CARTO_TILE_URL = `https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`;

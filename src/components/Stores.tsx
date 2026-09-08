@@ -1,25 +1,34 @@
 'use client';
 
+// Store explorer: master-detail synced to the city. Primary source is the
+// Stores sheet tab (name, address, website, lat/lng), rendered as an
+// interactive map. With a working map there is no list at all: the pins
+// are focusable and their popups carry the address, website and weekly
+// play. The list only appears if the map can't run.
+
 import dynamic from 'next/dynamic';
 import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
-import { CITIES, SHEET_URL } from '@/lib/config';
+import { CITIES } from '@/lib/config';
 import { ALL, findStoreForVenue } from '@/lib/events';
 import { DAY_KEYS, DAY_NAMES, type Store } from '@/lib/sheet/types';
+import { CityTabs } from './CityTabs';
 import { useSiteData } from './SiteDataProvider';
 
 const StoreMap = dynamic(() => import('./StoreMap').then((m) => m.StoreMap), { ssr: false });
 
-const FREQ_LABEL: Record<string, string> = { fortnightly: 'fortnightly', monthly: 'monthly', irregular: 'check dates' };
+const FREQ_LABELS: Record<string, string> = { fortnightly: 'Fortnightly', monthly: 'Monthly', irregular: 'Check dates' };
 
 export interface StoresHandle {
   showVenue: (venue: string) => void;
 }
 
 export const Stores = forwardRef<StoresHandle>(function Stores(_, ref) {
-  const { data, city, setCity } = useSiteData();
+  const { data, storeCity, cityPicked, setStoreCity } = useSiteData();
   const [focus, setFocus] = useState<Store | null>(null);
   const [focusSeq, setFocusSeq] = useState(0);
+  const [mapLive, setMapLive] = useState(false);
 
+  // weekly events hosted at this store, for the map popup
   const weeklyLines = useCallback(
     (store: Store): string[] => {
       const lines: string[] = [];
@@ -32,7 +41,7 @@ export const Stores = forwardRef<StoresHandle>(function Stores(_, ref) {
           for (const ev of cd.events[day] || []) {
             const v = ev.venue.trim().toLowerCase();
             if (!v || !(v.includes(n) || n.includes(v))) continue;
-            lines.push(`${DAY_NAMES[day].slice(0, 3)} · ${ev.type}${ev.time ? ' · ' + ev.time : ''}${ev.freq !== 'weekly' ? ` (${FREQ_LABEL[ev.freq]})` : ''}`);
+            lines.push(`${DAY_NAMES[day].slice(0, 3)}: ${ev.type}${ev.time ? ', ' + ev.time : ''}${ev.freq !== 'weekly' ? ` (${FREQ_LABELS[ev.freq]})` : ''}`);
           }
         }
       }
@@ -54,68 +63,33 @@ export const Stores = forwardRef<StoresHandle>(function Stores(_, ref) {
     },
   }));
 
-  const items = city === ALL ? data.stores : data.stores.filter((s) => s.city === city);
+  const items = storeCity === ALL ? data.stores : data.stores.filter((s) => s.city === storeCity);
   const unreadable = data.failed.includes('stores') && data.stores.length === 0;
+  const listHidden = mapLive && items.some((s) => s.lat != null);
 
   return (
-    <section className="section wrap" id="stores" aria-labelledby="stores-title">
-      <div className="section-head">
-        <span className="section-no mono">§ 06</span>
-        <h2 className="section-title" id="stores-title">
-          Find <em>a local store</em>
-        </h2>
-        <p className="section-meta mono">
-          {city === ALL ? `${data.stores.length} stores across Australia` : `${items.length} in ${city}`}
-          {city !== ALL && (
-            <>
-              {' · '}
-              <a href="#stores" onClick={(e) => (e.preventDefault(), setCity(ALL))}>
-                show all
-              </a>
-            </>
-          )}
-        </p>
-      </div>
-      <div className="stores">
-        <StoreMap stores={data.stores} city={city} weeklyLines={weeklyLines} focus={focus} focusSeq={focusSeq} />
-        <ul className="store-list">
+    <section id="stores" className="stores" aria-label="Find a local store">
+      <div className="stores-inner">
+        <h2>Find a Local Store</h2>
+        <CityTabs current={storeCity} onPick={setStoreCity} label="City for stores" />
+        <StoreMap stores={data.stores} city={storeCity} cityPicked={cityPicked} weeklyLines={weeklyLines} focus={focus} focusSeq={focusSeq} onLive={() => setMapLive(true)} />
+        <ul className="store-list" hidden={listHidden}>
           {unreadable ? (
-            <li className="store-none">The store list could not be read just now. Ask on the Discord.</li>
+            <li className="store-note">Couldn&rsquo;t load the stores right now. Check the Discord.</li>
           ) : items.length === 0 ? (
-            <li className="store-none">
-              No stores listed {city === ALL ? 'yet' : `for ${city} yet`}.{' '}
-              <a href={SHEET_URL} target="_blank" rel="noopener" style={{ color: 'var(--text-2)' }}>
-                Add one to the sheet.
-              </a>
-            </li>
+            <li className="store-note">No stores listed for {storeCity === ALL ? 'any city' : storeCity} yet.</li>
           ) : (
-            items.map((s) => {
-              const week = weeklyLines(s);
-              return (
-                <li className="store-item" key={s.name + s.city}>
-                  <button type="button" onClick={() => focusStore(s)} disabled={s.lat == null} title={s.lat == null ? 'No coordinates in the sheet yet' : 'Show on the map'}>
-                    <span>{s.name}</span>
-                    {city === ALL && s.city && <span className="store-city">{s.city}</span>}
-                  </button>
-                  {s.address && <p className="store-addr">{s.address}</p>}
-                  {week.length > 0 && (
-                    <p className="store-week">
-                      {week.map((l, i) => (
-                        <span key={i}>
-                          {l}
-                          <br />
-                        </span>
-                      ))}
-                    </p>
-                  )}
-                  {s.link && (
-                    <a className="store-site" href={s.link} target="_blank" rel="noopener">
-                      Website &nearr;
-                    </a>
-                  )}
-                </li>
-              );
-            })
+            items.map((s) => (
+              <li className="store-item" key={s.name + s.city}>
+                <span className="store-name-plain">{s.name}</span>
+                {s.address && <div className="store-addr">{s.address}</div>}
+                {s.link && (
+                  <a className="store-site" href={s.link} target="_blank" rel="noopener">
+                    Website
+                  </a>
+                )}
+              </li>
+            ))
           )}
         </ul>
       </div>

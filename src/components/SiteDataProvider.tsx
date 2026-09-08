@@ -1,12 +1,13 @@
 'use client';
 
-// Holds the site's data and the one city selection that every section
-// shares. Starts from the build-time snapshot (so the first paint and search
-// engines see real content), then re-reads the Google Sheet in the browser
-// so an edit to the sheet shows up without waiting for the next build.
+// Holds the site's data and the one city selection that the schedule and
+// the store explorer share. Starts from the build-time snapshot (so the
+// first paint and search engines see real content), then re-reads the
+// Google Sheet in the browser so an edit to the sheet shows up without
+// waiting for the next build.
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { CITIES, CITY_SLUG, type City } from '@/lib/config';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { CITIES, type City } from '@/lib/config';
 import { ALL, type CityChoice } from '@/lib/events';
 import { loadSiteData } from '@/lib/sheet/load';
 import type { SiteData } from '@/lib/sheet/types';
@@ -15,26 +16,37 @@ export type RefreshState = 'idle' | 'refreshing' | 'fresh' | 'offline';
 
 interface Ctx {
   data: SiteData;
-  city: CityChoice;
+  // the schedule shows one city at a time, or every city together
+  activeCity: CityChoice;
+  // the store explorer tracks the same city, but can also sit on "All"
+  storeCity: CityChoice;
+  cityPicked: boolean;
   setCity: (c: CityChoice) => void;
+  setStoreCity: (c: CityChoice) => void;
   refresh: RefreshState;
   now: Date | null;
 }
 
 const SiteDataContext = createContext<Ctx | null>(null);
 
-const STORAGE_KEY = 'realmofoz.city';
-
-function isCity(v: unknown): v is City {
-  return typeof v === 'string' && (CITIES as readonly string[]).includes(v);
+function cityFromURL(): CityChoice | null {
+  try {
+    const p = new URLSearchParams(window.location.search).get('city');
+    if (!p) return null;
+    if (p.toLowerCase() === 'all') return ALL;
+    return (CITIES.find((c) => c.toLowerCase() === p.toLowerCase()) as City | undefined) ?? null;
+  } catch {
+    return null;
+  }
 }
 
-export function SiteDataProvider({ snapshot, initialCity, children }: { snapshot: SiteData; initialCity: CityChoice; children: ReactNode }) {
+export function SiteDataProvider({ snapshot, children }: { snapshot: SiteData; children: ReactNode }) {
   const [data, setData] = useState<SiteData>(snapshot);
-  const [city, setCityState] = useState<CityChoice>(initialCity);
+  const [activeCity, setActiveCity] = useState<CityChoice>(CITIES[0]);
+  const [storeCity, setStoreCityState] = useState<CityChoice>(CITIES[0]);
+  const [cityPicked, setCityPicked] = useState(false);
   const [refresh, setRefresh] = useState<RefreshState>('idle');
   const [now, setNow] = useState<Date | null>(null);
-  const pinned = useRef(initialCity !== ALL);
 
   // Clock only exists after hydration, so server and client markup agree.
   useEffect(() => {
@@ -43,22 +55,12 @@ export function SiteDataProvider({ snapshot, initialCity, children }: { snapshot
     return () => clearInterval(t);
   }, []);
 
-  // On the home page, come back to the city you looked at last time. A city
-  // page (/schedule/melbourne) is pinned to its own city.
+  // ?city=Melbourne opens on that city, as it always has
   useEffect(() => {
-    if (pinned.current) return;
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const fromQuery = params.get('city');
-      const match = fromQuery && CITIES.find((c) => c.toLowerCase() === fromQuery.toLowerCase());
-      if (match) {
-        setCityState(match);
-        return;
-      }
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (isCity(stored) || stored === ALL) setCityState(stored);
-    } catch {
-      /* storage unavailable: stay on the default */
+    const c = cityFromURL();
+    if (c) {
+      setActiveCity(c);
+      setStoreCityState(c);
     }
   }, []);
 
@@ -82,18 +84,38 @@ export function SiteDataProvider({ snapshot, initialCity, children }: { snapshot
     return () => controller.abort();
   }, []);
 
+  // one city selection drives the schedule, the store list and the map
   const setCity = useCallback((c: CityChoice) => {
-    setCityState(c);
+    setActiveCity(c);
+    setStoreCityState(c);
+    setCityPicked(true);
     try {
-      window.localStorage.setItem(STORAGE_KEY, c);
-      const path = c === ALL ? '/' : `/schedule/${CITY_SLUG[c]}`;
-      window.history.replaceState(null, '', path + window.location.hash);
+      const u = new URL(window.location.href);
+      u.searchParams.set('city', c);
+      window.history.replaceState(null, '', u);
     } catch {
-      /* not shareable, still selectable */
+      /* URL API unavailable: selection simply isn't shareable */
     }
   }, []);
 
-  const value = useMemo<Ctx>(() => ({ data, city, setCity, refresh, now }), [data, city, setCity, refresh, now]);
+  // picking a city in the store explorer still drives the whole page; only
+  // "All" there is store-only
+  const setStoreCity = useCallback(
+    (c: CityChoice) => {
+      if (c !== ALL) {
+        setCity(c);
+        return;
+      }
+      setStoreCityState(ALL);
+      setCityPicked(true);
+    },
+    [setCity],
+  );
+
+  const value = useMemo<Ctx>(
+    () => ({ data, activeCity, storeCity, cityPicked, setCity, setStoreCity, refresh, now }),
+    [data, activeCity, storeCity, cityPicked, setCity, setStoreCity, refresh, now],
+  );
   return <SiteDataContext.Provider value={value}>{children}</SiteDataContext.Provider>;
 }
 
