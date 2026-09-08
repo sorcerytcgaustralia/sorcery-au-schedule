@@ -53,10 +53,17 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
+      # Preview aliases must be lowercase letters, digits and hyphens, so a
+      # branch like feature/new-board becomes feature-new-board.
+      - name: Derive preview alias from the branch name
+        if: github.ref != 'refs/heads/main' && github.event_name == 'push'
+        run: echo "alias=$(echo "$GITHUB_REF_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/^-*//; s/-*$//' | cut -c1-40)" >> "$GITHUB_OUTPUT"
+        id: preview
+
       - name: Upload preview version
         if: github.ref != 'refs/heads/main' && github.event_name == 'push'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: versions upload --preview-alias ${{ github.ref_name }}
+          command: versions upload --preview-alias ${{ steps.preview.outputs.alias }}
