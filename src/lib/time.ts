@@ -156,6 +156,27 @@ export function specialDateLabels(startIso: string, endIso: string): DateLabels 
   };
 }
 
+// The date column of a special event: one line per calendar date so each
+// can be its own <time> element. "Sat 3 Oct" then "to Sun 4 Oct", with
+// the year kept apart. A single day is one line.
+export interface DatePart {
+  iso: string;
+  text: string;
+}
+export interface DateParts {
+  lines: DatePart[];
+  year: string;
+}
+
+export function specialDateParts(startIso: string, endIso: string): DateParts {
+  const start = parseIso(startIso);
+  const end = parseIso(endIso);
+  const fmt = (d: Date) => `${WEEKDAYS_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+  const lines: DatePart[] = [{ iso: startIso, text: fmt(start) }];
+  if (endIso !== startIso) lines.push({ iso: endIso, text: `to ${fmt(end)}` });
+  return { lines, year: String(end.getFullYear()) };
+}
+
 export function relativeDays(iso: string, today: string): string {
   const diff = Math.round((parseIso(iso).getTime() - parseIso(today).getTime()) / 86400000);
   if (diff <= 0) return 'today';

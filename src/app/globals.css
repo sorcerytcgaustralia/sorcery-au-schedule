@@ -192,11 +192,9 @@ img { display: block; max-width: 100%; }
 .special-heading { margin: 4px 0 4px; font-family: var(--font-info); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--parch-muted); }
 .special-feature { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 28px; padding: 22px 0 24px; border-top: 1px solid var(--line); }
 .special-feature:last-child { border-bottom: 1px solid var(--line); }
-.feature-date { display: flex; flex-direction: column; gap: 3px; padding-top: 4px; font-family: var(--font-info); font-variant-numeric: tabular-nums; }
-.feature-date-day { font-size: 26px; font-weight: 600; line-height: 1.05; color: #f3eee5; }
-.tier-grand .feature-date-day { color: var(--gold); }
-.tier-cornerstone .feature-date-day { color: var(--red); }
-.feature-date-month { font-size: 12.5px; color: var(--parch-muted); }
+.feature-date { display: flex; flex-direction: column; gap: 2px; padding-top: 5px; font-family: var(--font-info); font-variant-numeric: tabular-nums; }
+.feature-date .event-date { font-size: 17px; font-weight: 600; line-height: 1.25; color: #f3eee5; white-space: nowrap; }
+.feature-date .event-year { margin-top: 2px; font-size: 12.5px; color: var(--parch-muted); }
 .feature-main { min-width: 0; }
 .feature-name-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; align-items: start; }
 .feature-name { font-size: 21px; font-weight: 600; line-height: 1.25; color: #f3eee5; }
@@ -215,9 +213,9 @@ img { display: block; max-width: 100%; }
 .special-archive summary:hover { color: var(--parchment); }
 .special-archive-list { margin-top: 6px; }
 .special-card { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 28px; padding: 14px 0 15px; border-bottom: 1px solid var(--line); }
-.special-date { display: flex; flex-direction: column; font-family: var(--font-info); font-variant-numeric: tabular-nums; padding-top: 2px; }
-.special-date-day { font-size: 17px; font-weight: 600; line-height: 1.1; color: var(--parch-soft); }
-.special-date-month { font-size: 12px; color: var(--parch-muted); }
+.special-date { display: flex; flex-direction: column; gap: 1px; font-family: var(--font-info); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.special-date .event-date { font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--parch-soft); white-space: nowrap; }
+.special-date .event-year { font-size: 12px; color: var(--parch-muted); }
 .special-name { font-size: 16.5px; font-weight: 600; color: var(--parch-soft); }
 .tier-grand .special-name { color: var(--gold); }
 .special-venue { margin-top: 1px; font-size: 14.5px; color: var(--parch-muted); }
@@ -372,7 +370,8 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked { t
   .agenda-start { font-size: 18px; }
   .agenda-city { display: block; margin: 2px 0 0; }
   .special-feature, .special-card { grid-template-columns: 1fr; gap: 6px; }
-  .feature-date, .special-date { flex-direction: row; align-items: baseline; gap: 10px; }
+  .feature-date, .special-date { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0 6px; }
+  .feature-date .event-year, .special-date .event-year { margin: 0; }
   .dispatch { grid-template-columns: 1fr; gap: 32px; }
   .deck-fan { margin-right: 0; height: 236px; }
   .hall-teaser, .discord-card { border-bottom: 0; padding-bottom: 8px; }

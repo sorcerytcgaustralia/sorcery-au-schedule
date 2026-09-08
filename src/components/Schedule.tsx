@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { addSpecialToCalendar, addWeeklyToCalendar, canExportWeekly } from '@/lib/calendar';
 import { ALL, eventsForDay, findStoreForVenue, splitSpecial, type PlacedEvent } from '@/lib/events';
 import { DAY_KEYS, DAY_NAMES, type SpecialEvent } from '@/lib/sheet/types';
-import { formatClock, parseTimes, specialDateLabels, todayIso } from '@/lib/time';
+import { formatClock, parseTimes, specialDateParts, todayIso } from '@/lib/time';
 import { CalendarButton } from './CalendarButton';
 import { CityTabs } from './CityTabs';
 import { useSiteData } from './SiteDataProvider';
@@ -117,14 +117,26 @@ function WeeklyView({ onVenue }: { onVenue: (venue: string) => void }) {
 }
 
 // upcoming events render as featured panels
+// each calendar date is its own <time>, so a two-day event reads
+// "Sat 3 Oct / to Sun 4 Oct" with the year set apart
+function EventDates({ ev, className }: { ev: SpecialEvent; className: string }) {
+  const d = specialDateParts(ev.start, ev.end);
+  return (
+    <div className={className}>
+      {d.lines.map((l) => (
+        <time key={l.iso} dateTime={l.iso} className="event-date">
+          {l.text}
+        </time>
+      ))}
+      <span className="event-year">{d.year}</span>
+    </div>
+  );
+}
+
 function SpecialFeature({ ev }: { ev: SpecialEvent }) {
-  const d = specialDateLabels(ev.start, ev.end);
   return (
     <article className={'special-feature' + (ev.tier ? ' tier-' + ev.tier : '')}>
-      <div className="feature-date">
-        <div className={'feature-date-day' + (d.dayLabel.includes(' ') ? ' is-range' : '')}>{d.dayLabel}</div>
-        <div className="feature-date-month">{d.monthLabel}</div>
-      </div>
+      <EventDates ev={ev} className="feature-date" />
       <div className="feature-main">
         <div className="feature-name-row">
           <span className="feature-name">{ev.event}</span>
@@ -150,21 +162,16 @@ function SpecialFeature({ ev }: { ev: SpecialEvent }) {
 }
 
 function SpecialCard({ ev }: { ev: SpecialEvent }) {
-  const d = specialDateLabels(ev.start, ev.end);
   const where = [ev.venue, ev.city].filter(Boolean).join(', ');
   return (
     <div className={'special-card' + (ev.tier ? ' tier-' + ev.tier : '')}>
-      <div className="special-date">
-        <div className="special-date-day">{d.dayLabel}</div>
-        <div className="special-date-month">{d.monthLabel}</div>
-      </div>
+      <EventDates ev={ev} className="special-date" />
       <div className="special-main">
         <div className="special-top">
           <span className="special-name">{ev.event}</span>
         </div>
         {where && <div className="special-venue">{where}</div>}
         <div className="special-meta">
-          <span>{d.dateLabel}</span>
           {ev.time && <span>{ev.time}</span>}
           {ev.format && <span>{ev.format}</span>}
           {ev.entry && <span>{ev.entry}</span>}
