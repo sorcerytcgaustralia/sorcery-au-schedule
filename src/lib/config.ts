@@ -17,7 +17,7 @@ export const FEATURED_DECKS_TAB = 'Featured Decks';
 export const DISCORD_GUILD_ID = '1454028745001402485';
 export const DISCORD_INVITE_URL = 'https://discord.gg/eyPp9FKpxU';
 
-export const SORCERYTCG_PROFILE_URL = 'https://sorcerytcg.com/users/cml4xcf3o00m204l723smuakz';
+export const SORCERYTCG_PROFILE_URL = 'https://sorcerytcg.com/profile/cmt8gzvxy5wzk92cyfe70lg2u';
 
 export const SITE_URL = 'https://realmofoz.com';
 export const SITE_NAME = 'Sorcery TCG Australia';

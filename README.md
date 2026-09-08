@@ -2,7 +2,7 @@
 
 The community website of Sorcery: Contested Realm players in Australia,
 live at https://realmofoz.com. Weekly organised play in seven cities,
-tournaments and their results, featured decks on Curiosa, local stores and
+tournaments and their results, featured decks on SorceryTCG, local stores and
 the Discord. Fan-made and community-run, not affiliated with Erik's Curiosa.
 
 Built with Next.js as a fully static site and served by Cloudflare Workers
@@ -83,7 +83,7 @@ Date | End Date | Event | City | Venue | Time | Format | Entry | Link | Tier | 1
 - **Tier** is inferred from the name (`Cornerstone`, `Grand Contest`); add
   the column only when the name does not say.
 - **Placings** in `1st_place` / `1st_deck` pairs put the event in the Hall
-  of Fame. Deck cells should be Curiosa URLs.
+  of Fame. Deck cells should be SorceryTCG URLs.
 
 Upcoming events show under the Special events tab; past ones move to the
 collapsed Past events archive and, if they have placings, to the Hall of Fame.
@@ -105,7 +105,7 @@ Card | Deck | Pilot | Link
 ```
 
 Card is one of the five avatars in the fan (Imposter, Necromancer,
-Pathfinder, Archimago, Avatar of Air); Link is the deck's Curiosa URL.
+Pathfinder, Archimago, Avatar of Air); Link is the deck's SorceryTCG URL.
 
 ## Developing
 
