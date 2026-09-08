@@ -229,7 +229,7 @@ img { display: block; max-width: 100%; }
 
 /* ---------- dispatches: decks, hall of fame, community ---------- */
 .community { padding: 0; }
-.dispatch { max-width: var(--measure); margin: 0 auto; padding: clamp(40px, 6vw, 72px) var(--gutter); display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 28px clamp(28px, 5vw, 72px); align-items: center; }
+.dispatch { padding: clamp(40px, 6vw, 72px) 0; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 28px clamp(28px, 5vw, 72px); align-items: center; }
 .dispatch + .dispatch { border-top: 1px solid var(--line); }
 .dispatch h2 { margin-bottom: 16px; }
 .dispatch p { font-size: 16.5px; line-height: 1.6; color: var(--parch-soft); max-width: 52ch; text-wrap: pretty; }
@@ -373,8 +373,9 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked { t
   .agenda-city { display: block; margin: 2px 0 0; }
   .special-feature, .special-card { grid-template-columns: 1fr; gap: 6px; }
   .feature-date, .special-date { flex-direction: row; align-items: baseline; gap: 10px; }
-  .dispatch { grid-template-columns: 1fr; gap: 12px; }
-  .deck-fan { margin-right: 0; height: 280px; order: -1; }
+  .dispatch { grid-template-columns: 1fr; gap: 32px; }
+  .deck-fan { margin-right: 0; height: 236px; }
+  .hall-teaser, .discord-card { border-bottom: 0; padding-bottom: 8px; }
   .store-map { height: 340px; }
   .podium-row { grid-template-columns: 48px 1fr; }
   .podium-row .deck-link { grid-column: 2; }
@@ -383,4 +384,5 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked { t
   .masthead-title { font-size: 38px; }
   .masthead-map .bd-cities text { font-size: 24px; }
   .fan-card { width: 128px; height: 179px; }
+  .deck-fan { height: 206px; }
 }
