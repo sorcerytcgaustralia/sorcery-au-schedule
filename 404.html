@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <title>Sorcery TCG Australia has moved to realmofoz.com</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://realmofoz.com/">
+  <meta http-equiv="refresh" content="0; url=https://realmofoz.com/">
+  <script>
+    // This GitHub Pages address is retired. Send every old link to the same
+    // page on realmofoz.com, keeping the ?city= selection and any hash.
+    (function () {
+      var path = location.pathname.replace(/^\/sorcery-au-schedule/, '');
+      var target = '/';
+      if (/^\/hall(\.html)?\/?$/.test(path)) target = '/hall';
+      location.replace('https://realmofoz.com' + target + location.search + location.hash);
+    })();
+  </script>
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0f0f10; color: #e8e3da; font: 17px/1.5 Georgia, serif; text-align: center; padding: 24px; }
+    a { color: #e07a2c; }
+  </style>
+</head>
+<body>
+  <p>Sorcery TCG Australia has moved to <a href="https://realmofoz.com/">realmofoz.com</a>.</p>
+</body>
+</html>
