@@ -3,6 +3,7 @@
 
 import cardData from '../src/data/cards.json';
 import type { Board, LeaderboardRow } from '../src/lib/realmdle/api';
+import { rank, type LeaderboardSort, type RankedRow } from '../src/lib/realmdle/discord';
 import { HINT_AFTER, LOCK_DAYS, MAX_GUESSES, compare, extendSchedule, puzzleDate, releaseGate } from '../src/lib/realmdle/engine';
 import { playerStats, type Play } from '../src/lib/realmdle/stats';
 import type { Card, CardData } from '../src/lib/realmdle/types';
@@ -41,26 +42,51 @@ type PlayRow = { puzzle: number; guesses: string; attempts: number; solved: numb
 
 const toPlay = (r: PlayRow): Play => ({ puzzle: r.puzzle, solved: r.solved === 1, attempts: r.attempts, finished: r.finished === 1 });
 
-export async function upsertPlayer(db: D1Database, id: string, name: string): Promise<void> {
+/** Creates the player on first sign-in; afterwards refreshes their name and avatar. */
+export async function upsertPlayer(db: D1Database, id: string, name: string, avatar: string | null = null): Promise<void> {
   await db
     .prepare(
-      `INSERT INTO players (discord_id, display_name, created_at, seen_at) VALUES (?1, ?2, ?3, ?3)
-       ON CONFLICT (discord_id) DO UPDATE SET display_name = excluded.display_name, seen_at = excluded.seen_at`,
+      `INSERT INTO players (discord_id, display_name, avatar, created_at, seen_at) VALUES (?1, ?2, ?3, ?4, ?4)
+       ON CONFLICT (discord_id) DO UPDATE SET display_name = excluded.display_name, avatar = excluded.avatar, seen_at = excluded.seen_at`,
     )
-    .bind(id, name, now())
+    .bind(id, name, avatar, now())
     .run();
 }
 
 export async function getPlayer(db: D1Database, id: string) {
-  return db.prepare('SELECT display_name, leaderboard FROM players WHERE discord_id = ?').bind(id).first<{ display_name: string; leaderboard: number }>();
+  return db
+    .prepare('SELECT display_name, leaderboard, avatar FROM players WHERE discord_id = ?')
+    .bind(id)
+    .first<{ display_name: string; leaderboard: number; avatar: string | null }>();
+}
+
+/** Card ids a player has already guessed today (to leave them out of autocomplete). */
+export async function guessedToday(db: D1Database, id: string, puzzle: number): Promise<Set<string>> {
+  const row = await db.prepare('SELECT guesses FROM plays WHERE discord_id = ? AND puzzle = ?').bind(id, puzzle).first<{ guesses: string }>();
+  return new Set(row ? (JSON.parse(row.guesses) as string[]) : []);
+}
+
+export async function dayCounts(db: D1Database, puzzle: number) {
+  const row = await db
+    .prepare('SELECT COUNT(*) AS finished, COALESCE(SUM(solved), 0) AS solved FROM plays WHERE puzzle = ? AND finished = 1')
+    .bind(puzzle)
+    .first<{ finished: number; solved: number }>();
+  return { finished: row?.finished ?? 0, solved: row?.solved ?? 0 };
+}
+
+/** Claims the day's announcement; false if another run already has. */
+export async function claimAnnouncement(db: D1Database, puzzle: number): Promise<boolean> {
+  const result = await db.prepare('INSERT OR IGNORE INTO announcements (puzzle, posted_at) VALUES (?, ?)').bind(puzzle, now()).run();
+  return result.meta.changes === 1;
+}
+
+export async function releaseAnnouncement(db: D1Database, puzzle: number): Promise<void> {
+  await db.prepare('DELETE FROM announcements WHERE puzzle = ?').bind(puzzle).run();
 }
 
 /** Everything the page shows for one puzzle, for a player (or signed out, with `playerId` null). */
 export async function board(db: D1Database, puzzle: number, answer: Card, playerId: string | null): Promise<Board> {
-  const community = await db
-    .prepare('SELECT COUNT(*) AS finished, COALESCE(SUM(solved), 0) AS solved FROM plays WHERE puzzle = ? AND finished = 1')
-    .bind(puzzle)
-    .first<{ finished: number; solved: number }>();
+  const community = await dayCounts(db, puzzle);
   const base: Board = {
     puzzle,
     date: puzzleDate(puzzle),
@@ -71,7 +97,7 @@ export async function board(db: D1Database, puzzle: number, answer: Card, player
     hint: null,
     answer: null,
     stats: null,
-    community: { finished: community?.finished ?? 0, solved: community?.solved ?? 0 },
+    community,
   };
   if (!playerId) return base;
 
@@ -134,8 +160,8 @@ export async function guess(db: D1Database, playerId: string, puzzle: number, an
   return { ok: true };
 }
 
-/** Players who chose to be listed, best current streak first, then win rate. */
-export async function leaderboard(db: D1Database, today: number, playerId: string | null, limit = 25): Promise<LeaderboardRow[]> {
+/** Every player who chose to be listed, with their stats. Ranking is `rank` in discord.ts. */
+export async function leaderboardRows(db: D1Database, today: number): Promise<RankedRow[]> {
   const { results } = await db
     .prepare(
       `SELECT p.discord_id, p.display_name, x.puzzle, x.attempts, x.solved, x.finished
@@ -149,13 +175,17 @@ export async function leaderboard(db: D1Database, today: number, playerId: strin
     entry.plays.push(toPlay(r));
     byPlayer.set(r.discord_id, entry);
   }
-  return [...byPlayer.entries()]
-    .map(([id, { name, plays }]) => {
-      const s = playerStats(plays, today);
-      return { name, currentStreak: s.currentStreak, maxStreak: s.maxStreak, winRate: s.winRate, played: s.played, averageGuesses: s.averageGuesses, you: id === playerId };
-    })
-    .sort((a, b) => b.currentStreak - a.currentStreak || b.winRate - a.winRate || b.played - a.played || a.name.localeCompare(b.name))
-    .slice(0, limit);
+  return [...byPlayer.entries()].map(([id, { name, plays }]) => {
+    const s = playerStats(plays, today);
+    return { id, name, currentStreak: s.currentStreak, maxStreak: s.maxStreak, winRate: s.winRate, played: s.played, averageGuesses: s.averageGuesses };
+  });
+}
+
+/** The web leaderboard: same ranking as Discord, without Discord ids. */
+export async function leaderboard(db: D1Database, today: number, playerId: string | null, sort: LeaderboardSort = 'streak', limit = 25): Promise<LeaderboardRow[]> {
+  return rank(await leaderboardRows(db, today), sort)
+    .slice(0, limit)
+    .map(({ id, ...row }) => ({ ...row, you: id === playerId }));
 }
 
 export async function setLeaderboard(db: D1Database, playerId: string, on: boolean): Promise<void> {

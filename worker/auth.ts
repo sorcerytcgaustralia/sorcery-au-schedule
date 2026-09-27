@@ -94,7 +94,7 @@ export function startDiscordLogin(request: Request, env: RealmdleEnv): Response 
   return new Response(null, { status: 302, headers: { location: url.toString(), 'set-cookie': cookie(request, STATE_COOKIE, state, 600) } });
 }
 
-export type DiscordUser = { id: string; name: string };
+export type DiscordUser = { id: string; name: string; avatar: string | null };
 
 /**
  * Step 2: Discord sends the player back with a `code`. Check the state
@@ -125,8 +125,8 @@ export async function finishDiscordLogin(request: Request, env: RealmdleEnv): Pr
 
   const me = await fetch('https://discord.com/api/users/@me', { headers: { authorization: `Bearer ${access_token}` } });
   if (!me.ok) return null;
-  const user = (await me.json()) as { id: string; username: string; global_name: string | null };
-  return { id: user.id, name: user.global_name || user.username };
+  const user = (await me.json()) as { id: string; username: string; global_name: string | null; avatar: string | null };
+  return { id: user.id, name: user.global_name || user.username, avatar: user.avatar };
 }
 
 export function clearStateCookie(request: Request): string {

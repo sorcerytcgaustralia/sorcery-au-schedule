@@ -276,7 +276,59 @@ Open http://127.0.0.1:8787/api/auth/dev?id=123&name=Tester to sign in
 without Discord. That route only exists when `DEV_LOGIN` is `"true"` (set
 only in the `dev` environment) and the host is localhost.
 
-**Next: Discord slash commands.** `/realmdle` in the server, answered by
-the same Worker (Discord signs each interaction; verify with the
-application's public key), writing `plays` rows with `source = 'discord'`,
-so web and Discord share one play per day and one set of stats.
+## Realmdle in Discord (`/realmdle`)
+
+Players mostly play in the server. Every step is private (Discord's
+ephemeral replies, visible only to the player); the one public message is
+their result, posted when they finish. Web and Discord share one play per
+person per day and one set of stats.
+
+```
+/realmdle play                     your board for today (also the Play button on the midnight post)
+/realmdle guess card:<name>        autocomplete lists each set separately, e.g. "Pudge Butcher (Beta)"
+/realmdle stats [player]           your stats; someone else's only if they joined the leaderboard
+/realmdle leaderboard [sort]       top ten by current streak, or by solved % (5+ games), plus your place
+/realmdle settings leaderboard:<>  join or leave the leaderboard
+```
+
+- **Where things are:** `worker/discord.ts` (signature check, commands,
+  posting), `src/lib/realmdle/discord.ts` (every embed design, tested in
+  `discord.test.ts`), `scripts/discord-commands.mjs` (registers the
+  command), `scripts/discord-smoke.mjs` (end-to-end rehearsal).
+- **Trust:** Discord signs every interaction with the application's
+  Ed25519 key (`DISCORD_PUBLIC_KEY`); unsigned or altered requests get
+  401, so nobody can play as someone else by calling the endpoint.
+- **The public result** names the player (a mention, which shows their
+  server name without pinging them), the score, the squares, their streak
+  and solved %, and the day's solve count. It never names the card. For a
+  Discord player it is posted in the channel they played in; for a web
+  player the bot posts it in `DISCORD_CHANNEL_ID`.
+- **The midnight post** goes to `DISCORD_CHANNEL_ID` on the first hourly
+  run of the Sydney day: yesterday's card and solve count, and a Play
+  button. The `announcements` table makes it once per day.
+
+**Setup (after the backend setup above)**
+
+1. In the same Discord application: Bot, then Reset Token; save it with
+   `npx wrangler secret put DISCORD_BOT_TOKEN`. Copy the Public Key from
+   General Information into `npx wrangler secret put DISCORD_PUBLIC_KEY`.
+2. `npx wrangler d1 migrations apply realmdle --remote` (adds migration 0002).
+3. Create #realmdle, copy its channel id (Developer Mode, right click),
+   `npx wrangler secret put DISCORD_CHANNEL_ID`.
+4. Set Interactions Endpoint URL (General Information) to
+   `https://realmofoz.com/api/discord/interactions`. Discord checks it with
+   a signed ping when you save, so the site must be deployed first.
+5. Invite the bot: OAuth2 URL Generator, scopes `bot` and
+   `applications.commands`, permissions View Channel, Send Messages, Embed
+   Links. Open the URL and pick the server.
+6. Register the command:
+   `DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... DISCORD_GUILD_ID=... node scripts/discord-commands.mjs`
+   (with the guild id it appears at once; without, globally within an hour).
+
+**Local rehearsal**
+
+```sh
+node scripts/discord-smoke.mjs keys >> .dev.vars   # a test key pair + a fake channel
+npm run api:dev -- --test-scheduled                # Worker on :8787
+node scripts/discord-smoke.mjs                     # 21 checks, with a stand-in Discord API on :8799
+```
