@@ -6,10 +6,8 @@ tournaments and their results, featured decks on SorceryTCG, local stores and
 the Discord. Fan-made and community-run, not affiliated with Erik's Curiosa.
 
 Built with Next.js as a fully static site and served by Cloudflare Workers
-static assets. Every fact on the pages comes from one shared Google Sheet
-that organisers edit directly. The one exception is Realmdle, the daily card
-game played in the Discord server: a small Worker (`worker/`) with a D1
-database answers the `/realmdle` slash command. See `HANDOVER.md`.
+static assets. There is no server and no database: every fact on the page
+comes from one shared Google Sheet that organisers edit directly.
 
 ## How the data flows
 

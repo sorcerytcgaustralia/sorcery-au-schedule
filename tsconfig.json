@@ -39,7 +39,6 @@
     "node_modules",
     "out",
     "project",
-    "chats",
-    "worker"
+    "chats"
   ]
 }
