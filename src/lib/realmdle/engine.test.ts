@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_GUESSES, answerPool, compare, extendSchedule, nameRepeats, dailyCard, msUntilNextPuzzle, puzzleNumber, shareText, suggest } from './engine';
+import { LOCK_DAYS, MAX_GUESSES, answerPool, compare, extendSchedule, nameRepeats, puzzleDate, releaseGate, replan, dailyCard, msUntilNextPuzzle, puzzleNumber, shareText, suggest } from './engine';
 import type { Card } from './types';
 
 // Made-up cards: the rules are tested against shapes, not real card data.
@@ -104,10 +104,37 @@ describe('schedule', () => {
     // rule always has a free name, so it must hold over many cycles.
     const names = Array.from({ length: 8 }, (_, i) => card({ name: `Name ${i}`, cost: i }));
     const entries = [...names, ...names.slice(0, 3).map((c) => ({ ...c, id: `${c.id}-b`, set: 'Second' }))];
-    const s = extendSchedule(entries, [], 200, 5);
+    const s = extendSchedule(entries, [], 200, { gap: 5 });
     expect(nameRepeats(entries, s, 5)).toEqual([]);
     // and every entry still gets its day
     expect(new Set(s).size).toBe(entries.length);
+  });
+
+  it('holds a new set back until its grace period is over', () => {
+    const fresh = card({ name: 'Fresh', cost: 50, set: 'Second' });
+    // Second released on puzzle 5's date: with 14 days' grace, eligible from puzzle 19
+    const gate = releaseGate(['First', 'Second'], ['2020-01-01', puzzleDate(5)]);
+    const s = extendSchedule([...pool, fresh], [], 40, { gap: 1, eligibleFrom: gate });
+    expect(s.indexOf(fresh.id) + 1).toBeGreaterThanOrEqual(19);
+  });
+
+  it('gives a new set a fair share, level with the cards still waiting their turn', () => {
+    // 10 old cards: one full round (10 days) and half of the next (5 days)
+    const played = extendSchedule(pool, [], 15, { gap: 1 });
+    const waiting = pool.filter((c) => !played.slice(10).includes(c.id)).map((c) => c.id);
+    const fresh = Array.from({ length: 5 }, (_, i) => card({ name: `Fresh ${i}`, cost: 60 + i }));
+    const next = replan([...pool, ...fresh], played, 15, 25, { gap: 1 }).slice(15);
+    // the next ten days are the five old cards still waiting plus the five new ones, in some mix
+    expect(new Set(next)).toEqual(new Set([...waiting, ...fresh.map((c) => c.id)]));
+    expect(next.slice(0, 5).some((id) => id.startsWith('fresh'))).toBe(true);
+  });
+
+  it('never changes today or the locked week when replanning', () => {
+    const planned = extendSchedule(pool, [], 30, { gap: 1 });
+    const fresh = card({ name: 'Fresh', cost: 70 });
+    const after = replan([...pool, fresh], planned, 10, 30, { gap: 1 });
+    expect(after.slice(0, 10 + LOCK_DAYS)).toEqual(planned.slice(0, 10 + LOCK_DAYS));
+    expect(after.slice(10 + LOCK_DAYS)).toContain(fresh.id);
   });
 
   it('reports a name that comes back too soon', () => {

@@ -4,7 +4,7 @@
   "description": "Sorcery TCG Australia community site, built with Next.js and deployed to Cloudflare Workers static assets",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "tsx scripts/fetch-data.ts && tsx scripts/fetch-cards.ts",
+    "prebuild": "tsx scripts/fetch-data.ts",
     "build": "next build",
     "start": "npx serve out",
     "lint": "next lint",

@@ -39,5 +39,7 @@ export type CardData = {
   sha256: string | null;
   /** Release set names, oldest first. */
   sets: string[];
+  /** Release date (YYYY-MM-DD) of each set in `sets`, same order. */
+  setDates: string[];
   cards: Card[];
 };

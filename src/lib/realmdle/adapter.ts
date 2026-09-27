@@ -81,5 +81,5 @@ export function normalise(registry: RegistryExport, source: string, fetchedAt: s
   }
   // by name, then by set in release order (ids end in the set code)
   cards.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
-  return { fetchedAt, source, sha256, sets: releases.map((s) => s.set_name), cards };
+  return { fetchedAt, source, sha256, sets: releases.map((s) => s.set_name), setDates: releases.map((s) => s.released_at), cards };
 }

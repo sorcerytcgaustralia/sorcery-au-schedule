@@ -1,0 +1,65 @@
+# Keeps the Realmdle card pool and answer schedule current.
+#
+# Once a day it asks the Sorcery Card Registry whether a new release exists
+# (an 80-byte checksum; the 6 MB export is only downloaded when it changed),
+# replans the schedule if the pool changed or tops it up once a month, runs
+# the tests (which check the schedule), and commits the two data files to
+# main. Site builds only read the committed files, so the answer for a day
+# can only change here, and never for today or the week ahead.
+name: Refresh Realmdle cards
+
+on:
+  schedule:
+    # 16:23 UTC is 02:23 or 03:23 in Sydney, after the daily puzzle turns over
+    - cron: '23 16 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: refresh-cards
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh the card pool and schedule
+        run: npm run fetch-cards
+
+      - name: Check the schedule
+        run: npm test
+
+      # A push made with the workflow token does not trigger other
+      # workflows, so the deploy is started explicitly.
+      - name: Commit and redeploy if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- src/data/cards.json src/data/schedule.json; then
+            echo "Card pool and schedule are current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898783+github-actions[bot]@users.noreply.github.com"
+          git add src/data/cards.json src/data/schedule.json
+          git commit -m "Refresh Realmdle card pool and schedule"
+          git push
+          gh workflow run deploy.yml --ref main

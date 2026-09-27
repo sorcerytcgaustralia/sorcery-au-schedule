@@ -27,6 +27,11 @@ function dayIndex(now: Date): number {
   return Math.round((Date.UTC(y, m - 1, d) - EPOCH) / DAY_MS);
 }
 
+/** The Sydney date (YYYY-MM-DD) of a puzzle. */
+export function puzzleDate(puzzle: number): string {
+  return new Date(EPOCH + (puzzle - 1) * DAY_MS).toISOString().slice(0, 10);
+}
+
 export function puzzleNumber(now: Date): number {
   return Math.max(1, dayIndex(now) + 1);
 }
@@ -104,41 +109,81 @@ export function dailyCard(cards: Card[], puzzle: number, schedule: string[] = []
 /** A card name may not be the answer again within this many days, whatever its set. */
 export const NAME_GAP = 365;
 
+/** Days a new set's cards wait after release before they can be the answer. */
+export const GRACE_DAYS = 14;
+/** Upcoming days that are never replanned, so the next week's answers stay put. */
+export const LOCK_DAYS = 7;
+
+export type PlanOptions = {
+  /** Minimum days between two answers with the same name. */
+  gap?: number;
+  /** The date (YYYY-MM-DD) a card may first be the answer; always, if left out. */
+  eligibleFrom?: (card: Card) => string;
+};
+
+/** When each card may first be the answer: its set's release date plus GRACE_DAYS. */
+export function releaseGate(sets: string[], setDates: string[]): (card: Card) => string {
+  const from = new Map(sets.map((set, i) => [set, new Date(Date.parse(setDates[i]) + GRACE_DAYS * DAY_MS).toISOString().slice(0, 10)]));
+  return (card) => from.get(card.set) ?? '0000-00-00';
+}
+
 /**
- * Extends a schedule so it covers `until` puzzles. Existing entries are
- * never changed. Each new day is chosen by three rules, in order:
+ * Extends a schedule so it covers `until` puzzles, replaying the days it
+ * already has so the rules see the whole history. Each new day is chosen
+ * by these rules, in order:
  *
- * 1. Its card name has not been the answer in the last NAME_GAP days, in
- *    any set. There are more eligible names than days in the gap, so some
- *    name is always free and this never has to bend.
- * 2. Of those, the entry that has waited longest: every entry has a day
- *    before any comes back.
- * 3. Then the name that has waited longest, then a hash of the day, so the
+ * 1. The card may be the answer by that date: a new set's cards wait
+ *    GRACE_DAYS after release (they can still be guessed).
+ * 2. Its name has not been the answer in the last `gap` days, in any set.
+ *    There are more eligible names than days in the gap, so some name is
+ *    always free and this never has to bend.
+ * 3. Of those, the entry that has been the answer the fewest times. Every
+ *    entry has a day before any comes back, and a card that becomes
+ *    eligible later joins level with the entries still waiting in the
+ *    current round: a new set gets its fair share of days alongside them,
+ *    rather than taking over or waiting a full round.
+ * 4. Then the name that has waited longest, then a hash of the day, so the
  *    order is fixed by the data and not by when the script ran.
  */
-export function extendSchedule(cards: Card[], schedule: string[], until: number, gap = NAME_GAP): string[] {
+export function extendSchedule(cards: Card[], schedule: string[], until: number, options: PlanOptions = {}): string[] {
+  const gap = options.gap ?? NAME_GAP;
+  const eligibleFrom = options.eligibleFrom ?? (() => '0000-00-00');
   const pool = answerPool(cards);
   const byId = new Map(cards.map((c) => [c.id, c]));
   const out = [...schedule];
-  const entrySeen = new Map<string, number>(); // id -> latest day (index) it was the answer
-  const nameSeen = new Map<string, number>(); // name -> latest day it was the answer
+
+  const plays = new Map<string, number>(); // id -> times it has been the answer, once eligible
+  const nameSeen = new Map<string, number>(); // name -> latest day (index) it was the answer
+  const admit = (day: number) => {
+    const date = puzzleDate(day + 1);
+    const arriving = pool.filter((c) => !plays.has(c.id) && eligibleFrom(c) <= date);
+    if (!arriving.length) return;
+    // join level with whoever is still waiting in the current round
+    const level = plays.size ? Math.min(...plays.values()) : 0;
+    for (const c of arriving) plays.set(c.id, level);
+  };
   const record = (id: string, day: number) => {
-    entrySeen.set(id, day);
+    plays.set(id, (plays.get(id) ?? 0) + 1);
     const name = byId.get(id)?.name;
     if (name) nameSeen.set(name, day);
   };
-  out.forEach(record);
+
+  out.forEach((id, day) => {
+    admit(day);
+    record(id, day);
+  });
 
   while (out.length < until) {
     const day = out.length;
+    admit(day);
+    const open = pool.filter((c) => plays.has(c.id));
+    if (!open.length) break;
     const nameAge = (c: Card) => nameSeen.get(c.name) ?? -Infinity;
-    const entryAge = (c: Card) => entrySeen.get(c.id) ?? -Infinity;
-    const free = pool.filter((c) => day - nameAge(c) >= gap);
-    // only reachable with fewer names than `gap` days: fall back to the whole pool
-    let candidates = free.length ? free : pool;
-    if (!candidates.length) break;
-    const oldestEntry = Math.min(...candidates.map(entryAge));
-    candidates = candidates.filter((c) => entryAge(c) === oldestEntry);
+    const free = open.filter((c) => day - nameAge(c) >= gap);
+    // only reachable with fewer names than `gap` days: fall back to every eligible entry
+    let candidates = free.length ? free : open;
+    const fewest = Math.min(...candidates.map((c) => plays.get(c.id)!));
+    candidates = candidates.filter((c) => plays.get(c.id) === fewest);
     const oldestName = Math.min(...candidates.map(nameAge));
     const pick = rendezvous(
       candidates.filter((c) => nameAge(c) === oldestName),
@@ -148,6 +193,23 @@ export function extendSchedule(cards: Card[], schedule: string[], until: number,
     record(pick.id, day);
   }
   return out;
+}
+
+/**
+ * Brings a schedule up to date with the card pool as of puzzle `today`.
+ * Days up to and including today never change. The next LOCK_DAYS days are
+ * kept as long as their card is still the only one fitting its clues (a new
+ * card could share them). Everything after that is planned again, so new
+ * cards are mixed in within about a week instead of a year from now.
+ */
+export function replan(cards: Card[], schedule: string[], today: number, until: number, options: PlanOptions = {}): string[] {
+  const eligible = new Set(answerPool(cards).map((c) => c.id));
+  const kept = schedule.slice(0, today);
+  for (const id of schedule.slice(today, today + LOCK_DAYS)) {
+    if (!eligible.has(id)) break;
+    kept.push(id);
+  }
+  return extendSchedule(cards, kept, Math.max(until, kept.length), options);
 }
 
 /** Days where a name repeats within NAME_GAP days of its last appearance, as [day, name] (1-based days). */

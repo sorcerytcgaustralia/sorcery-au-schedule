@@ -1,12 +1,14 @@
 // Refreshes src/data/cards.json, the card pool for Realmdle (/daily), from
-// the Sorcery Card Registry export that KairosArchive serves.
+// the Sorcery Card Registry export that KairosArchive serves, and keeps
+// src/data/schedule.json (the answer for each day) planned a year ahead.
 //
-// Runs before every `next build`, after the sheet fetch. The registry
-// changes a few times a year and asks clients not to re-download the 6 MB
-// export needlessly, so this first fetches its 80-byte checksum and only
-// downloads the export when that differs from the one the snapshot was made
-// from. Any failure keeps the committed file and never fails the build: the
-// page never calls the API, so the game works even if the source is down.
+// Run daily by .github/workflows/refresh-cards.yml, which commits any
+// change; site builds never run it and only read the committed files, so
+// a build can never change a day's answer. The registry changes a few
+// times a year and asks clients not to re-download the 6 MB export
+// needlessly, so this first fetches its 80-byte checksum and only
+// downloads the export when that differs from the one the pool was made
+// from. Any failure keeps the committed files.
 //
 // To seed from a local clone instead (no network): pass the path, e.g.
 //   npx tsx scripts/fetch-cards.ts ../sorcery-registry/export/registry.json
@@ -14,7 +16,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { normalise, type RegistryExport } from '../src/lib/realmdle/adapter';
-import { extendSchedule, puzzleNumber } from '../src/lib/realmdle/engine';
+import { releaseGate, replan, puzzleNumber } from '../src/lib/realmdle/engine';
 import type { CardData } from '../src/lib/realmdle/types';
 
 const BASE = 'https://api.kairosarchive.net/v3';
@@ -23,8 +25,10 @@ const SOURCE = `${BASE}/registry.json`;
 const HEADERS = { 'user-agent': 'realmofoz-daily/1.0 (+https://realmofoz.com)', accept: 'application/json' };
 const OUT = new URL('../src/data/cards.json', import.meta.url);
 const SCHEDULE = new URL('../src/data/schedule.json', import.meta.url);
-/** How far ahead the schedule is kept filled. */
+/** How far ahead the schedule is planned. */
 const DAYS_AHEAD = 365;
+/** Top the plan up once it is this much shorter than DAYS_AHEAD: a commit a month, not a day. */
+const TOP_UP = 30;
 /** Fewer cards than this means something upstream is wrong. */
 const MIN_CARDS = 500;
 
@@ -52,23 +56,38 @@ function write(text: string, source: string, digest: string) {
   console.log(`Card pool written: ${data.cards.length} cards across ${data.sets.join(', ')} (${noRarity} without a rarity, never the answer)`);
 }
 
+type Schedule = { note?: string; pool: string | null; answers: string[] };
+
 /**
- * Keeps src/data/schedule.json a year ahead of today. Only appends: a day
- * that already has a card keeps it, so the answer never shifts under
- * players, whatever the build or the card pool does.
+ * Replans the schedule when the card pool has changed, or tops it up when
+ * it runs short. Days up to today never change and the next week is
+ * locked (see `replan`), so a new set is mixed in from about a week out.
  */
 function updateSchedule() {
-  const cards = readPrevious()?.cards ?? [];
-  let current: { answers: string[] } = { answers: [] };
+  const data = readPrevious();
+  if (!data) return;
+  let current: Schedule = { pool: null, answers: [] };
   try {
-    current = JSON.parse(readFileSync(SCHEDULE, 'utf8'));
+    current = { pool: null, ...JSON.parse(readFileSync(SCHEDULE, 'utf8')) };
   } catch {
     /* first run */
   }
-  const answers = extendSchedule(cards, current.answers, puzzleNumber(new Date()) + DAYS_AHEAD);
-  if (answers.length === current.answers.length) return;
-  writeFileSync(SCHEDULE, JSON.stringify({ note: 'Puzzle n is answers[n - 1]. Append only: never edit or reorder existing entries.', answers }, null, 0) + '\n');
-  console.log(`Schedule extended to puzzle ${answers.length} (${answers.length - current.answers.length} new days)`);
+  const today = puzzleNumber(new Date());
+  const poolChanged = current.pool !== data.sha256;
+  if (!poolChanged && current.answers.length - today >= DAYS_AHEAD - TOP_UP) return;
+
+  const answers = replan(data.cards, current.answers, today, today + DAYS_AHEAD, { eligibleFrom: releaseGate(data.sets, data.setDates) });
+  const changedFrom = answers.findIndex((id, i) => id !== current.answers[i]);
+  const schedule: Schedule = {
+    note: 'Puzzle n is answers[n - 1]. Written by scripts/fetch-cards.ts: days up to today never change.',
+    pool: data.sha256,
+    answers,
+  };
+  writeFileSync(SCHEDULE, JSON.stringify(schedule) + '\n');
+  console.log(
+    `Schedule ${poolChanged ? 'replanned for a new card pool' : 'topped up'}: puzzles 1 to ${answers.length}` +
+      (changedFrom >= 0 ? `, changed from puzzle ${changedFrom + 1}` : ', no days changed'),
+  );
 }
 
 async function main() {
@@ -81,10 +100,6 @@ async function refreshCards() {
   if (local) {
     const text = readFileSync(local, 'utf8');
     return write(text, SOURCE, sha256(text));
-  }
-  if (process.env.SKIP_SHEET_FETCH || process.env.SKIP_CARD_FETCH) {
-    console.log('Skipping the card fetch: keeping the committed card pool');
-    return;
   }
   const previous = readPrevious();
   try {

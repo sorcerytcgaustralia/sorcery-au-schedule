@@ -133,16 +133,25 @@ each day with no server involved.
 
 - **Data:** the [Sorcery Card Registry](https://github.com/sadkinglabs/sorcery-registry)
   export, served by KairosArchive at `api.kairosarchive.net/v3/registry.json`.
-  `scripts/fetch-cards.ts` runs in `prebuild` after the sheet fetch. It
-  first fetches the 80-byte `registry.json.sha256` and only downloads the
-  6 MB export when that differs from the `sha256` stored in
-  `src/data/cards.json`, as the registry's usage notes ask (the data
-  changes a few times a year). It sends a `User-Agent` naming the site,
-  which the registry requires. Any failure keeps the committed file and
-  never fails the build; the page never calls the API.
+  `.github/workflows/refresh-cards.yml` runs `scripts/fetch-cards.ts`
+  daily on `main`: it fetches the 80-byte `registry.json.sha256` and only
+  downloads the 6 MB export when that differs from the `sha256` in
+  `src/data/cards.json`, as the registry's usage notes ask. It sends a
+  `User-Agent` naming the site, which the registry requires. If
+  `cards.json` or `schedule.json` changed, it runs the tests, commits both
+  to `main` and starts a deploy. **Site builds never fetch cards**; they
+  only read the committed files, so a build cannot change an answer.
+- **New sets:** a new set's cards can be guessed as soon as the registry
+  has them, and can be the answer from 14 days after the set's release
+  (`GRACE_DAYS`). On the next daily run the schedule is replanned from a
+  week out (`LOCK_DAYS`), so the new set is mixed in within about three
+  weeks of release, taking a fair share of days (level with the cards
+  still waiting their turn in the current round). A rehearsal with a
+  300-card set gave it 30 to 42% of days, with no name repeats.
 - **Seeding without network:** `npx tsx scripts/fetch-cards.ts
-  path/to/sorcery-registry/export/registry.json` builds the pool from a
-  local clone of the registry repo.
+  path/to/sorcery-registry/export/registry.json` builds the pool (and
+  replans the schedule) from a local clone of the registry repo. Commit
+  both data files.
 - **Adapter:** `src/lib/realmdle/adapter.ts` makes **one entry per card
   per release set**: Apprentice Wizard in Alpha (`C000001-001`) and in
   Beta (`C000001-002`) are separate guesses and separate answers, with
@@ -161,20 +170,23 @@ each day with no server involved.
   ~1,480 entries qualify, spread across every set including Beta; most
   Sites and all avatars do not.
 - **Schedule:** `src/data/schedule.json` lists the answer for every
-  puzzle a year ahead (puzzle n is `answers[n - 1]`). The fetch script
-  only ever appends to it, never edits it, so no rebuild or new set can
-  change a day that is already set. New days follow three rules in
-  order: (1) a card name is never the answer twice within 365 days, in
-  any set (`NAME_GAP`), so the Alpha and Beta copies of a card are always
-  at least a year apart; (2) the entry that has waited longest goes next,
-  so every entry has a day before any repeats; (3) then the name that has
-  waited longest, then a hash. Rule 1 can always be met because there are
-  more eligible names (~465) than days in a year; a five-year simulation
-  has no repeats. `schedule.test.ts` checks the committed file on every
-  CI run and stops the deploy if a name repeats within a year or a
-  scheduled card is no longer eligible. Past its end, or if a scheduled
-  card later gains a twin, the day falls back to a hash of the puzzle number over the pool.
-  Commit the file when it grows.
+  puzzle about a year ahead (puzzle n is `answers[n - 1]`), plus the
+  checksum of the card pool it was planned from. Days up to today never
+  change; the next 7 days stay put unless their card stops being the only
+  one fitting its clues; later days are replanned whenever the pool
+  changes (`replan` in `engine.ts`). Otherwise it is topped up once a
+  month. Each new day follows these rules in order: (1) a new set's cards
+  wait out their grace period; (2) a card name is never the answer twice
+  within 365 days, in any set (`NAME_GAP`), so the Alpha and Beta copies
+  of a card are always at least a year apart; (3) the entry that has been
+  the answer the fewest times goes next, and a newly eligible card joins
+  level with the ones still waiting in the current round; (4) then the
+  name that has waited longest, then a hash. Rule 2 can always be met
+  because there are more eligible names (~465) than days in a year.
+  `schedule.test.ts` checks the committed file on every CI run and stops
+  the deploy if a name repeats within a year or a scheduled card is no
+  longer eligible. Past its end the day falls back to a hash of the
+  puzzle number over the pool.
 - **Clues:** element (match, or close if one element is shared), type,
   cost and power (close within one, with a higher/lower chevron), rarity
   and set (with a rarer/newer chevron). Guessing the Alpha copy when the
