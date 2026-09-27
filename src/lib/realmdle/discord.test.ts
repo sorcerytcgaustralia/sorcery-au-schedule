@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Board } from './api';
+import type { Board } from './board';
 import { announcementEmbed, boardEmbed, distributionBars, grid, leaderboardEmbed, rank, resultEmbed, statsEmbed, type RankedRow } from './discord';
 import { compare } from './engine';
 import { playerStats } from './stats';
@@ -73,7 +73,7 @@ describe('public result', () => {
   });
 
   it('shows the squares, score, streak and the day, but never the card', () => {
-    const e = resultEmbed(finished, who, 'discord');
+    const e = resultEmbed(finished, who);
     expect(e.author?.name).toBe('Bob · Realmdle #12 · 2/6');
     expect(e.description).toBe(`<@${who.id}> solved it in 2.\n\n${grid(finished.guesses.map((g) => g.feedback))}`);
     expect(e.fields).toEqual([
@@ -86,9 +86,8 @@ describe('public result', () => {
     expect(text).not.toContain('img.test');
   });
 
-  it('says where it was played and marks a loss', () => {
-    expect(resultEmbed({ ...finished, won: false }, who, 'web').footer?.text).toContain('realmofoz.com');
-    expect(resultEmbed({ ...finished, won: false }, who, 'web').author?.name).toContain('X/6');
+  it('marks a loss', () => {
+    expect(resultEmbed({ ...finished, won: false }, who).author?.name).toContain('X/6');
   });
 });
 

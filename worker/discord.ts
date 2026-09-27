@@ -4,16 +4,20 @@
 // Discord sends every interaction to POST /api/discord/interactions, signed
 // with the application's Ed25519 key; anything that fails the signature
 // check is refused, so nobody can play as someone else by calling the URL
-// directly. Every reply about the game is ephemeral (only the player sees
-// it); the one public message is the result, posted when they finish.
+// directly. Realmdle belongs to one server (DISCORD_GUILD_ID): commands
+// from any other server, or from DMs, are refused, so the stats and the
+// leaderboard are that server's. Every reply about the game is ephemeral
+// (only the player sees it); the one public message is the result, posted
+// to the Realmdle channel when they finish.
 //
 //   /realmdle play                     your board for today
 //   /realmdle guess card:<name>        autocomplete from the card pool
 //   /realmdle stats [player]           your stats, or a leaderboard player's
 //   /realmdle leaderboard [sort]       longest streaks, or solved %
 //   /realmdle settings leaderboard:<>  join or leave the leaderboard
+//   /realmdle forget-me confirm:True   delete my player record and every play
 
-import type { Board } from '../src/lib/realmdle/api';
+import type { Board } from '../src/lib/realmdle/board';
 import {
   announcementEmbed,
   boardEmbed,
@@ -21,7 +25,6 @@ import {
   rank,
   resultEmbed,
   statsEmbed,
-  SITE,
   type Embed,
   type LeaderboardSort,
   type Today,
@@ -36,6 +39,7 @@ import {
   cardsById,
   claimAnnouncement,
   dayCounts,
+  deletePlayer,
   ensurePlanned,
   getPlayer,
   guess,
@@ -46,7 +50,7 @@ import {
   upsertPlayer,
 } from './game';
 
-type Ready = RealmdleEnv & { DB: D1Database; PLAN_SALT: string; DISCORD_PUBLIC_KEY: string };
+type Ready = RealmdleEnv & { DB: D1Database; PLAN_SALT: string; DISCORD_PUBLIC_KEY: string; DISCORD_GUILD_ID: string };
 
 const EPHEMERAL = 64;
 const PLAY_BUTTON = 'realmdle:play';
@@ -78,6 +82,7 @@ type Interaction = {
   id: string;
   application_id: string;
   token: string;
+  guild_id?: string;
   member?: { nick?: string | null; user: DiscordUser };
   user?: DiscordUser;
   data?: { name?: string; custom_id?: string; options?: Option[]; resolved?: { users?: Record<string, DiscordUser> } };
@@ -97,25 +102,21 @@ function whoIs(interaction: Interaction): Who & { user: DiscordUser } {
 const todayOf = (b: Board): Today =>
   b.over ? (b.won ? { state: 'won', guesses: b.guesses.length } : { state: 'lost' }) : b.guesses.length ? { state: 'playing', guesses: b.guesses.length } : { state: 'not_played' };
 
-/** The public result: in the channel the player used, via the interaction's own webhook. */
-async function postResultHere(env: Ready, interaction: Interaction, b: Board, who: Who) {
-  const res = await fetch(`${discordApi(env)}/webhooks/${interaction.application_id}/${interaction.token}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ embeds: [resultEmbed(b, who, 'discord')], ...quiet }),
-  });
+/**
+ * The public result. The bot posts it in the Realmdle channel, wherever in
+ * the server the player was; without a channel set, it falls back to the
+ * channel they played in, through the interaction's own webhook.
+ */
+async function postResult(env: Ready, interaction: Interaction, b: Board, who: Who) {
+  const body = JSON.stringify({ embeds: [resultEmbed(b, who)], ...quiet });
+  const res = channelReady(env)
+    ? await fetch(`${discordApi(env)}/channels/${env.DISCORD_CHANNEL_ID}/messages`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bot ${env.DISCORD_BOT_TOKEN}` },
+        body,
+      })
+    : await fetch(`${discordApi(env)}/webhooks/${interaction.application_id}/${interaction.token}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
   if (!res.ok) console.error('result post failed', res.status, await res.text());
-}
-
-/** A web player's result, posted to the Realmdle channel by the bot. */
-export async function postResultToChannel(env: RealmdleEnv, b: Board, who: Who) {
-  if (!channelReady(env)) return;
-  const res = await fetch(`${discordApi(env)}/channels/${env.DISCORD_CHANNEL_ID}/messages`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bot ${env.DISCORD_BOT_TOKEN}` },
-    body: JSON.stringify({ embeds: [resultEmbed(b, who, 'web')], ...quiet }),
-  });
-  if (!res.ok) console.error('channel result post failed', res.status, await res.text());
 }
 
 /** The midnight post, once per puzzle, with yesterday's reveal and a Play button. */
@@ -131,10 +132,7 @@ export async function announce(env: RealmdleEnv & { DB: D1Database }, today: num
       components: [
         {
           type: 1,
-          components: [
-            { type: 2, style: 1, label: 'Play', custom_id: PLAY_BUTTON },
-            { type: 2, style: 5, label: 'Play on the web', url: SITE },
-          ],
+          components: [{ type: 2, style: 1, label: 'Play', custom_id: PLAY_BUTTON }],
         },
       ],
     }),
@@ -191,12 +189,14 @@ async function handle(env: Ready, ctx: ExecutionContext, interaction: Interactio
   if (name === 'guess') {
     const picked = resolveCard(String(option(options, 'card') ?? ''));
     if ('error' in picked) return notice(picked.error);
-    const result = await guess(env.DB, who.id, today, answer, picked.id, 'discord');
+    const result = await guess(env.DB, who.id, today, answer, picked.id);
     if (!result.ok) return notice(result.error);
     const b = await board(env.DB, today, answer, who.id);
+    if (!b.over) return privately([boardEmbed(b, cardsById)]);
     // the one public step: the finished result, after the private reply
-    if (b.over) ctx.waitUntil(postResultHere(env, interaction, b, who));
-    return privately([boardEmbed(b, cardsById)]);
+    ctx.waitUntil(postResult(env, interaction, b, who));
+    const where = channelReady(env) ? ` in <#${env.DISCORD_CHANNEL_ID}>` : '';
+    return privately([boardEmbed(b, cardsById)], `Your result has been posted${where}.`);
   }
 
   if (name === 'stats') {
@@ -229,6 +229,12 @@ async function handle(env: Ready, ctx: ExecutionContext, interaction: Interactio
     return notice(on ? 'You are on the leaderboard. Your streak and solved % are now visible to the server.' : 'You have left the leaderboard. Your stats are private again.');
   }
 
+  if (name === 'forget-me') {
+    if (option(options, 'confirm') !== true) return notice('Nothing was deleted. Use `/realmdle forget-me confirm:True` to delete your Realmdle stats and every game you have played.');
+    await deletePlayer(env.DB, who.id);
+    return notice('Done. Your Realmdle stats and games are deleted. Playing again starts a fresh record.');
+  }
+
   return notice('Unknown command.');
 }
 
@@ -238,7 +244,9 @@ export async function handleInteraction(request: Request, env: RealmdleEnv, ctx:
   if (!(await verified(request, body, env.DISCORD_PUBLIC_KEY))) return new Response('Bad signature', { status: 401 });
   const interaction = JSON.parse(body) as Interaction;
   if (interaction.type === 1) return reply({ type: 1 }); // Discord's ping when the URL is saved
-  if (!env.DB || !env.PLAN_SALT) return notice('Realmdle is not set up yet.');
+  if (!env.DB || !env.PLAN_SALT || !env.DISCORD_GUILD_ID) return notice('Realmdle is not set up yet.');
+  // one server's game: nowhere else, not in DMs
+  if (interaction.guild_id !== env.DISCORD_GUILD_ID) return notice('Realmdle is played in the Sorcery TCG Australia Discord server.');
   return handle(env as Ready, ctx, interaction);
 }
 

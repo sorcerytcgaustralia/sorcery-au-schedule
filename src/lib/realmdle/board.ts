@@ -1,5 +1,5 @@
-// The shapes the Realmdle API (worker/) sends to the page. Shared so the
-// browser and the Worker cannot disagree about them.
+// A player's view of one puzzle, as the Worker builds it for the Discord
+// embeds (src/lib/realmdle/discord.ts).
 
 import type { Feedback } from './engine';
 import type { PlayerStats } from './stats';
@@ -8,7 +8,7 @@ export type Board = {
   puzzle: number;
   /** YYYY-MM-DD in Sydney. */
   date: string;
-  /** Null when signed out. */
+  /** Null for someone who has never played. */
   player: { name: string; leaderboard: boolean } | null;
   guesses: { id: string; feedback: Feedback }[];
   over: boolean;
@@ -21,16 +21,3 @@ export type Board = {
   /** Everyone who has finished today's puzzle, anonymously. */
   community: { finished: number; solved: number };
 };
-
-export type LeaderboardRow = {
-  name: string;
-  currentStreak: number;
-  maxStreak: number;
-  winRate: number;
-  played: number;
-  averageGuesses: number | null;
-  you: boolean;
-};
-
-export type ApiErrorCode = 'not_configured' | 'signed_out' | 'stale_puzzle' | 'bad_guess' | 'over' | 'conflict' | 'forbidden' | 'not_found' | 'server';
-export type ApiError = { error: string; code: ApiErrorCode };

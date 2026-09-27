@@ -5,10 +5,10 @@
 //   npm run api:dev                        # with those lines in .dev.vars
 //   node scripts/discord-smoke.mjs         # signs interactions like Discord does
 //
-// Checks: signatures, private boards, autocomplete, the hint, the public
-// result (and that it never names the card), stats privacy, the
-// leaderboard, the Play button, web results reaching the channel and the
-// once-a-day midnight post.
+// Checks: signatures, the one-server lock, private boards, autocomplete,
+// the hint, the public result in the Realmdle channel (never naming the
+// card), stats privacy, the leaderboard, the Play button, deleting your
+// data and the once-a-day midnight post.
 
 import { execSync } from 'node:child_process';
 import { createPrivateKey, generateKeyPairSync, sign } from 'node:crypto';
@@ -19,7 +19,7 @@ if (process.argv[2] === 'keys') {
   const { publicKey, privateKey } = generateKeyPairSync('ed25519');
   const pub = publicKey.export({ format: 'der', type: 'spki' }).subarray(-32).toString('hex');
   const priv = privateKey.export({ format: 'der', type: 'pkcs8' }).toString('hex');
-  console.log(`DISCORD_PUBLIC_KEY=${pub}\nDISCORD_TEST_PRIVATE_KEY=${priv}\nDISCORD_BOT_TOKEN=test-token\nDISCORD_CHANNEL_ID=555\nDISCORD_API=http://127.0.0.1:8799`);
+  console.log(`DISCORD_PUBLIC_KEY=${pub}\nDISCORD_TEST_PRIVATE_KEY=${priv}\nPLAN_SALT=local-test-salt\nDISCORD_BOT_TOKEN=test-token\nDISCORD_GUILD_ID=777\nDISCORD_CHANNEL_ID=555\nDISCORD_API=http://127.0.0.1:8799`);
   process.exit(0);
 }
 
@@ -58,8 +58,8 @@ const check = (label, ok, extra = '') => {
 const run = Date.now().toString().slice(-6);
 const user = (n, name) => ({ id: `8${run}${String(n).padStart(11, '0')}`, username: name.toLowerCase(), global_name: name, avatar: null });
 let seq = 0;
-async function interact(body, { signed = true } = {}) {
-  const text = JSON.stringify({ id: String(++seq), application_id: 'app1', token: `tok${seq}`, ...body });
+async function interact(body, { signed = true, guild = '777' } = {}) {
+  const text = JSON.stringify({ id: String(++seq), application_id: 'app1', token: `tok${seq}`, guild_id: guild, ...body });
   const timestamp = String(Math.floor(Date.now() / 1000));
   const signature = signed ? sign(null, Buffer.from(timestamp + text), key).toString('hex') : '00'.repeat(64);
   const res = await fetch(`${BASE}/api/discord/interactions`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-signature-ed25519': signature, 'x-signature-timestamp': timestamp }, body: text });
@@ -68,23 +68,28 @@ async function interact(body, { signed = true } = {}) {
 const command = (u, sub, options = [], resolved) => interact({ type: 2, member: { user: u }, data: { name: 'realmdle', options: [{ type: 1, name: sub, options }], resolved } });
 const guess = (u, card) => command(u, 'guess', [{ type: 3, name: 'card', value: card }]);
 
+const eve = user(1, 'Eve');
+const finn = user(2, 'Finn');
+
 // ---- today's answer, read from the local database ----
-const today = (await (await fetch(`${BASE}/api/today`)).json()).puzzle;
+const opening = await command(eve, 'play');
+const today = Number(opening.body.data.embeds[0].title.match(/#(\d+)/)[1]);
 const sql = `SELECT card_id FROM puzzles WHERE puzzle = ${today}`;
 const ANSWER = JSON.parse(execSync(`npx wrangler d1 execute realmdle --local --env dev --json --command "${sql}"`, { stdio: ['ignore', 'pipe', 'ignore'] }))[0].results[0].card_id;
 const answer = cards.find((c) => c.id === ANSWER);
 const wrong = cards.filter((c) => c.name !== answer.name && !cards.some((o) => o.name === c.name && o.id !== c.id)).slice(0, 6);
-
-const eve = user(1, 'Eve');
-const finn = user(2, 'Finn');
 
 let r = await interact({ type: 1 }, { signed: false });
 check('refuses an unsigned request', r.status === 401);
 r = await interact({ type: 1 });
 check('answers Discord’s ping', r.body.type === 1);
 
-r = await command(eve, 'play');
+r = opening;
 check('play: a private board, guess 1 of 6', r.body.data.flags === 64 && r.body.data.embeds[0].title === `Realmdle #${today} · guess 1 of 6`);
+r = await interact({ type: 2, member: { user: eve }, data: { name: 'realmdle', options: [{ type: 1, name: 'play' }] } }, { guild: '999' });
+check('refuses to play in any other server', r.body.data.content.includes('Sorcery TCG Australia'));
+r = await interact({ type: 2, user: eve, data: { name: 'realmdle', options: [{ type: 1, name: 'play' }] } }, { guild: null }); // a DM has no server
+check('refuses to play in DMs', r.body.data.content.includes('Sorcery TCG Australia'));
 
 r = await interact({ type: 4, member: { user: eve }, data: { name: 'realmdle', options: [{ type: 1, name: 'guess', options: [{ type: 3, name: 'card', value: 'apprentice wiz', focused: true }] }] } });
 const names = r.body.data.choices.map((c) => c.name);
@@ -101,10 +106,10 @@ r = await interact({ type: 4, member: { user: eve }, data: { name: 'realmdle', o
 check('autocomplete leaves out cards already guessed', !r.body.data.choices.some((c) => c.value === wrong[0].id));
 
 r = await guess(eve, ANSWER);
-check('solving it: the private board reveals the card', r.body.data.flags === 64 && r.body.data.embeds[0].title === `Solved in 6: ${answer.name}`);
+check('solving it: the private board reveals the card and points to the channel', r.body.data.flags === 64 && r.body.data.embeds[0].title === `Solved in 6: ${answer.name}` && r.body.data.content.includes('<#555>'));
 const result = await waitForPost(1);
 const resultText = JSON.stringify(result?.body);
-check('then the result is posted publicly in the channel', result?.path === `/webhooks/app1/tok${seq}` && result.body.flags === undefined && result.body.embeds[0].author.name === `Eve · Realmdle #${today} · 6/6`);
+check('then the bot posts the result publicly in the Realmdle channel', result?.path === '/channels/555/messages' && result.auth === 'Bot test-token' && result.body.flags === undefined && result.body.embeds[0].author.name === `Eve · Realmdle #${today} · 6/6`);
 check('the public result never names the card', !resultText.includes(answer.name) && !resultText.includes(answer.image ?? 'no-image'));
 check('the result mentions the player without pinging', resultText.includes(`<@${eve.id}>`) && result.body.allowed_mentions.parse.length === 0);
 
@@ -129,11 +134,15 @@ check('leaderboard by solved % needs 5 games', r.body.data.embeds[0].title.inclu
 r = await interact({ type: 3, member: { user: finn }, data: { custom_id: 'realmdle:play' } });
 check('the Play button opens Finn’s private board', r.body.data.flags === 64 && r.body.data.embeds[0].title.includes('guess 1 of 6'));
 
-// a web player finishing: the bot posts the result in the channel
-const cookie = (await fetch(`${BASE}/api/auth/dev?id=${finn.id}&name=Finn`, { redirect: 'manual' })).headers.get('set-cookie').split(';')[0];
-await fetch(`${BASE}/api/guess`, { method: 'POST', headers: { cookie, 'content-type': 'application/json', origin: BASE }, body: JSON.stringify({ puzzle: today, cardId: ANSWER }) });
-const webPost = await waitForPost(2);
-check('a web finish is posted to the Realmdle channel by the bot', webPost?.path === '/channels/555/messages' && webPost.auth === 'Bot test-token' && webPost.body.embeds[0].footer.text.includes('realmofoz.com'));
+r = await guess(finn, ANSWER);
+const finnPost = await waitForPost(2);
+check('Finn solves it first try: his result goes to the channel too', finnPost?.body.embeds[0].author.name === `Finn · Realmdle #${today} · 1/6`);
+
+r = await command(finn, 'forget-me', [{ type: 5, name: 'confirm', value: false }]);
+check('forget-me does nothing without confirm:True', r.body.data.content.includes('Nothing was deleted'));
+r = await command(finn, 'forget-me', [{ type: 5, name: 'confirm', value: true }]);
+const finnStats = await command(finn, 'stats');
+check('forget-me deletes the record: stats start again from nothing', r.body.data.content.includes('deleted') && finnStats.body.data.embeds[0].fields[0].value === '0');
 
 // the midnight post: once, however often the hourly job runs
 await fetch(`${BASE}/cdn-cgi/handler/scheduled?cron=7+*+*+*+*`);

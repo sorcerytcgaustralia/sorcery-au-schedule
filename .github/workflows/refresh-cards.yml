@@ -1,11 +1,10 @@
-# Keeps the Realmdle card pool and answer schedule current.
+# Keeps the Realmdle card pool current.
 #
 # Once a day it asks the Sorcery Card Registry whether a new release exists
 # (an 80-byte checksum; the 6 MB export is only downloaded when it changed),
-# replans the schedule if the pool changed or tops it up once a month, runs
-# the tests (which check the schedule), and commits the two data files to
-# main. Site builds only read the committed files, so the answer for a day
-# can only change here, and never for today or the week ahead.
+# runs the tests and commits src/data/cards.json to main, then deploys so
+# the Worker bundles the new cards. New cards become answers through the
+# Worker's planner, 14 days after their set's release.
 name: Refresh Realmdle cards
 
 on:
@@ -41,10 +40,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Refresh the card pool and schedule
+      - name: Refresh the card pool
         run: npm run fetch-cards
 
-      - name: Check the schedule
+      - name: Test
         run: npm test
 
       # A push made with the workflow token does not trigger other
@@ -53,13 +52,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- src/data/cards.json src/data/schedule.json; then
-            echo "Card pool and schedule are current"
+          if git diff --quiet -- src/data/cards.json; then
+            echo "Card pool is current"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898783+github-actions[bot]@users.noreply.github.com"
-          git add src/data/cards.json src/data/schedule.json
-          git commit -m "Refresh Realmdle card pool and schedule"
+          git add src/data/cards.json
+          git commit -m "Refresh Realmdle card pool"
           git push
           gh workflow run deploy.yml --ref main

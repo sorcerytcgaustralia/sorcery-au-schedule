@@ -2,8 +2,8 @@
 // The answer only ever leaves the server once a player's puzzle is over.
 
 import cardData from '../src/data/cards.json';
-import type { Board, LeaderboardRow } from '../src/lib/realmdle/api';
-import { rank, type LeaderboardSort, type RankedRow } from '../src/lib/realmdle/discord';
+import type { Board } from '../src/lib/realmdle/board';
+import type { RankedRow } from '../src/lib/realmdle/discord';
 import { HINT_AFTER, LOCK_DAYS, MAX_GUESSES, compare, extendSchedule, puzzleDate, releaseGate } from '../src/lib/realmdle/engine';
 import { playerStats, type Play } from '../src/lib/realmdle/stats';
 import type { Card, CardData } from '../src/lib/realmdle/types';
@@ -84,7 +84,7 @@ export async function releaseAnnouncement(db: D1Database, puzzle: number): Promi
   await db.prepare('DELETE FROM announcements WHERE puzzle = ?').bind(puzzle).run();
 }
 
-/** Everything the page shows for one puzzle, for a player (or signed out, with `playerId` null). */
+/** Everything a player's board shows for one puzzle (`playerId` null for nobody in particular). */
 export async function board(db: D1Database, puzzle: number, answer: Card, playerId: string | null): Promise<Board> {
   const community = await dayCounts(db, puzzle);
   const base: Board = {
@@ -125,19 +125,19 @@ export async function board(db: D1Database, puzzle: number, answer: Card, player
   };
 }
 
-export type GuessResult = { ok: true } | { ok: false; code: 'bad_guess' | 'over' | 'conflict'; error: string };
+export type GuessResult = { ok: true } | { ok: false; error: string };
 
 /**
  * Records one guess. The update only applies if the play still has the
  * number of guesses it was read with, so two tabs guessing at once cannot
  * both count: the second gets `conflict` and simply reloads.
  */
-export async function guess(db: D1Database, playerId: string, puzzle: number, answer: Card, cardId: string, source: 'web' | 'discord'): Promise<GuessResult> {
-  if (!cardsById.has(cardId)) return { ok: false, code: 'bad_guess', error: 'That is not a card Realmdle knows.' };
+export async function guess(db: D1Database, playerId: string, puzzle: number, answer: Card, cardId: string): Promise<GuessResult> {
+  if (!cardsById.has(cardId)) return { ok: false, error: 'That is not a card Realmdle knows.' };
   const row = await db.prepare('SELECT guesses, attempts, finished FROM plays WHERE discord_id = ? AND puzzle = ?').bind(playerId, puzzle).first<PlayRow>();
   const previous = row ? (JSON.parse(row.guesses) as string[]) : [];
-  if (row?.finished) return { ok: false, code: 'over', error: 'You have already finished today’s puzzle.' };
-  if (previous.includes(cardId)) return { ok: false, code: 'bad_guess', error: 'You have already guessed that card.' };
+  if (row?.finished) return { ok: false, error: 'You have already finished today’s puzzle.' };
+  if (previous.includes(cardId)) return { ok: false, error: 'You have already guessed that card.' };
 
   const guesses = [...previous, cardId];
   const solved = cardId === answer.id;
@@ -154,9 +154,9 @@ export async function guess(db: D1Database, playerId: string, puzzle: number, an
           `INSERT INTO plays (discord_id, puzzle, guesses, attempts, solved, finished, source, started_at, finished_at)
            VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`,
         )
-        .bind(playerId, puzzle, JSON.stringify(guesses), solved ? 1 : 0, finished ? 1 : 0, source, now(), finishedAt)
+        .bind(playerId, puzzle, JSON.stringify(guesses), solved ? 1 : 0, finished ? 1 : 0, 'discord', now(), finishedAt)
         .run();
-  if (result.meta.changes !== 1) return { ok: false, code: 'conflict', error: 'That guess crossed with another one. Reload to see your board.' };
+  if (result.meta.changes !== 1) return { ok: false, error: 'That guess crossed with another one. Run `/realmdle play` to see your board.' };
   return { ok: true };
 }
 
@@ -179,13 +179,6 @@ export async function leaderboardRows(db: D1Database, today: number): Promise<Ra
     const s = playerStats(plays, today);
     return { id, name, currentStreak: s.currentStreak, maxStreak: s.maxStreak, winRate: s.winRate, played: s.played, averageGuesses: s.averageGuesses };
   });
-}
-
-/** The web leaderboard: same ranking as Discord, without Discord ids. */
-export async function leaderboard(db: D1Database, today: number, playerId: string | null, sort: LeaderboardSort = 'streak', limit = 25): Promise<LeaderboardRow[]> {
-  return rank(await leaderboardRows(db, today), sort)
-    .slice(0, limit)
-    .map(({ id, ...row }) => ({ ...row, you: id === playerId }));
 }
 
 export async function setLeaderboard(db: D1Database, playerId: string, on: boolean): Promise<void> {

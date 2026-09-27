@@ -64,7 +64,7 @@ src/lib/events.ts                     selectors: events per day, special events 
 src/lib/time.ts                       city-local clocks via Intl, proximity, date labels
 ```
 
-Routes are static: `/`, `/hall`, `/daily` and the 404 page. Picking a city writes
+Routes are static: `/`, `/hall`, and the 404 page. Picking a city writes
 `?city=Sydney` into the address bar with `history.replaceState`, so a
 selection is shareable, and the same query opens on that city.
 
@@ -126,209 +126,134 @@ with hatching, ranges and the seven cities, as a faded, masked SVG behind
 the masthead. It is decorative only (`aria-hidden`); the cities on it are
 not controls. Its styles are the `.masthead-map` rules in `globals.css`.
 
-## Realmdle (`/daily`)
+## Realmdle (the daily card game, in Discord)
 
-A daily guess-the-card game for the Discord. Everyone gets the same card
-each day with no server involved.
-
-- **Data:** the [Sorcery Card Registry](https://github.com/sadkinglabs/sorcery-registry)
-  export, served by KairosArchive at `api.kairosarchive.net/v3/registry.json`.
-  `.github/workflows/refresh-cards.yml` runs `scripts/fetch-cards.ts`
-  daily on `main`: it fetches the 80-byte `registry.json.sha256` and only
-  downloads the 6 MB export when that differs from the `sha256` in
-  `src/data/cards.json`, as the registry's usage notes ask. It sends a
-  `User-Agent` naming the site, which the registry requires. If
-  `cards.json` or `schedule.json` changed, it runs the tests, commits both
-  to `main` and starts a deploy. **Site builds never fetch cards**; they
-  only read the committed files, so a build cannot change an answer.
-- **New sets:** a new set's cards can be guessed as soon as the registry
-  has them, and can be the answer from 14 days after the set's release
-  (`GRACE_DAYS`). On the next daily run the schedule is replanned from a
-  week out (`LOCK_DAYS`), so the new set is mixed in within about three
-  weeks of release, taking a fair share of days (level with the cards
-  still waiting their turn in the current round). A rehearsal with a
-  300-card set gave it 30 to 42% of days, with no name repeats.
-- **Seeding without network:** `npx tsx scripts/fetch-cards.ts
-  path/to/sorcery-registry/export/registry.json` builds the pool (and
-  replans the schedule) from a local clone of the registry repo. Commit
-  both data files.
-- **Adapter:** `src/lib/realmdle/adapter.ts` makes **one entry per card
-  per release set**: Apprentice Wizard in Alpha (`C000001-001`) and in
-  Beta (`C000001-002`) are separate guesses and separate answers, with
-  the same stats and a different set. Foils and other finishes in a set
-  are the same entry; its art comes from the set's standard booster
-  printing. Stats come from the card record (`power`, not `attack`;
-  `["None"]` elements are colourless). Tokens and promo printings are
-  left out, and the promo set is not in the set order (it is dated before
-  Alpha). Entries without a rarity (avatars) can be guessed but are never
-  the answer.
-- **Rules:** `src/lib/realmdle/engine.ts`, tested in `engine.test.ts`.
-  Six guesses. The puzzle number is days since 28 Sep 2026 in Sydney.
-- **One answer per puzzle:** a card can only be the answer if no other
-  card shares all six of its clue values (its `signature`). Otherwise a
-  player could turn every tile green and still be wrong. About 620 of the
-  ~1,480 entries qualify, spread across every set including Beta; most
-  Sites and all avatars do not.
-- **Schedule:** `src/data/schedule.json` lists the answer for every
-  puzzle about a year ahead (puzzle n is `answers[n - 1]`), plus the
-  checksum of the card pool it was planned from. Days up to today never
-  change; the next 7 days stay put unless their card stops being the only
-  one fitting its clues; later days are replanned whenever the pool
-  changes (`replan` in `engine.ts`). Otherwise it is topped up once a
-  month. Each new day follows these rules in order: (1) a new set's cards
-  wait out their grace period; (2) a card name is never the answer twice
-  within 365 days, in any set (`NAME_GAP`), so the Alpha and Beta copies
-  of a card are always at least a year apart; (3) the entry that has been
-  the answer the fewest times goes next, and a newly eligible card joins
-  level with the ones still waiting in the current round; (4) then the
-  name that has waited longest, then a hash. Rule 2 can always be met
-  because there are more eligible names (~465) than days in a year.
-  `schedule.test.ts` checks the committed file on every CI run and stops
-  the deploy if a name repeats within a year or a scheduled card is no
-  longer eligible. Past its end the day falls back to a hash of the
-  puzzle number over the pool.
-- **Clues:** element (match, or close if one element is shared), type,
-  cost and power (close within one, with a higher/lower chevron), rarity
-  and set (with a rarer/newer chevron). Guessing the Alpha copy when the
-  answer is the Beta copy shows every stat green and the set tile newer.
-- **Hint:** on the sixth and last guess the answer's subtypes (Monster,
-  Mortal, Spirit...) are revealed, or "no subtype" for most spells and
-  sites. Subtypes are never a per-guess clue.
-- **State:** guesses and streaks live in `localStorage` only, and the game
-  works without it. Keys are versioned (`realmdle:v3:*`) so a rule change
-  such as the guess count does not mix old boards with new. The copied result uses emoji squares because that is
-  what renders in Discord; the page itself uses none.
-- **Images** are hotlinked from `api.kairosarchive.net/images/`, which the
-  registry allows with credit to Erik's Curiosa (in the page footer).
-
-## Realmdle backend (accounts, stats, leaderboard)
-
-With the backend set up, players sign in with Discord and the server runs
-the game: it holds the answer, scores every guess and keeps each play, so
-streaks and stats follow a player across devices (and, later, into the
-Discord slash commands). Until it is set up, `/api/*` answers
-`503 not_configured` and `/daily` plays in the browser as before.
-
-**Pieces**
-
-```
-worker/index.ts      routes /api/* (every other path is served from ./out untouched)
-worker/auth.ts       Discord OAuth2 (identify scope) and the signed session cookie
-worker/game.ts       planning, scoring, stats and leaderboard queries
-worker/env.ts        the bindings and secrets, all optional until set up
-migrations/          D1 schema: puzzles, players, plays
-src/lib/realmdle/    rules, planner and stats, shared by the page and the Worker
-scripts/api-smoke.mjs  end-to-end check against the local Worker
-```
-
-- **puzzles** holds every past day and the week ahead. The hourly cron
-  (and the first request of a day, as a fallback) appends missing days with
-  the same planner as `schedule.json`, replaying the history in the table.
-  Rows are never changed once written.
-- **Answers are secret.** The planner mixes in `PLAN_SALT`, so the public
-  code and data cannot be used to work out future answers, and the API only
-  returns the answer once a player's puzzle is over. (The committed
-  `schedule.json` is only used by the in-browser fallback and does not
-  match the server's answers.)
-- **plays** is one row per player per puzzle. Stats (played, win rate,
-  current and best streak, guess spread, average) are computed from it by
-  `src/lib/realmdle/stats.ts`, never stored, so they cannot drift. A streak
-  survives until a whole day is missed.
-- **Sessions** are an HMAC-signed cookie (`SESSION_SECRET`), HttpOnly and
-  SameSite=Lax, 30 days. Changes (`POST`/`DELETE`) must send JSON from this
-  site's origin. Two guesses at once cannot both count: the update only
-  applies if the play still has the number of guesses it was read with.
-- **Privacy:** the database holds the Discord id, display name and guesses,
-  nothing else. The leaderboard is opt-in; "delete my Realmdle data" on
-  `/daily` removes the player and every play.
-
-**Setup (once, by someone with the Cloudflare account and a Discord login)**
-
-1. Create the database and apply the schema:
-   `npx wrangler d1 create realmdle`, paste the id into the commented
-   `d1_databases` block in `wrangler.jsonc` and uncomment it, then
-   `npx wrangler d1 migrations apply realmdle --remote`.
-2. At https://discord.com/developers/applications create an application
-   ("Realmdle"). Under OAuth2 add the redirect
-   `https://realmofoz.com/api/auth/callback`. Put its Client ID in
-   `vars.DISCORD_CLIENT_ID` in `wrangler.jsonc` (it is public), then
-   `npx wrangler secret put DISCORD_CLIENT_SECRET`.
-3. `npx wrangler secret put SESSION_SECRET` and
-   `npx wrangler secret put PLAN_SALT`, each a long random string
-   (`openssl rand -base64 32`). Never change `PLAN_SALT` once live: only
-   unplanned days would change, but keep it stable anyway.
-4. Merge and deploy. Check `/api/today` returns a board, then sign in.
-
-Preview versions share the production database and secrets, so a preview
-is played with real accounts; Discord sign-in only works on origins listed
-as redirects in step 2.
-
-**Local development**
-
-```sh
-printf 'SESSION_SECRET=dev-secret-0123456789\nPLAN_SALT=dev-salt\n' > .dev.vars
-SKIP_SHEET_FETCH=1 npx next build      # the Worker serves ./out
-npm run api:dev                        # local D1 + Worker on http://127.0.0.1:8787
-npm run api:smoke                      # in another terminal: 17 end-to-end checks
-```
-
-Open http://127.0.0.1:8787/api/auth/dev?id=123&name=Tester to sign in
-without Discord. That route only exists when `DEV_LOGIN` is `"true"` (set
-only in the `dev` environment) and the host is localhost.
-
-## Realmdle in Discord (`/realmdle`)
-
-Players mostly play in the server. Every step is private (Discord's
+Guess the Sorcery card of the day in six tries, with the `/realmdle` slash
+command in the community server. Every step is private (Discord's
 ephemeral replies, visible only to the player); the one public message is
-their result, posted when they finish. Web and Discord share one play per
-person per day and one set of stats.
+the player's result, posted to #realmdle when they finish. There is no
+game on the website.
 
 ```
-/realmdle play                     your board for today (also the Play button on the midnight post)
-/realmdle guess card:<name>        autocomplete lists each set separately, e.g. "Pudge Butcher (Beta)"
-/realmdle stats [player]           your stats; someone else's only if they joined the leaderboard
-/realmdle leaderboard [sort]       top ten by current streak, or by solved % (5+ games), plus your place
-/realmdle settings leaderboard:<>  join or leave the leaderboard
+/realmdle play                      your board for today (also the Play button on the midnight post)
+/realmdle guess card:<name>         autocomplete lists each set separately, e.g. "Pudge Butcher (Beta)"
+/realmdle stats [player]            your stats; someone else's only if they joined the leaderboard
+/realmdle leaderboard [sort]        top ten by current streak, or by solved % (5+ games), plus your place
+/realmdle settings leaderboard:<>   join or leave the leaderboard
+/realmdle forget-me confirm:True    delete your record and every game
 ```
 
-- **Where things are:** `worker/discord.ts` (signature check, commands,
-  posting), `src/lib/realmdle/discord.ts` (every embed design, tested in
-  `discord.test.ts`), `scripts/discord-commands.mjs` (registers the
-  command), `scripts/discord-smoke.mjs` (end-to-end rehearsal).
+### Rules
+
+- **Clues:** element (match, or close if one element is shared), type,
+  cost and power (close within one, with a higher/lower arrow), rarity
+  and set (with a rarer/newer arrow). The sixth and last guess also shows
+  the answer's subtypes (Monster, Mortal, Spirit...) as a hint.
+- **One entry per card per set:** Apprentice Wizard in Alpha
+  (`C000001-001`) and in Beta (`C000001-002`) are separate guesses and
+  answers, with the same stats and a different set. Foils and other
+  finishes in a set are the same entry. Tokens and promo printings are
+  left out.
+- **One possible answer:** a card can only be the answer if no other card
+  shares all six of its clue values; otherwise a player could turn every
+  clue green and still be wrong. About 620 of ~1,480 entries qualify.
+  Avatars (no rarity) can be guessed but are never the answer.
+
+### Choosing each day's answer
+
+`extendSchedule` in `src/lib/realmdle/engine.ts` picks each new day by
+these rules, in order:
+
+1. A new set's cards wait 14 days after release (`GRACE_DAYS`).
+2. A card name is never the answer twice within 365 days, in any set
+   (`NAME_GAP`); there are more eligible names than days, so this never
+   has to bend.
+3. The entry that has been the answer the fewest times goes next; a card
+   that becomes eligible later joins level with those still waiting in
+   the current round, so a new set gets a fair share of days.
+4. Then the name that has waited longest, then a hash of the day mixed
+   with the secret `PLAN_SALT`, so the public code cannot be used to work
+   out answers.
+
+The Worker keeps the `puzzles` table filled to a week ahead
+(`LOCK_DAYS`), replaying the history in the table; rows are never changed
+once written. Planning takes about 3 ms even after five years.
+
+### Pieces
+
+```
+worker/index.ts            /api/discord/interactions and the hourly cron (every other path is the static site)
+worker/discord.ts          signature check, the commands, posting results and the midnight message
+worker/game.ts             planning, scoring guesses, stats and leaderboard queries
+worker/env.ts              the bindings and secrets, all optional until set up
+migrations/                D1 schema: puzzles, players, plays, announcements
+src/lib/realmdle/          rules and planner (engine), stats, embed designs (discord), card adapter
+src/data/cards.json        the card pool, refreshed daily by .github/workflows/refresh-cards.yml
+scripts/fetch-cards.ts     builds cards.json from the Sorcery Card Registry
+scripts/discord-commands.mjs  registers /realmdle on the server
+scripts/discord-smoke.mjs  end-to-end rehearsal against the local Worker (25 checks)
+```
+
+- **One server:** commands from any server other than `DISCORD_GUILD_ID`,
+  or from DMs, are refused, so the stats and leaderboard are the server's.
 - **Trust:** Discord signs every interaction with the application's
-  Ed25519 key (`DISCORD_PUBLIC_KEY`); unsigned or altered requests get
-  401, so nobody can play as someone else by calling the endpoint.
-- **The public result** names the player (a mention, which shows their
-  server name without pinging them), the score, the squares, their streak
-  and solved %, and the day's solve count. It never names the card. For a
-  Discord player it is posted in the channel they played in; for a web
-  player the bot posts it in `DISCORD_CHANNEL_ID`.
-- **The midnight post** goes to `DISCORD_CHANNEL_ID` on the first hourly
-  run of the Sydney day: yesterday's card and solve count, and a Play
-  button. The `announcements` table makes it once per day.
+  Ed25519 key; unsigned or altered requests get 401, so nobody can play as
+  someone else by calling the endpoint directly.
+- **Stats** (played, solved %, current and best streak, guess spread,
+  average) are computed from `plays` by `stats.ts`, never stored. A streak
+  survives until a whole day is missed.
+- **The public result** shows the player's name (a mention, which does not
+  ping them), score, squares, streak, solved % and the day's solve count.
+  It never names the card. The bot posts it to `DISCORD_CHANNEL_ID`.
+- **The midnight post** goes to the same channel on the first hourly run
+  of the Sydney day: yesterday's card and solve count, and a Play button.
+  The `announcements` table makes it once per day.
+- **Privacy:** the database holds the Discord id, display name, avatar
+  hash and guesses, nothing else. The leaderboard is opt-in, and
+  `/realmdle forget-me` deletes everything for that player.
 
-**Setup (after the backend setup above)**
+### Card data
 
-1. In the same Discord application: Bot, then Reset Token; save it with
-   `npx wrangler secret put DISCORD_BOT_TOKEN`. Copy the Public Key from
-   General Information into `npx wrangler secret put DISCORD_PUBLIC_KEY`.
-2. `npx wrangler d1 migrations apply realmdle --remote` (adds migration 0002).
-3. Create #realmdle, copy its channel id (Developer Mode, right click),
-   `npx wrangler secret put DISCORD_CHANNEL_ID`.
-4. Set Interactions Endpoint URL (General Information) to
-   `https://realmofoz.com/api/discord/interactions`. Discord checks it with
-   a signed ping when you save, so the site must be deployed first.
-5. Invite the bot: OAuth2 URL Generator, scopes `bot` and
-   `applications.commands`, permissions View Channel, Send Messages, Embed
-   Links. Open the URL and pick the server.
-6. Register the command:
-   `DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... DISCORD_GUILD_ID=... node scripts/discord-commands.mjs`
-   (with the guild id it appears at once; without, globally within an hour).
+`src/data/cards.json` comes from the [Sorcery Card Registry](https://github.com/sadkinglabs/sorcery-registry),
+served by KairosArchive at `api.kairosarchive.net/v3/registry.json`. The
+daily refresh workflow fetches the 80-byte `registry.json.sha256` and only
+downloads the 6 MB export when it changed, as the registry asks, sending a
+`User-Agent` that names the site. On a change it runs the tests, commits
+`cards.json` to `main` and starts a deploy. Site builds never fetch cards.
+To seed from a local clone of the registry:
+`npx tsx scripts/fetch-cards.ts path/to/sorcery-registry/export/registry.json`.
 
-**Local rehearsal**
+### Setup (once, with the Cloudflare account and Discord admin rights)
+
+1. **Database:** `npx wrangler d1 create realmdle`, paste the id into the
+   commented `d1_databases` block in `wrangler.jsonc` and uncomment it,
+   then `npx wrangler d1 migrations apply realmdle --remote`.
+2. **Discord application** at https://discord.com/developers/applications:
+   copy the Public Key (General Information) into `vars.DISCORD_PUBLIC_KEY`
+   in `wrangler.jsonc`. Under Bot, reset the token and save it with
+   `npx wrangler secret put DISCORD_BOT_TOKEN`.
+3. **Server and channel:** with Developer Mode on, copy the server id into
+   `vars.DISCORD_GUILD_ID` and the #realmdle channel id into
+   `vars.DISCORD_CHANNEL_ID`.
+4. **Planner salt:** `npx wrangler secret put PLAN_SALT` with a long random
+   string (`openssl rand -base64 32`). Keep it once live.
+5. **Deploy** (merge to `main`), then set the Interactions Endpoint URL
+   (General Information) to `https://realmofoz.com/api/discord/interactions`.
+   Discord checks it with a signed ping when you save.
+6. **Invite the bot:** OAuth2 URL Generator, scopes `bot` and
+   `applications.commands`, permissions View Channel, Send Messages and
+   Embed Links.
+7. **Register the command:**
+   `DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... DISCORD_GUILD_ID=... node scripts/discord-commands.mjs`.
+
+Previews share the production database and secrets, so a preview version
+plays with real data. Discord only ever calls the production URL.
+
+### Local rehearsal
 
 ```sh
-node scripts/discord-smoke.mjs keys >> .dev.vars   # a test key pair + a fake channel
-npm run api:dev -- --test-scheduled                # Worker on :8787
-node scripts/discord-smoke.mjs                     # 21 checks, with a stand-in Discord API on :8799
+node scripts/discord-smoke.mjs keys > .dev.vars   # test key pair, fake server and channel ids
+SKIP_SHEET_FETCH=1 npx next build                  # the Worker serves ./out
+npm run api:dev -- --test-scheduled                # local D1 + Worker on :8787
+npm run api:smoke                                  # 25 checks, with a stand-in Discord API on :8799
 ```

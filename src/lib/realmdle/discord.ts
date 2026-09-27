@@ -6,7 +6,7 @@
 // Emoji are Discord's native way to show colour, so they are used here,
 // unlike on the website.
 
-import type { Board } from './api';
+import type { Board } from './board';
 import { COLUMNS, MAX_GUESSES, formatElements, type Clue, type Column, type Feedback } from './engine';
 import type { PlayerStats } from './stats';
 import type { Card } from './types';
@@ -29,7 +29,6 @@ const SQUARE = { correct: '🟩', partial: '🟨', wrong: '⬛' } as const;
 const ARROW = { up: '▲', down: '▼' } as const;
 const SHORT_SET: Record<string, string> = { 'Arthurian Legends': 'Arthurian' };
 const MEDALS = ['🥇', '🥈', '🥉'];
-export const SITE = 'https://realmofoz.com/daily';
 
 const shortSet = (set: string) => SHORT_SET[set] ?? set;
 
@@ -68,10 +67,9 @@ export function boardEmbed(board: Board, cards: Map<string, Card>): Embed {
     return {
       color: board.won ? COLOURS.win : COLOURS.loss,
       title: board.won ? `Solved in ${rows.length}: ${answer.name}` : `Out of guesses. It was ${answer.name}`,
-      url: SITE,
       description: `${answer.type}${answer.subtypes.length ? `, ${answer.subtypes.join(' ')}` : ''} · ${answer.set}\n\n${lines}`,
       image: answer.image ? { url: answer.image } : undefined,
-      footer: { text: `Realmdle #${board.puzzle} · your result has been posted in the channel` },
+      footer: { text: `Realmdle #${board.puzzle} · your result has been posted for the server` },
     };
   }
 
@@ -97,7 +95,7 @@ export const avatarUrl = (who: Who) =>
  * The public result, posted once a player finishes. It never names the
  * card: only the squares, the score, the streak and how the day is going.
  */
-export function resultEmbed(board: Board, who: Who, source: 'discord' | 'web'): Embed {
+export function resultEmbed(board: Board, who: Who): Embed {
   const feedbacks = board.guesses.map((g) => g.feedback);
   const stats = board.stats;
   const score = board.won ? `${feedbacks.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
@@ -117,7 +115,7 @@ export function resultEmbed(board: Board, who: Who, source: 'discord' | 'web'): 
     author: { name: `${who.name} · Realmdle #${board.puzzle} · ${score}`, icon_url: avatarUrl(who) },
     description: `<@${who.id}> ${headline}\n\n${grid(feedbacks)}`,
     fields,
-    footer: { text: source === 'web' ? 'Played on realmofoz.com/daily · /realmdle to play here' : 'Play with /realmdle' },
+    footer: { text: 'Play with /realmdle' },
     timestamp: new Date().toISOString(),
   };
 }
@@ -206,7 +204,6 @@ export function leaderboardEmbed(ranked: RankedRow[], sort: LeaderboardSort, vie
   return {
     color: COLOURS.gold,
     title: sort === 'streak' ? '🔥 Realmdle leaderboard · longest streaks' : `🎯 Realmdle leaderboard · solved % (${MIN_GAMES_FOR_PERCENT}+ games)`,
-    url: SITE,
     description: top.length ? top.join('\n') : empty,
     footer: { text: `After puzzle #${puzzle} · opt in or out with /realmdle settings` },
   };
@@ -220,7 +217,6 @@ export function announcementEmbed(puzzle: number, yesterday: { card: Card; finis
   return {
     color: COLOURS.neutral,
     title: `Realmdle #${puzzle} is live`,
-    url: SITE,
     description: `${recap}\n\nGuess today's Sorcery card in six tries. Your guesses are private; your result is posted here when you finish.`,
     thumbnail: yesterday?.card.image ? { url: yesterday.card.image } : undefined,
     footer: { text: 'Press Play or use /realmdle play' },

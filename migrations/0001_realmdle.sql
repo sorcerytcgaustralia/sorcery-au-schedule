@@ -10,17 +10,17 @@ CREATE TABLE puzzles (
   planned_at TEXT    NOT NULL
 );
 
--- Anyone who has signed in, keyed by Discord user id.
+-- Anyone who has played, keyed by Discord user id.
 CREATE TABLE players (
   discord_id   TEXT    PRIMARY KEY,
-  display_name TEXT    NOT NULL,          -- refreshed at each sign-in
+  display_name TEXT    NOT NULL,          -- refreshed each time they play
   leaderboard  INTEGER NOT NULL DEFAULT 0, -- 1 = chose to appear on the leaderboard
   created_at   TEXT    NOT NULL,
   seen_at      TEXT    NOT NULL
 );
 
--- One row per player per puzzle, whether played on the web or in Discord.
--- Stats (streaks, win rate, averages) are computed from these rows.
+-- One row per player per puzzle. Stats (streaks, solved %, averages) are
+-- computed from these rows, never stored.
 CREATE TABLE plays (
   discord_id  TEXT    NOT NULL REFERENCES players (discord_id) ON DELETE CASCADE,
   puzzle      INTEGER NOT NULL REFERENCES puzzles (puzzle),
@@ -28,7 +28,7 @@ CREATE TABLE plays (
   attempts    INTEGER NOT NULL DEFAULT 0,
   solved      INTEGER NOT NULL DEFAULT 0,
   finished    INTEGER NOT NULL DEFAULT 0,
-  source      TEXT    NOT NULL DEFAULT 'web', -- 'web' or 'discord'
+  source      TEXT    NOT NULL DEFAULT 'discord', -- where it was played, should another way to play be added
   started_at  TEXT    NOT NULL,
   finished_at TEXT,
   PRIMARY KEY (discord_id, puzzle)

@@ -8,8 +8,8 @@ the Discord. Fan-made and community-run, not affiliated with Erik's Curiosa.
 Built with Next.js as a fully static site and served by Cloudflare Workers
 static assets. Every fact on the pages comes from one shared Google Sheet
 that organisers edit directly. The one exception is Realmdle, the daily card
-game at `/daily`: a small Worker (`worker/`) with a D1 database answers
-`/api/*` for Discord sign-in, guesses and stats. See `HANDOVER.md`.
+game played in the Discord server: a small Worker (`worker/`) with a D1
+database answers the `/realmdle` slash command. See `HANDOVER.md`.
 
 ## How the data flows
 

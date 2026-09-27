@@ -13,7 +13,7 @@
     "fetch-data": "tsx scripts/fetch-data.ts",
     "fetch-cards": "tsx scripts/fetch-cards.ts",
     "deploy": "wrangler deploy",
-    "api:smoke": "node scripts/api-smoke.mjs",
+    "api:smoke": "node scripts/discord-smoke.mjs",
     "api:dev": "wrangler d1 migrations apply realmdle --local --env dev && wrangler dev --env dev",
     "preview": "wrangler versions upload"
   },

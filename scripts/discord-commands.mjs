@@ -1,14 +1,14 @@
-// Registers the /realmdle slash command with Discord. Run once, and again
-// whenever the definitions below change:
+// Registers the /realmdle slash command on the community's server. Run
+// once, and again whenever the definitions below change:
 //
-//   DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... node scripts/discord-commands.mjs
+//   DISCORD_APPLICATION_ID=... DISCORD_BOT_TOKEN=... DISCORD_GUILD_ID=... node scripts/discord-commands.mjs
 //
-// Add DISCORD_GUILD_ID=... to register on one server only, which updates
-// instantly (global commands can take up to an hour to appear).
+// It is registered on that one server only (the Worker refuses any other),
+// which also means changes appear instantly.
 
 const { DISCORD_APPLICATION_ID: app, DISCORD_BOT_TOKEN: token, DISCORD_GUILD_ID: guild } = process.env;
-if (!app || !token) {
-  console.error('Set DISCORD_APPLICATION_ID and DISCORD_BOT_TOKEN.');
+if (!app || !token || !guild) {
+  console.error('Set DISCORD_APPLICATION_ID, DISCORD_BOT_TOKEN and DISCORD_GUILD_ID.');
   process.exit(1);
 }
 
@@ -21,8 +21,8 @@ const commands = [
   {
     name: 'realmdle',
     description: 'Guess the Sorcery card of the day',
-    // usable in servers and in DMs with the bot
-    contexts: [0, 1],
+    // in the server only, not in DMs
+    contexts: [0],
     options: [
       { type: SUB, name: 'play', description: 'Show your board for today (only you can see it)' },
       {
@@ -59,14 +59,20 @@ const commands = [
         description: 'Join or leave the leaderboard',
         options: [{ type: BOOLEAN, name: 'leaderboard', description: 'Show your streak and solved % to the server', required: true }],
       },
+      {
+        type: SUB,
+        name: 'forget-me',
+        description: 'Delete your Realmdle stats and every game you have played',
+        options: [{ type: BOOLEAN, name: 'confirm', description: 'True to delete, which cannot be undone', required: true }],
+      },
     ],
   },
 ];
 
-const url = `https://discord.com/api/v10/applications/${app}${guild ? `/guilds/${guild}` : ''}/commands`;
+const url = `https://discord.com/api/v10/applications/${app}/guilds/${guild}/commands`;
 const res = await fetch(url, { method: 'PUT', headers: { authorization: `Bot ${token}`, 'content-type': 'application/json' }, body: JSON.stringify(commands) });
 if (!res.ok) {
   console.error(res.status, await res.text());
   process.exit(1);
 }
-console.log(`Registered /realmdle ${guild ? `on server ${guild}` : 'globally'}.`);
+console.log(`Registered /realmdle on server ${guild}.`);

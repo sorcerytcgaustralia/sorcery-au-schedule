@@ -1,8 +1,6 @@
-// Realmdle rules, kept free of React and the DOM so they can be tested.
-//
-// Everyone gets the same card on the same day without a server: the puzzle
-// number comes from the date in Sydney, and the answer is chosen from the
-// card pool by hashing that number together with each card's id.
+// Realmdle rules, kept free of Discord and the database so they can be
+// tested: the puzzle day, which cards can be the answer, the planner that
+// chooses them, and the clues a guess gets.
 
 import { ELEMENTS, RARITIES, type Card } from './types';
 
@@ -34,16 +32,6 @@ export function puzzleDate(puzzle: number): string {
 
 export function puzzleNumber(now: Date): number {
   return Math.max(1, dayIndex(now) + 1);
-}
-
-/** Milliseconds until the next puzzle, which starts at midnight in Sydney. */
-export function msUntilNextPuzzle(now: Date): number {
-  const current = dayIndex(now);
-  // Sydney is UTC+10 or +11, so the next midnight is 13 to 38 hours after
-  // the current UTC midnight. Step forward by the hour until the number ticks.
-  let t = Math.floor(now.getTime() / 3_600_000) * 3_600_000;
-  while (dayIndex(new Date(t)) === current) t += 3_600_000;
-  return t - now.getTime();
 }
 
 /** FNV-1a then a murmur3 finaliser: a cheap hash that spreads well. */
@@ -93,25 +81,12 @@ function rendezvous(pool: Card[], puzzle: number, salt = ''): Card | null {
   return best;
 }
 
-/**
- * The answer for a puzzle. The committed schedule (`src/data/schedule.json`,
- * index 0 is puzzle 1) decides it, so every card is used once before any
- * repeats and a rebuild can never change a day that is already set. Past
- * the end of the schedule, or if a scheduled card has since gained a twin
- * and left the pool, it falls back to a hash of the day over the pool.
- */
-export function dailyCard(cards: Card[], puzzle: number, schedule: string[] = []): Card | null {
-  const pool = answerPool(cards);
-  const scheduled = schedule[puzzle - 1];
-  return pool.find((c) => c.id === scheduled) ?? rendezvous(pool, puzzle);
-}
-
 /** A card name may not be the answer again within this many days, whatever its set. */
 export const NAME_GAP = 365;
 
 /** Days a new set's cards wait after release before they can be the answer. */
 export const GRACE_DAYS = 14;
-/** Upcoming days that are never replanned, so the next week's answers stay put. */
+/** How many days ahead the answers are planned (the Worker's puzzles table). */
 export const LOCK_DAYS = 7;
 
 export type PlanOptions = {
@@ -206,23 +181,6 @@ export function extendSchedule(cards: Card[], schedule: string[], until: number,
   return out;
 }
 
-/**
- * Brings a schedule up to date with the card pool as of puzzle `today`.
- * Days up to and including today never change. The next LOCK_DAYS days are
- * kept as long as their card is still the only one fitting its clues (a new
- * card could share them). Everything after that is planned again, so new
- * cards are mixed in within about a week instead of a year from now.
- */
-export function replan(cards: Card[], schedule: string[], today: number, until: number, options: PlanOptions = {}): string[] {
-  const eligible = new Set(answerPool(cards).map((c) => c.id));
-  const kept = schedule.slice(0, today);
-  for (const id of schedule.slice(today, today + LOCK_DAYS)) {
-    if (!eligible.has(id)) break;
-    kept.push(id);
-  }
-  return extendSchedule(cards, kept, Math.max(until, kept.length), options);
-}
-
 /** Days where a name repeats within NAME_GAP days of its last appearance, as [day, name] (1-based days). */
 export function nameRepeats(cards: Card[], schedule: string[], gap = NAME_GAP): [number, string][] {
   const byId = new Map(cards.map((c) => [c.id, c]));
@@ -274,18 +232,6 @@ export function compare(guess: Card, answer: Card, sets: string[]): Feedback {
     rarity: ordinal(rank(guess.rarity), rank(answer.rarity), 0),
     set: ordinal(sets.indexOf(guess.set), sets.indexOf(answer.set), 0),
   };
-}
-
-const SQUARE: Record<Verdict, string> = { correct: '\u{1F7E9}', partial: '\u{1F7E8}', wrong: '⬛' };
-
-/**
- * The spoiler-free result people paste into Discord. Emoji squares are the
- * genre's convention and render natively there; the page itself uses none.
- */
-export function shareText(puzzle: number, rows: Feedback[], won: boolean, url: string): string {
-  const score = won ? `${rows.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
-  const grid = rows.map((row) => COLUMNS.map((c) => SQUARE[row[c].verdict]).join('')).join('\n');
-  return `Realmdle #${puzzle} ${score}\n${grid}\n${url}`;
 }
 
 export function formatElements(elements: Card['elements']): string {

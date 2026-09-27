@@ -9,13 +9,9 @@ const LINKS: [string, string][] = [
   ['hall', 'Hall of Fame'],
   ['join', 'Community'],
   ['stores', 'Stores'],
-  ['daily', 'Daily card'],
 ];
 
-/** Links that are pages of their own rather than sections of the home page. */
-const PAGES = new Set(['daily']);
-
-export function SiteNav({ home = true, page = 'hall' }: { home?: boolean; page?: 'hall' | 'daily' }) {
+export function SiteNav({ home = true }: { home?: boolean }) {
   const nav = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -58,12 +54,8 @@ export function SiteNav({ home = true, page = 'hall' }: { home?: boolean; page?:
         </Link>
         <div className="nav-links">
           {LINKS.map(([id, label]) =>
-            !home && id === page ? (
-              <Link key={id} href={`/${id}`} className="active" aria-current="page">
-                {label}
-              </Link>
-            ) : PAGES.has(id) || (id === 'hall' && !home) ? (
-              <Link key={id} href={`/${id}`}>
+            id === 'hall' && !home ? (
+              <Link key={id} href="/hall" className="active" aria-current="page">
                 {label}
               </Link>
             ) : (
