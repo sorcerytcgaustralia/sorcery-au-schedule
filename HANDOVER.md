@@ -131,16 +131,24 @@ not controls. Its styles are the `.masthead-map` rules in `globals.css`.
 A daily guess-the-card game for the Discord. Everyone gets the same card
 each day with no server involved.
 
-- **Data:** `scripts/fetch-cards.ts` runs in `prebuild` after the sheet
-  fetch. It reads `CARDS_API_URL` (default
-  `https://kairosarchive.net/api/cards`) and writes `src/data/cards.json`.
-  Like the sheet snapshot, a failed or unrecognised fetch keeps the
-  committed file and never fails the build. The page never calls the API.
-- **Adapter:** `src/lib/realmdle/adapter.ts` is the only code that knows
-  the API's shape. It was written before the KairosArchive response could
-  be seen from the sandbox, so it accepts several common field names. If a
-  build logs "0 cards parsed", it also prints the first record: match the
-  field names in `pick(...)` to it.
+- **Data:** the [Sorcery Card Registry](https://github.com/sadkinglabs/sorcery-registry)
+  export, served by KairosArchive at `api.kairosarchive.net/v3/registry.json`.
+  `scripts/fetch-cards.ts` runs in `prebuild` after the sheet fetch. It
+  first fetches the 80-byte `registry.json.sha256` and only downloads the
+  6 MB export when that differs from the `sha256` stored in
+  `src/data/cards.json`, as the registry's usage notes ask (the data
+  changes a few times a year). It sends a `User-Agent` naming the site,
+  which the registry requires. Any failure keeps the committed file and
+  never fails the build; the page never calls the API.
+- **Seeding without network:** `npx tsx scripts/fetch-cards.ts
+  path/to/sorcery-registry/export/registry.json` builds the pool from a
+  local clone of the registry repo.
+- **Adapter:** `src/lib/realmdle/adapter.ts` maps registry cards to the
+  game's shape: `codex_id` as the id, `["None"]` elements as colourless,
+  `power` (not `attack`), and the first printing in a release set. Tokens
+  and the few promo-only cards are left out, and promo sets are not in the
+  set order (they are dated before Alpha). Cards without a rarity
+  (avatars) can be guessed but are never the answer.
 - **Rules:** `src/lib/realmdle/engine.ts`, tested in `engine.test.ts`.
   The puzzle number is days since 28 Sep 2026 in Sydney. The answer is
   chosen by rendezvous hashing (the card with the highest
@@ -152,5 +160,5 @@ each day with no server involved.
 - **State:** guesses and streaks live in `localStorage` only, and the game
   works without it. The copied result uses emoji squares because that is
   what renders in Discord; the page itself uses none.
-- **Sandbox note:** `kairosarchive.net` is blocked in Claude Code
-  sandboxes, so the card pool can only be refreshed from GitHub Actions.
+- **Images** are hotlinked from `api.kairosarchive.net/images/`, which the
+  registry allows with credit to Erik's Curiosa (in the page footer).

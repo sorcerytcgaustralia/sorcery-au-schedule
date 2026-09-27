@@ -14,11 +14,11 @@ export function Footer({ variant = 'home' }: { variant?: 'home' | 'hall' | 'dail
         <p className="footer-disclaimer">This is a fan-made website and is not affiliated with or endorsed by Erik&rsquo;s Curiosa. Sorcery: Contested Realm and all related artwork are the property of their respective owners.</p>
         {variant === 'daily' && (
           <p className="footer-disclaimer">
-            Card data from{' '}
+            Card data and images from the{' '}
             <a href="https://kairosarchive.net" target="_blank" rel="noopener">
-              KairosArchive
+              Sorcery Card Registry on KairosArchive
             </a>
-            .
+            . Card images &copy; Erik&rsquo;s Curiosa.
           </p>
         )}
         {variant === 'home' && (

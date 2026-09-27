@@ -178,7 +178,7 @@ export function Realmdle({ data }: { data: CardData }) {
   }
 
   if (!data.cards.length) {
-    return <p className="hall-note">The card pool has not been loaded yet. It is fetched from KairosArchive when the site is built, so check back after the next deploy.</p>;
+    return <p className="hall-note">The card pool has not been loaded yet. It is fetched from the Sorcery Card Registry when the site is built, so check back after the next deploy.</p>;
   }
   if (puzzle === null || !answer) return <p className="hall-note">Shuffling the deck.</p>;
 

@@ -1,19 +1,28 @@
-// Refreshes src/data/cards.json, the card pool for Realmdle (/daily).
+// Refreshes src/data/cards.json, the card pool for Realmdle (/daily), from
+// the Sorcery Card Registry export that KairosArchive serves.
 //
-// Runs before every `next build`, after the sheet fetch. Like the sheet
-// snapshot, the committed file is the last known good data: if the API is
-// unreachable, or answers with something the adapter cannot read, the file
-// is left alone and the build carries on. The page itself never calls the
-// API, so the game keeps working even if the source goes down.
+// Runs before every `next build`, after the sheet fetch. The registry
+// changes a few times a year and asks clients not to re-download the 6 MB
+// export needlessly, so this first fetches its 80-byte checksum and only
+// downloads the export when that differs from the one the snapshot was made
+// from. Any failure keeps the committed file and never fails the build: the
+// page never calls the API, so the game works even if the source is down.
+//
+// To seed from a local clone instead (no network): pass the path, e.g.
+//   npx tsx scripts/fetch-cards.ts ../sorcery-registry/export/registry.json
 
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { cardRecords, normalise } from '../src/lib/realmdle/adapter';
+import { normalise, type RegistryExport } from '../src/lib/realmdle/adapter';
 import type { CardData } from '../src/lib/realmdle/types';
 
-const SOURCE = process.env.CARDS_API_URL ?? 'https://kairosarchive.net/api/cards';
+const BASE = 'https://api.kairosarchive.net/v3';
+const SOURCE = `${BASE}/registry.json`;
+// The registry asks automated clients to name themselves and a contact.
+const HEADERS = { 'user-agent': 'realmofoz-daily/1.0 (+https://realmofoz.com)', accept: 'application/json' };
 const OUT = new URL('../src/data/cards.json', import.meta.url);
-/** A fresh fetch with fewer cards than this is treated as broken. */
-const MIN_CARDS = 100;
+/** Fewer cards than this means something upstream is wrong. */
+const MIN_CARDS = 500;
 
 function readPrevious(): CardData | null {
   try {
@@ -23,39 +32,46 @@ function readPrevious(): CardData | null {
   }
 }
 
+const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
+
+async function get(url: string): Promise<string> {
+  const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
+  if (!res.ok) throw new Error(`${url} answered ${res.status}`);
+  return res.text();
+}
+
+function write(text: string, source: string, digest: string) {
+  const data = normalise(JSON.parse(text) as RegistryExport, source, new Date().toISOString(), digest);
+  if (data.cards.length < MIN_CARDS) throw new Error(`only ${data.cards.length} cards parsed; has the export's shape changed?`);
+  writeFileSync(OUT, JSON.stringify(data) + '\n');
+  const noRarity = data.cards.filter((c) => c.rarity === null).length;
+  console.log(`Card pool written: ${data.cards.length} cards across ${data.sets.join(', ')} (${noRarity} without a rarity, never the answer)`);
+}
+
 async function main() {
+  const local = process.argv[2];
+  if (local) {
+    const text = readFileSync(local, 'utf8');
+    return write(text, SOURCE, sha256(text));
+  }
   if (process.env.SKIP_SHEET_FETCH || process.env.SKIP_CARD_FETCH) {
     console.log('Skipping the card fetch: keeping the committed card pool');
     return;
   }
   const previous = readPrevious();
-  const keep = (why: string) => console.warn(`Card pool not refreshed (${why}): keeping ${previous?.cards.length ?? 0} committed cards`);
-
-  let body: unknown;
   try {
-    const res = await fetch(SOURCE, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(30_000) });
-    if (!res.ok) return keep(`${SOURCE} answered ${res.status}`);
-    body = await res.json();
+    const published = (await get(`${SOURCE}.sha256`)).trim().split(/\s+/)[0];
+    if (previous?.sha256 === published) {
+      console.log(`Card pool is current (registry ${published.slice(0, 12)})`);
+      return;
+    }
+    const text = await get(SOURCE);
+    const digest = sha256(text);
+    if (digest !== published) throw new Error(`download does not match its published checksum`);
+    write(text, SOURCE, digest);
   } catch (err) {
-    return keep(`${SOURCE}: ${(err as Error).message}`);
+    console.warn(`Card pool not refreshed (${(err as Error).message}): keeping ${previous?.cards.length ?? 0} committed cards`);
   }
-
-  const data = normalise(body, SOURCE, new Date().toISOString());
-  if (data.cards.length < MIN_CARDS) {
-    // Print enough of the response to fix the adapter without guessing.
-    const records = cardRecords(body);
-    const sample = records[0] ?? body;
-    console.warn(`  ${records.length} records found, ${data.cards.length} cards parsed. Top-level keys: ${Object.keys((body ?? {}) as object).slice(0, 20).join(', ')}`);
-    console.warn(`  First record: ${JSON.stringify(sample).slice(0, 1500)}`);
-    return keep('the response did not match the adapter in src/lib/realmdle/adapter.ts');
-  }
-
-  writeFileSync(OUT, JSON.stringify(data, null, 1) + '\n');
-  const missing = (field: 'rarity' | 'cost' | 'image') => data.cards.filter((c) => c[field] === null).length;
-  console.log(
-    `Card pool written: ${data.cards.length} cards across ${data.sets.length} sets (${data.sets.join(', ')}); ` +
-      `without rarity ${missing('rarity')}, without cost ${missing('cost')}, without image ${missing('image')}`,
-  );
 }
 
 main().catch((err) => {

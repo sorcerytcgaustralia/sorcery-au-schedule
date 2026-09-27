@@ -1,40 +1,50 @@
 import { describe, expect, it } from 'vitest';
-import { normalise } from './adapter';
+import { normalise, type RegistryExport } from './adapter';
 
-// Made-up records in the two shapes the adapter accepts.
+// Made-up records in the registry v3 export shape.
+const record = (over: Partial<RegistryExport['cards'][number]>): RegistryExport['cards'][number] => ({
+  codex_id: 'C000001',
+  name: 'Test Imp',
+  type: 'Minion',
+  category: 'Spell',
+  rarity: 'Ordinary',
+  elements: ['Fire'],
+  cost: 2,
+  power: 1,
+  set_codes: ['001'],
+  image_urls: { normal: 'https://img.test/imp.webp' },
+  ...over,
+});
+
+const registry: RegistryExport = {
+  sets: [
+    { set_code: '002', set_name: 'Second', released_at: '2024-01-01', kind: 'release' },
+    { set_code: '001', set_name: 'First', released_at: '2023-01-01', kind: 'release' },
+    { set_code: '999', set_name: 'Promo', released_at: '2022-01-01', kind: 'promo' },
+  ],
+  cards: [
+    record({ codex_id: 'C000002', name: 'Test Tower', type: 'Site', category: 'Site', elements: ['None'], cost: null, power: null, set_codes: ['999', '002'] }),
+    record({ codex_id: 'C000003', name: 'Test Token', category: 'Token' }),
+    record({ codex_id: 'C000004', name: 'Promo Only', set_codes: ['999'] }),
+    record({ codex_id: 'C000005', name: 'Test Avatar', type: 'Avatar', category: 'Avatar', rarity: null, elements: ['Water', 'Air'], image_urls: null }),
+    record({}),
+  ],
+};
+
 describe('normalise', () => {
-  it('reads flat records wrapped in { data }', () => {
-    const body = {
-      data: [
-        { name: 'Test Imp', type: 'minion', elements: 'Fire, Water', cost: '2', attack: 1, rarity: 'ordinary', set: 'Second', image: 'https://img.test/imp.png' },
-        { name: 'Test Tower', type: 'Site', element: null, rarity: 'Exceptional', set: 'First' },
-        { title: 'no type, skipped' },
-      ],
-    };
-    const data = normalise(body, 'src', 'now');
-    expect(data.cards).toEqual([
-      { id: 'test-imp', name: 'Test Imp', type: 'Minion', elements: ['Fire', 'Water'], cost: 2, power: 1, rarity: 'Ordinary', set: 'Second', image: 'https://img.test/imp.png' },
-      { id: 'test-tower', name: 'Test Tower', type: 'Site', elements: [], cost: null, power: null, rarity: 'Exceptional', set: 'First', image: null },
-    ]);
+  const data = normalise(registry, 'src', 'now', 'abc');
+
+  it('orders release sets by date and leaves promos out', () => {
+    expect(data.sets).toEqual(['First', 'Second']);
   });
 
-  it('reads nested records, keeps the first printing and orders sets by release', () => {
-    const body = [
-      {
-        name: 'Test Knight',
-        guardian: { type: 'Minion', rarity: 'Elite', cost: 4, attack: 4, thresholds: { air: 0, earth: 2, fire: 0, water: 0 } },
-        sets: [
-          { name: 'Reprint', releasedAt: '2025-01-01', variants: [] },
-          { name: 'Original', releasedAt: '2023-05-01', variants: [] },
-        ],
-      },
-    ];
-    const data = normalise(body, 'src', 'now');
-    expect(data.cards[0]).toMatchObject({ type: 'Minion', elements: ['Earth'], cost: 4, power: 4, rarity: 'Elite', set: 'Original' });
-    expect(data.sets).toEqual(['Original']);
+  it('maps cards, dropping tokens and promo-only cards', () => {
+    expect(data.cards.map((c) => c.name)).toEqual(['Test Avatar', 'Test Imp', 'Test Tower']);
   });
 
-  it('returns nothing for a shape it does not know', () => {
-    expect(normalise({ message: 'hello' }, 'src', 'now').cards).toEqual([]);
+  it('turns "None" into no elements, sorts elements and uses the first release printing', () => {
+    const byName = Object.fromEntries(data.cards.map((c) => [c.name, c]));
+    expect(byName['Test Tower']).toEqual({ id: 'C000002', name: 'Test Tower', type: 'Site', elements: [], cost: null, power: null, rarity: 'Ordinary', set: 'Second', image: 'https://img.test/imp.webp' });
+    expect(byName['Test Avatar']).toMatchObject({ elements: ['Air', 'Water'], rarity: null, image: null });
   });
 });

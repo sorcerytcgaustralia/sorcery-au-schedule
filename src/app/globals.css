@@ -388,7 +388,7 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked { t
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
 }
 .rd-result:not(:has(.rd-art)) { grid-template-columns: minmax(0, 1fr); }
-.rd-art { width: 100%; border-radius: 10px; }
+.rd-art { width: 100%; border-radius: 4.75% / 3.5%; }
 .rd-result-line { font-size: 13px; color: var(--parch-muted); letter-spacing: 0.02em; }
 .rd-answer { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.05; color: #f3eee5; margin: 6px 0 8px; }
 .rd-answer-meta { font-size: 13.5px; color: var(--parch-soft); }

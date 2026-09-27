@@ -8,7 +8,7 @@ export const RARITIES = ['Ordinary', 'Exceptional', 'Elite', 'Unique'] as const;
 export type Rarity = (typeof RARITIES)[number];
 
 export type Card = {
-  /** Stable key: a slug of the name, so a reprint never changes it. */
+  /** The registry's codex_id, e.g. C000001: permanent, shared by every printing. */
   id: string;
   name: string;
   /** Minion, Magic, Aura, Artifact, Site or Avatar. */
@@ -30,7 +30,9 @@ export type CardData = {
   /** ISO time of the last successful fetch, null if never fetched. */
   fetchedAt: string | null;
   source: string;
-  /** Set names, oldest first. */
+  /** Checksum of the registry export this was made from, to skip re-downloading it. */
+  sha256: string | null;
+  /** Release set names, oldest first. */
   sets: string[];
   cards: Card[];
 };
