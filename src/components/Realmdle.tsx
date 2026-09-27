@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { SITE_URL } from '@/lib/config';
 import {
   COLUMNS,
+  HINT_AFTER,
   MAX_GUESSES,
   compare,
   dailyCard,
@@ -18,7 +19,7 @@ import {
 } from '@/lib/realmdle/engine';
 import type { Card, CardData } from '@/lib/realmdle/types';
 
-const LABELS: Record<Column, string> = { elements: 'Element', type: 'Type', cost: 'Cost', power: 'Power', rarity: 'Rarity', set: 'Set' };
+const LABELS: Record<Column, string> = { elements: 'Element', type: 'Type', cost: 'Cost', power: 'Power', rarity: 'Rarity', set: 'First set' };
 const DIRECTION_WORDS: Record<Column, [string, string]> = {
   elements: ['', ''],
   type: ['', ''],
@@ -30,8 +31,9 @@ const DIRECTION_WORDS: Record<Column, [string, string]> = {
 
 type Stats = { played: number; won: number; streak: number; best: number; lastPlayed: number; lastWon: number; dist: number[] };
 const EMPTY_STATS: Stats = { played: 0, won: 0, streak: 0, best: 0, lastPlayed: 0, lastWon: 0, dist: Array(MAX_GUESSES).fill(0) };
-const STATE_KEY = 'realmdle:v1:state';
-const STATS_KEY = 'realmdle:v1:stats';
+// v2: six guesses instead of eight, so v1 boards and score spreads do not carry over
+const STATE_KEY = 'realmdle:v2:state';
+const STATS_KEY = 'realmdle:v2:stats';
 
 // Storage can be missing or throw (private windows, blocked site data), so
 // the game must work without it; it only costs the streak.
@@ -109,7 +111,7 @@ function Countdown() {
   );
 }
 
-export function Realmdle({ data }: { data: CardData }) {
+export function Realmdle({ data, schedule }: { data: CardData; schedule: string[] }) {
   const byId = useMemo(() => new Map(data.cards.map((c) => [c.id, c])), [data.cards]);
   // The date is only known in the browser; render nothing date-specific
   // until mounted so the static HTML and the first client render agree.
@@ -129,7 +131,7 @@ export function Realmdle({ data }: { data: CardData }) {
     setStats(load(STATS_KEY, EMPTY_STATS));
   }, [byId]);
 
-  const answer = useMemo(() => (puzzle === null ? null : dailyCard(data.cards, puzzle)), [data.cards, puzzle]);
+  const answer = useMemo(() => (puzzle === null ? null : dailyCard(data.cards, puzzle, schedule)), [data.cards, puzzle, schedule]);
   const rows = useMemo(
     () => (answer ? guesses.map((id) => byId.get(id)!).map((card) => ({ card, feedback: compare(card, answer, data.sets) })) : []),
     [answer, guesses, byId, data.sets],
@@ -250,6 +252,18 @@ export function Realmdle({ data }: { data: CardData }) {
               ))}
             </ul>
           )}
+          {guesses.length >= HINT_AFTER && (
+            <p className="rd-hint" role="status">
+              <span className="rd-hint-label info">Last guess, a hint</span>
+              {answer.subtypes.length ? (
+                <>
+                  The card is a <strong>{answer.subtypes.join(' ')}</strong>.
+                </>
+              ) : (
+                <>The card has no subtype.</>
+              )}
+            </p>
+          )}
         </div>
       )}
 
@@ -263,7 +277,7 @@ export function Realmdle({ data }: { data: CardData }) {
             <p className="rd-result-line info">{won ? `Solved in ${guesses.length}` : 'Out of guesses. The card was'}</p>
             <h2 className="rd-answer">{answer.name}</h2>
             <p className="rd-answer-meta info">
-              {[answer.type, formatElements(answer.elements), answer.rarity, answer.set].filter(Boolean).join(', ')}
+              {[answer.subtypes.length ? `${answer.type}, ${answer.subtypes.join(' ')}` : answer.type, formatElements(answer.elements), answer.rarity, answer.set].filter(Boolean).join(', ')}
             </p>
             <div className="rd-actions">
               <button type="button" className="btn" onClick={share}>
@@ -323,6 +337,7 @@ export function Realmdle({ data }: { data: CardData }) {
         <span>
           <Chevron up /> The answer is higher, rarer or from a newer set
         </span>
+        <span>First set is where a card was first printed; reprints do not count</span>
       </div>
     </div>
   );

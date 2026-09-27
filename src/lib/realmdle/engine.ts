@@ -6,7 +6,9 @@
 
 import { ELEMENTS, RARITIES, type Card } from './types';
 
-export const MAX_GUESSES = 8;
+export const MAX_GUESSES = 6;
+/** The subtype hint appears once this many guesses have been used, i.e. for the last guess. */
+export const HINT_AFTER = MAX_GUESSES - 1;
 export const TIME_ZONE = 'Australia/Sydney';
 /** Puzzle #1. */
 const EPOCH = Date.UTC(2026, 8, 28);
@@ -54,21 +56,29 @@ export function hash(text: string): number {
   return h >>> 0;
 }
 
-/** Cards that can be the answer: enough data to give fair clues. */
-export function answerPool(cards: Card[]): Card[] {
-  return cards.filter((c) => c.rarity !== null && c.set !== '');
+/** Everything a guess is compared on. Two cards with the same signature look identical on the board. */
+export function signature(card: Card): string {
+  return JSON.stringify([card.elements, card.type, card.cost, card.power, card.rarity, card.set]);
 }
 
 /**
- * Rendezvous hashing: every card gets a score for today and the highest
- * wins. Unlike `pool[n % pool.length]`, adding a new set only changes the
- * answer on days where one of the new cards happens to score highest, so a
- * rebuild in the middle of the day almost never swaps today's card.
+ * Cards that can be the answer. Only one card may fit all six clues: if
+ * another card shared the answer's signature, a player could turn every
+ * tile green and still be wrong, with nothing on the board to tell the two
+ * apart. So a card is eligible only when its signature is unique among all
+ * guessable cards, and it has a rarity (avatars have none).
  */
-export function dailyCard(cards: Card[], puzzle: number): Card | null {
+export function answerPool(cards: Card[]): Card[] {
+  const count = new Map<string, number>();
+  for (const card of cards) count.set(signature(card), (count.get(signature(card)) ?? 0) + 1);
+  return cards.filter((c) => c.rarity !== null && c.set !== '' && count.get(signature(c)) === 1);
+}
+
+/** Highest `hash(puzzle:id)` wins: a stable, even-handed pick from any list. */
+function rendezvous(pool: Card[], puzzle: number): Card | null {
   let best: Card | null = null;
   let bestScore = -1;
-  for (const card of answerPool(cards)) {
+  for (const card of pool) {
     const score = hash(`realmdle:${puzzle}:${card.id}`);
     if (score > bestScore || (score === bestScore && best !== null && card.id < best.id)) {
       best = card;
@@ -76,6 +86,46 @@ export function dailyCard(cards: Card[], puzzle: number): Card | null {
     }
   }
   return best;
+}
+
+/**
+ * The answer for a puzzle. The committed schedule (`src/data/schedule.json`,
+ * index 0 is puzzle 1) decides it, so every card is used once before any
+ * repeats and a rebuild can never change a day that is already set. Past
+ * the end of the schedule, or if a scheduled card has since gained a twin
+ * and left the pool, it falls back to a hash of the day over the pool.
+ */
+export function dailyCard(cards: Card[], puzzle: number, schedule: string[] = []): Card | null {
+  const pool = answerPool(cards);
+  const scheduled = schedule[puzzle - 1];
+  return pool.find((c) => c.id === scheduled) ?? rendezvous(pool, puzzle);
+}
+
+/**
+ * Extends a schedule so it covers `until` puzzles. Existing entries are
+ * never changed; new ones take cards not yet used in the current cycle
+ * (a cycle ends when every card in the pool has had its day), picked by
+ * hash so the order is fixed by the data, not by when the script ran.
+ */
+export function extendSchedule(cards: Card[], schedule: string[], until: number): string[] {
+  const pool = answerPool(cards);
+  const ids = new Set(pool.map((c) => c.id));
+  const out = [...schedule];
+  // cards already used since the current cycle began
+  const used = new Set<string>();
+  for (const id of out) {
+    if (!ids.has(id)) continue;
+    if (used.size >= ids.size) used.clear();
+    used.add(id);
+  }
+  while (out.length < until) {
+    if (used.size >= ids.size) used.clear();
+    const pick = rendezvous(pool.filter((c) => !used.has(c.id)), out.length + 1);
+    if (!pick) break;
+    out.push(pick.id);
+    used.add(pick.id);
+  }
+  return out;
 }
 
 export type Verdict = 'correct' | 'partial' | 'wrong';

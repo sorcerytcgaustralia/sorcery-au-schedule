@@ -13,6 +13,7 @@ export type RegistryExport = {
     type: string;
     category: string;
     rarity: string | null;
+    subtypes: string[];
     /** ["None"] for colourless cards. */
     elements: string[];
     cost: number | null;
@@ -46,6 +47,7 @@ export function normalise(registry: RegistryExport, source: string, fetchedAt: s
       cost: c.cost,
       power: c.power,
       rarity: isRarity(c.rarity) ? c.rarity : null,
+      subtypes: c.subtypes ?? [],
       set: setName.get(first)!,
       image: c.image_urls?.normal ?? null,
     });

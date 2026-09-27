@@ -150,15 +150,28 @@ each day with no server involved.
   set order (they are dated before Alpha). Cards without a rarity
   (avatars) can be guessed but are never the answer.
 - **Rules:** `src/lib/realmdle/engine.ts`, tested in `engine.test.ts`.
-  The puzzle number is days since 28 Sep 2026 in Sydney. The answer is
-  chosen by rendezvous hashing (the card with the highest
-  `hash(puzzle:id)` wins), so a new set landing mid-day rarely changes
-  today's card.
+  Six guesses. The puzzle number is days since 28 Sep 2026 in Sydney.
+- **One answer per puzzle:** a card can only be the answer if no other
+  card shares all six of its clue values (its `signature`). Otherwise a
+  player could turn every tile green and still be wrong. About 465 of the
+  ~1,050 cards qualify; most Sites and all avatars do not.
+- **Schedule:** `src/data/schedule.json` lists the answer for every
+  puzzle a year ahead (puzzle n is `answers[n - 1]`). The fetch script
+  only ever appends to it, never edits it, so no rebuild or new set can
+  change a day that is already set. Every eligible card is used once
+  before any repeats. Past its end, or if a scheduled card later gains a
+  twin, the day falls back to a hash of the puzzle number over the pool.
+  Commit the file when it grows.
 - **Clues:** element (match, or close if one element is shared), type,
   cost and power (close within one, with a higher/lower chevron), rarity
-  and set (with a rarer/newer chevron).
+  and first set (with a rarer/newer chevron). A card in several sets only
+  counts its first release set; promos never count.
+- **Hint:** on the sixth and last guess the answer's subtypes (Monster,
+  Mortal, Spirit...) are revealed, or "no subtype" for most spells and
+  sites. Subtypes are never a per-guess clue.
 - **State:** guesses and streaks live in `localStorage` only, and the game
-  works without it. The copied result uses emoji squares because that is
+  works without it. Keys are versioned (`realmdle:v2:*`) so a rule change
+  such as the guess count does not mix old boards with new. The copied result uses emoji squares because that is
   what renders in Discord; the page itself uses none.
 - **Images** are hotlinked from `api.kairosarchive.net/images/`, which the
   registry allows with credit to Erik's Curiosa (in the page footer).

@@ -8,6 +8,7 @@ const record = (over: Partial<RegistryExport['cards'][number]>): RegistryExport[
   type: 'Minion',
   category: 'Spell',
   rarity: 'Ordinary',
+  subtypes: ['Demon'],
   elements: ['Fire'],
   cost: 2,
   power: 1,
@@ -28,6 +29,7 @@ const registry: RegistryExport = {
     record({ codex_id: 'C000004', name: 'Promo Only', set_codes: ['999'] }),
     record({ codex_id: 'C000005', name: 'Test Avatar', type: 'Avatar', category: 'Avatar', rarity: null, elements: ['Water', 'Air'], image_urls: null }),
     record({}),
+    record({ codex_id: 'C000006', name: 'Test Reprint', cost: 5, set_codes: ['002', '001', '999'] }),
   ],
 };
 
@@ -39,12 +41,14 @@ describe('normalise', () => {
   });
 
   it('maps cards, dropping tokens and promo-only cards', () => {
-    expect(data.cards.map((c) => c.name)).toEqual(['Test Avatar', 'Test Imp', 'Test Tower']);
+    expect(data.cards.map((c) => c.name)).toEqual(['Test Avatar', 'Test Imp', 'Test Reprint', 'Test Tower']);
   });
 
   it('turns "None" into no elements, sorts elements and uses the first release printing', () => {
     const byName = Object.fromEntries(data.cards.map((c) => [c.name, c]));
-    expect(byName['Test Tower']).toEqual({ id: 'C000002', name: 'Test Tower', type: 'Site', elements: [], cost: null, power: null, rarity: 'Ordinary', set: 'Second', image: 'https://img.test/imp.webp' });
+    expect(byName['Test Tower']).toEqual({ id: 'C000002', name: 'Test Tower', type: 'Site', elements: [], cost: null, power: null, rarity: 'Ordinary', subtypes: ['Demon'], set: 'Second', image: 'https://img.test/imp.webp' });
+    // printed in both release sets and a promo: only its first release set counts
+    expect(byName['Test Reprint'].set).toBe('First');
     expect(byName['Test Avatar']).toMatchObject({ elements: ['Air', 'Water'], rarity: null, image: null });
   });
 });

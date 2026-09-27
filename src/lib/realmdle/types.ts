@@ -20,6 +20,8 @@ export type Card = {
   /** Attack power; null for anything that is not a unit. */
   power: number | null;
   rarity: Rarity | null;
+  /** Mortal, Beast, Monster, Spirit and so on; empty for most spells and sites. Revealed as the last-guess hint. */
+  subtypes: string[];
   /** Set of first printing. Its position in `CardData.sets` gives release order. */
   set: string;
   /** Art to reveal once the puzzle is over, if the source provides one. */

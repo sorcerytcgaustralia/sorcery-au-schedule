@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_GUESSES, compare, dailyCard, msUntilNextPuzzle, puzzleNumber, shareText, suggest } from './engine';
+import { MAX_GUESSES, answerPool, compare, extendSchedule, dailyCard, msUntilNextPuzzle, puzzleNumber, shareText, suggest } from './engine';
 import type { Card } from './types';
 
 // Made-up cards: the rules are tested against shapes, not real card data.
@@ -11,6 +11,7 @@ const card = (over: Partial<Card> & { name: string }): Card => ({
   cost: 3,
   power: 3,
   rarity: 'Ordinary',
+  subtypes: [],
   set: 'First',
   image: null,
   ...over,
@@ -39,7 +40,8 @@ describe('puzzleNumber', () => {
 });
 
 describe('dailyCard', () => {
-  const pool = Array.from({ length: 50 }, (_, i) => card({ name: `Card ${i}` }));
+  // distinct cost and power so every card has its own signature
+  const pool = Array.from({ length: 50 }, (_, i) => card({ name: `Card ${i}`, cost: i % 10, power: Math.floor(i / 10) }));
 
   it('is the same for everyone on a given day and changes between days', () => {
     expect(dailyCard(pool, 10)).toEqual(dailyCard([...pool].reverse(), 10));
@@ -48,13 +50,46 @@ describe('dailyCard', () => {
   });
 
   it('mostly keeps the answer when new cards are added', () => {
-    const grown = [...pool, ...Array.from({ length: 5 }, (_, i) => card({ name: `New ${i}` }))];
+    const grown = [...pool, ...Array.from({ length: 5 }, (_, i) => card({ name: `New ${i}`, cost: 20 + i }))];
     const kept = Array.from({ length: 100 }, (_, d) => dailyCard(pool, d)!.id === dailyCard(grown, d)!.id || dailyCard(grown, d)!.id.startsWith('new')).filter(Boolean).length;
     expect(kept).toBe(100);
   });
 
+  it('only picks a card no other card can be mistaken for', () => {
+    const twinA = card({ name: 'Twin A', type: 'Site', elements: [], cost: null, power: null });
+    const twinB = card({ name: 'Twin B', type: 'Site', elements: [], cost: null, power: null });
+    const loner = card({ name: 'Loner', cost: 9 });
+    expect(answerPool([twinA, twinB, loner]).map((c) => c.name)).toEqual(['Loner']);
+    for (let d = 1; d <= 20; d++) expect(dailyCard([twinA, twinB, loner], d)!.name).toBe('Loner');
+  });
+
   it('skips cards without a rarity', () => {
     expect(dailyCard([card({ name: 'No Rarity', rarity: null })], 1)).toBeNull();
+  });
+});
+
+describe('schedule', () => {
+  const pool = Array.from({ length: 10 }, (_, i) => card({ name: `Card ${i}`, cost: i }));
+
+  it('uses every card once before any repeats', () => {
+    const s = extendSchedule(pool, [], 25);
+    expect(s).toHaveLength(25);
+    expect(new Set(s.slice(0, 10)).size).toBe(10);
+    expect(new Set(s.slice(10, 20)).size).toBe(10);
+  });
+
+  it('never changes days already scheduled, even when the pool changes', () => {
+    const first = extendSchedule(pool, [], 12);
+    const grown = [...pool, card({ name: 'Newcomer', cost: 42 })];
+    const longer = extendSchedule(grown, first, 30);
+    expect(longer.slice(0, 12)).toEqual(first);
+    expect(longer).toContain('newcomer');
+  });
+
+  it('decides the daily card, falling back to a hash past its end', () => {
+    const s = extendSchedule(pool, [], 5);
+    expect(dailyCard(pool, 3, s)!.id).toBe(s[2]);
+    expect(dailyCard(pool, 99, s)).not.toBeNull();
   });
 });
 

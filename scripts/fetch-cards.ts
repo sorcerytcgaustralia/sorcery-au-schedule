@@ -14,6 +14,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { normalise, type RegistryExport } from '../src/lib/realmdle/adapter';
+import { extendSchedule, puzzleNumber } from '../src/lib/realmdle/engine';
 import type { CardData } from '../src/lib/realmdle/types';
 
 const BASE = 'https://api.kairosarchive.net/v3';
@@ -21,6 +22,9 @@ const SOURCE = `${BASE}/registry.json`;
 // The registry asks automated clients to name themselves and a contact.
 const HEADERS = { 'user-agent': 'realmofoz-daily/1.0 (+https://realmofoz.com)', accept: 'application/json' };
 const OUT = new URL('../src/data/cards.json', import.meta.url);
+const SCHEDULE = new URL('../src/data/schedule.json', import.meta.url);
+/** How far ahead the schedule is kept filled. */
+const DAYS_AHEAD = 365;
 /** Fewer cards than this means something upstream is wrong. */
 const MIN_CARDS = 500;
 
@@ -48,7 +52,31 @@ function write(text: string, source: string, digest: string) {
   console.log(`Card pool written: ${data.cards.length} cards across ${data.sets.join(', ')} (${noRarity} without a rarity, never the answer)`);
 }
 
+/**
+ * Keeps src/data/schedule.json a year ahead of today. Only appends: a day
+ * that already has a card keeps it, so the answer never shifts under
+ * players, whatever the build or the card pool does.
+ */
+function updateSchedule() {
+  const cards = readPrevious()?.cards ?? [];
+  let current: { answers: string[] } = { answers: [] };
+  try {
+    current = JSON.parse(readFileSync(SCHEDULE, 'utf8'));
+  } catch {
+    /* first run */
+  }
+  const answers = extendSchedule(cards, current.answers, puzzleNumber(new Date()) + DAYS_AHEAD);
+  if (answers.length === current.answers.length) return;
+  writeFileSync(SCHEDULE, JSON.stringify({ note: 'Puzzle n is answers[n - 1]. Append only: never edit or reorder existing entries.', answers }, null, 0) + '\n');
+  console.log(`Schedule extended to puzzle ${answers.length} (${answers.length - current.answers.length} new days)`);
+}
+
 async function main() {
+  await refreshCards();
+  updateSchedule();
+}
+
+async function refreshCards() {
   const local = process.argv[2];
   if (local) {
     const text = readFileSync(local, 'utf8');
