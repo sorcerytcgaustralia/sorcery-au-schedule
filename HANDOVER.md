@@ -143,18 +143,23 @@ each day with no server involved.
 - **Seeding without network:** `npx tsx scripts/fetch-cards.ts
   path/to/sorcery-registry/export/registry.json` builds the pool from a
   local clone of the registry repo.
-- **Adapter:** `src/lib/realmdle/adapter.ts` maps registry cards to the
-  game's shape: `codex_id` as the id, `["None"]` elements as colourless,
-  `power` (not `attack`), and the first printing in a release set. Tokens
-  and the few promo-only cards are left out, and promo sets are not in the
-  set order (they are dated before Alpha). Cards without a rarity
-  (avatars) can be guessed but are never the answer.
+- **Adapter:** `src/lib/realmdle/adapter.ts` makes **one entry per card
+  per release set**: Apprentice Wizard in Alpha (`C000001-001`) and in
+  Beta (`C000001-002`) are separate guesses and separate answers, with
+  the same stats and a different set. Foils and other finishes in a set
+  are the same entry; its art comes from the set's standard booster
+  printing. Stats come from the card record (`power`, not `attack`;
+  `["None"]` elements are colourless). Tokens and promo printings are
+  left out, and the promo set is not in the set order (it is dated before
+  Alpha). Entries without a rarity (avatars) can be guessed but are never
+  the answer.
 - **Rules:** `src/lib/realmdle/engine.ts`, tested in `engine.test.ts`.
   Six guesses. The puzzle number is days since 28 Sep 2026 in Sydney.
 - **One answer per puzzle:** a card can only be the answer if no other
   card shares all six of its clue values (its `signature`). Otherwise a
-  player could turn every tile green and still be wrong. About 465 of the
-  ~1,050 cards qualify; most Sites and all avatars do not.
+  player could turn every tile green and still be wrong. About 620 of the
+  ~1,480 entries qualify, spread across every set including Beta; most
+  Sites and all avatars do not.
 - **Schedule:** `src/data/schedule.json` lists the answer for every
   puzzle a year ahead (puzzle n is `answers[n - 1]`). The fetch script
   only ever appends to it, never edits it, so no rebuild or new set can
@@ -164,13 +169,13 @@ each day with no server involved.
   Commit the file when it grows.
 - **Clues:** element (match, or close if one element is shared), type,
   cost and power (close within one, with a higher/lower chevron), rarity
-  and first set (with a rarer/newer chevron). A card in several sets only
-  counts its first release set; promos never count.
+  and set (with a rarer/newer chevron). Guessing the Alpha copy when the
+  answer is the Beta copy shows every stat green and the set tile newer.
 - **Hint:** on the sixth and last guess the answer's subtypes (Monster,
   Mortal, Spirit...) are revealed, or "no subtype" for most spells and
   sites. Subtypes are never a per-guess clue.
 - **State:** guesses and streaks live in `localStorage` only, and the game
-  works without it. Keys are versioned (`realmdle:v2:*`) so a rule change
+  works without it. Keys are versioned (`realmdle:v3:*`) so a rule change
   such as the guess count does not mix old boards with new. The copied result uses emoji squares because that is
   what renders in Discord; the page itself uses none.
 - **Images** are hotlinked from `api.kairosarchive.net/images/`, which the

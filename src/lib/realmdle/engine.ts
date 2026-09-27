@@ -183,7 +183,7 @@ export function formatElements(elements: Card['elements']): string {
 }
 
 /** Names that match what has been typed: prefix matches first, then anywhere. */
-export function suggest(cards: Card[], query: string, exclude: Set<string>, limit = 8): Card[] {
+export function suggest(cards: Card[], query: string, exclude: Set<string>, limit = 10): Card[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const starts: Card[] = [];
@@ -194,6 +194,7 @@ export function suggest(cards: Card[], query: string, exclude: Set<string>, limi
     if (name.startsWith(q)) starts.push(card);
     else if (name.includes(q)) contains.push(card);
   }
-  const byName = (a: Card, b: Card) => a.name.localeCompare(b.name);
+  // same name: keep the pool's release order, so Alpha is listed before Beta
+  const byName = (a: Card, b: Card) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
   return [...starts.sort(byName), ...contains.sort(byName)].slice(0, limit);
 }

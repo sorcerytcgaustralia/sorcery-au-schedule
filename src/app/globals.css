@@ -369,6 +369,7 @@ a.fan-imposter:hover, a.fan-imposter:focus-visible, a.fan-imposter.is-peeked { t
 .rd-row { border-top: 1px solid var(--line); padding-top: 14px; }
 .rd-name { font-family: var(--font-display); font-size: 21px; line-height: 1.1; color: #f3eee5; margin-bottom: 10px; }
 .rd-name-hit { color: var(--rd-hit); }
+.rd-name-set { margin-left: 12px; font-size: 13px; color: var(--parch-muted); letter-spacing: 0.02em; }
 .rd-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
 .rd-tile {
   position: relative; min-height: 64px; padding: 8px 8px 10px; border-radius: 8px;

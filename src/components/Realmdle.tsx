@@ -19,7 +19,7 @@ import {
 } from '@/lib/realmdle/engine';
 import type { Card, CardData } from '@/lib/realmdle/types';
 
-const LABELS: Record<Column, string> = { elements: 'Element', type: 'Type', cost: 'Cost', power: 'Power', rarity: 'Rarity', set: 'First set' };
+const LABELS: Record<Column, string> = { elements: 'Element', type: 'Type', cost: 'Cost', power: 'Power', rarity: 'Rarity', set: 'Set' };
 const DIRECTION_WORDS: Record<Column, [string, string]> = {
   elements: ['', ''],
   type: ['', ''],
@@ -31,9 +31,9 @@ const DIRECTION_WORDS: Record<Column, [string, string]> = {
 
 type Stats = { played: number; won: number; streak: number; best: number; lastPlayed: number; lastWon: number; dist: number[] };
 const EMPTY_STATS: Stats = { played: 0, won: 0, streak: 0, best: 0, lastPlayed: 0, lastWon: 0, dist: Array(MAX_GUESSES).fill(0) };
-// v2: six guesses instead of eight, so v1 boards and score spreads do not carry over
-const STATE_KEY = 'realmdle:v2:state';
-const STATS_KEY = 'realmdle:v2:stats';
+// v3: guesses are a card in a set (C000001-002), no longer just a card
+const STATE_KEY = 'realmdle:v3:state';
+const STATS_KEY = 'realmdle:v3:stats';
 
 // Storage can be missing or throw (private windows, blocked site data), so
 // the game must work without it; it only costs the streak.
@@ -247,7 +247,9 @@ export function Realmdle({ data, schedule }: { data: CardData; schedule: string[
                   }}
                 >
                   <span>{card.name}</span>
-                  <span className="rd-option-type info">{card.type}</span>
+                  <span className="rd-option-type info">
+                    {card.set}, {card.type}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -314,7 +316,9 @@ export function Realmdle({ data, schedule }: { data: CardData; schedule: string[
       <ol className="rd-board" aria-label="Your guesses" reversed>
         {[...rows].reverse().map(({ card, feedback }) => (
           <li key={card.id} className="rd-row">
-            <p className={`rd-name${card.id === answer.id ? ' rd-name-hit' : ''}`}>{card.name}</p>
+            <p className={`rd-name${card.id === answer.id ? ' rd-name-hit' : ''}`}>{card.name}
+              <span className="rd-name-set info">{card.set}</span>
+            </p>
             <div className="rd-tiles">
               {COLUMNS.map((column) => (
                 <Tile key={column} card={card} column={column} clue={feedback[column]} />
@@ -337,7 +341,7 @@ export function Realmdle({ data, schedule }: { data: CardData; schedule: string[
         <span>
           <Chevron up /> The answer is higher, rarer or from a newer set
         </span>
-        <span>First set is where a card was first printed; reprints do not count</span>
+        <span>Each set counts as its own card: Apprentice Wizard from Alpha and from Beta are different answers</span>
       </div>
     </div>
   );

@@ -8,7 +8,10 @@ export const RARITIES = ['Ordinary', 'Exceptional', 'Elite', 'Unique'] as const;
 export type Rarity = (typeof RARITIES)[number];
 
 export type Card = {
-  /** The registry's codex_id, e.g. C000001: permanent, shared by every printing. */
+  /**
+   * The card in one set: the registry's codex_id and the set code, e.g.
+   * C000001-002 is Apprentice Wizard in Beta. Both parts are permanent.
+   */
   id: string;
   name: string;
   /** Minion, Magic, Aura, Artifact, Site or Avatar. */
@@ -22,7 +25,7 @@ export type Card = {
   rarity: Rarity | null;
   /** Mortal, Beast, Monster, Spirit and so on; empty for most spells and sites. Revealed as the last-guess hint. */
   subtypes: string[];
-  /** Set of first printing. Its position in `CardData.sets` gives release order. */
+  /** The set this entry is from. Its position in `CardData.sets` gives release order. */
   set: string;
   /** Art to reveal once the puzzle is over, if the source provides one. */
   image: string | null;
