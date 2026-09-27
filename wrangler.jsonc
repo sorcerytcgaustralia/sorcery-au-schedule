@@ -1,14 +1,43 @@
 {
-  // Cloudflare Workers static assets config for realmofoz.com.
-  // No Worker script: `next build` writes a fully static site to ./out
-  // (output: 'export' in next.config.ts) and Cloudflare serves it as is.
+  // Cloudflare Workers config for realmofoz.com.
+  //
+  // The site itself is static: `next build` writes plain HTML, CSS and JS to
+  // ./out (output: 'export' in next.config.ts) and Cloudflare serves it as
+  // is. The only code that runs is worker/index.ts, and only for /api/*
+  // (Realmdle: Discord sign-in, guesses, stats); every other path is served
+  // straight from ./out without touching the Worker.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "realmofoz",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-09-08",
   "assets": {
     "directory": "./out",
+    "binding": "ASSETS",
     // Multi-page static site, not a client-routed SPA: unknown paths get
     // Next's exported 404.html with a real 404 status.
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  // Hourly: make sure today and the week ahead have a Realmdle answer.
+  "triggers": { "crons": ["7 * * * *"] },
+  "vars": {
+    // The Discord application's client id (public). Secrets are set with
+    // `wrangler secret put`: DISCORD_CLIENT_SECRET, SESSION_SECRET, PLAN_SALT.
+    "DISCORD_CLIENT_ID": ""
+  },
+  // Production database: uncomment once `wrangler d1 create realmdle` has
+  // given you an id (see HANDOVER.md, "Realmdle backend setup"). Until then
+  // the API answers "not configured" and /daily plays in the browser.
+  // "d1_databases": [
+  //   { "binding": "DB", "database_name": "realmdle", "database_id": "PASTE-ID-HERE", "migrations_dir": "migrations" }
+  // ],
+
+  "env": {
+    // Local development only: `npm run api:dev`. A local SQLite database, and
+    // a sign-in shortcut that works on localhost only (DEV_LOGIN).
+    "dev": {
+      "d1_databases": [{ "binding": "DB", "database_name": "realmdle", "database_id": "local-only", "migrations_dir": "migrations" }],
+      "vars": { "DISCORD_CLIENT_ID": "", "DEV_LOGIN": "true" }
+    }
   }
 }

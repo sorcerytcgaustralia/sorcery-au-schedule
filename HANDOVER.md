@@ -200,3 +200,83 @@ each day with no server involved.
   what renders in Discord; the page itself uses none.
 - **Images** are hotlinked from `api.kairosarchive.net/images/`, which the
   registry allows with credit to Erik's Curiosa (in the page footer).
+
+## Realmdle backend (accounts, stats, leaderboard)
+
+With the backend set up, players sign in with Discord and the server runs
+the game: it holds the answer, scores every guess and keeps each play, so
+streaks and stats follow a player across devices (and, later, into the
+Discord slash commands). Until it is set up, `/api/*` answers
+`503 not_configured` and `/daily` plays in the browser as before.
+
+**Pieces**
+
+```
+worker/index.ts      routes /api/* (every other path is served from ./out untouched)
+worker/auth.ts       Discord OAuth2 (identify scope) and the signed session cookie
+worker/game.ts       planning, scoring, stats and leaderboard queries
+worker/env.ts        the bindings and secrets, all optional until set up
+migrations/          D1 schema: puzzles, players, plays
+src/lib/realmdle/    rules, planner and stats, shared by the page and the Worker
+scripts/api-smoke.mjs  end-to-end check against the local Worker
+```
+
+- **puzzles** holds every past day and the week ahead. The hourly cron
+  (and the first request of a day, as a fallback) appends missing days with
+  the same planner as `schedule.json`, replaying the history in the table.
+  Rows are never changed once written.
+- **Answers are secret.** The planner mixes in `PLAN_SALT`, so the public
+  code and data cannot be used to work out future answers, and the API only
+  returns the answer once a player's puzzle is over. (The committed
+  `schedule.json` is only used by the in-browser fallback and does not
+  match the server's answers.)
+- **plays** is one row per player per puzzle. Stats (played, win rate,
+  current and best streak, guess spread, average) are computed from it by
+  `src/lib/realmdle/stats.ts`, never stored, so they cannot drift. A streak
+  survives until a whole day is missed.
+- **Sessions** are an HMAC-signed cookie (`SESSION_SECRET`), HttpOnly and
+  SameSite=Lax, 30 days. Changes (`POST`/`DELETE`) must send JSON from this
+  site's origin. Two guesses at once cannot both count: the update only
+  applies if the play still has the number of guesses it was read with.
+- **Privacy:** the database holds the Discord id, display name and guesses,
+  nothing else. The leaderboard is opt-in; "delete my Realmdle data" on
+  `/daily` removes the player and every play.
+
+**Setup (once, by someone with the Cloudflare account and a Discord login)**
+
+1. Create the database and apply the schema:
+   `npx wrangler d1 create realmdle`, paste the id into the commented
+   `d1_databases` block in `wrangler.jsonc` and uncomment it, then
+   `npx wrangler d1 migrations apply realmdle --remote`.
+2. At https://discord.com/developers/applications create an application
+   ("Realmdle"). Under OAuth2 add the redirect
+   `https://realmofoz.com/api/auth/callback`. Put its Client ID in
+   `vars.DISCORD_CLIENT_ID` in `wrangler.jsonc` (it is public), then
+   `npx wrangler secret put DISCORD_CLIENT_SECRET`.
+3. `npx wrangler secret put SESSION_SECRET` and
+   `npx wrangler secret put PLAN_SALT`, each a long random string
+   (`openssl rand -base64 32`). Never change `PLAN_SALT` once live: only
+   unplanned days would change, but keep it stable anyway.
+4. Merge and deploy. Check `/api/today` returns a board, then sign in.
+
+Preview versions share the production database and secrets, so a preview
+is played with real accounts; Discord sign-in only works on origins listed
+as redirects in step 2.
+
+**Local development**
+
+```sh
+printf 'SESSION_SECRET=dev-secret-0123456789\nPLAN_SALT=dev-salt\n' > .dev.vars
+SKIP_SHEET_FETCH=1 npx next build      # the Worker serves ./out
+npm run api:dev                        # local D1 + Worker on http://127.0.0.1:8787
+npm run api:smoke                      # in another terminal: 17 end-to-end checks
+```
+
+Open http://127.0.0.1:8787/api/auth/dev?id=123&name=Tester to sign in
+without Discord. That route only exists when `DEV_LOGIN` is `"true"` (set
+only in the `dev` environment) and the host is localhost.
+
+**Next: Discord slash commands.** `/realmdle` in the server, answered by
+the same Worker (Discord signs each interaction; verify with the
+application's public key), writing `plays` rows with `source = 'discord'`,
+so web and Discord share one play per day and one set of stats.

@@ -80,11 +80,11 @@ export function answerPool(cards: Card[]): Card[] {
 }
 
 /** Highest `hash(puzzle:id)` wins: a stable, even-handed pick from any list. */
-function rendezvous(pool: Card[], puzzle: number): Card | null {
+function rendezvous(pool: Card[], puzzle: number, salt = ''): Card | null {
   let best: Card | null = null;
   let bestScore = -1;
   for (const card of pool) {
-    const score = hash(`realmdle:${puzzle}:${card.id}`);
+    const score = hash(salt ? `realmdle:${salt}:${puzzle}:${card.id}` : `realmdle:${puzzle}:${card.id}`);
     if (score > bestScore || (score === bestScore && best !== null && card.id < best.id)) {
       best = card;
       bestScore = score;
@@ -119,6 +119,12 @@ export type PlanOptions = {
   gap?: number;
   /** The date (YYYY-MM-DD) a card may first be the answer; always, if left out. */
   eligibleFrom?: (card: Card) => string;
+  /**
+   * A secret mixed into the tie-breaking hash. The code and card data are
+   * public, so without one anyone could run the planner and read the
+   * answers ahead; the server plans with a secret salt.
+   */
+  salt?: string;
 };
 
 /** When each card may first be the answer: its set's release date plus GRACE_DAYS. */
@@ -154,13 +160,17 @@ export function extendSchedule(cards: Card[], schedule: string[], until: number,
 
   const plays = new Map<string, number>(); // id -> times it has been the answer, once eligible
   const nameSeen = new Map<string, number>(); // name -> latest day (index) it was the answer
+  // cards in the order they become eligible, admitted as the days pass
+  const pending = pool.map((c) => ({ card: c, from: eligibleFrom(c) })).sort((a, b) => a.from.localeCompare(b.from));
+  let next = 0;
   const admit = (day: number) => {
     const date = puzzleDate(day + 1);
-    const arriving = pool.filter((c) => !plays.has(c.id) && eligibleFrom(c) <= date);
-    if (!arriving.length) return;
+    if (next >= pending.length || pending[next].from > date) return;
     // join level with whoever is still waiting in the current round
     const level = plays.size ? Math.min(...plays.values()) : 0;
-    for (const c of arriving) plays.set(c.id, level);
+    for (; next < pending.length && pending[next].from <= date; next++) {
+      if (!plays.has(pending[next].card.id)) plays.set(pending[next].card.id, level);
+    }
   };
   const record = (id: string, day: number) => {
     plays.set(id, (plays.get(id) ?? 0) + 1);
@@ -188,6 +198,7 @@ export function extendSchedule(cards: Card[], schedule: string[], until: number,
     const pick = rendezvous(
       candidates.filter((c) => nameAge(c) === oldestName),
       day + 1,
+      options.salt,
     )!;
     out.push(pick.id);
     record(pick.id, day);
