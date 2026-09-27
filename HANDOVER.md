@@ -163,12 +163,17 @@ each day with no server involved.
 - **Schedule:** `src/data/schedule.json` lists the answer for every
   puzzle a year ahead (puzzle n is `answers[n - 1]`). The fetch script
   only ever appends to it, never edits it, so no rebuild or new set can
-  change a day that is already set. Every eligible entry is used once
-  before any repeats, and among unused entries it prefers the card name
-  used longest ago: the Alpha and Beta copies of a card only both come up
-  once every other name has had a day (about 465 names, so no name repeats
-  in the first year), and then as far apart as possible. Past its end, or if a scheduled card later gains a
-  twin, the day falls back to a hash of the puzzle number over the pool.
+  change a day that is already set. New days follow three rules in
+  order: (1) a card name is never the answer twice within 365 days, in
+  any set (`NAME_GAP`), so the Alpha and Beta copies of a card are always
+  at least a year apart; (2) the entry that has waited longest goes next,
+  so every entry has a day before any repeats; (3) then the name that has
+  waited longest, then a hash. Rule 1 can always be met because there are
+  more eligible names (~465) than days in a year; a five-year simulation
+  has no repeats. `schedule.test.ts` checks the committed file on every
+  CI run and stops the deploy if a name repeats within a year or a
+  scheduled card is no longer eligible. Past its end, or if a scheduled
+  card later gains a twin, the day falls back to a hash of the puzzle number over the pool.
   Commit the file when it grows.
 - **Clues:** element (match, or close if one element is shared), type,
   cost and power (close within one, with a higher/lower chevron), rarity

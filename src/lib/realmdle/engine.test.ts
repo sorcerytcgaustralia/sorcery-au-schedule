@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_GUESSES, answerPool, compare, extendSchedule, dailyCard, msUntilNextPuzzle, puzzleNumber, shareText, suggest } from './engine';
+import { MAX_GUESSES, answerPool, compare, extendSchedule, nameRepeats, dailyCard, msUntilNextPuzzle, puzzleNumber, shareText, suggest } from './engine';
 import type { Card } from './types';
 
 // Made-up cards: the rules are tested against shapes, not real card data.
@@ -97,6 +97,22 @@ describe('schedule', () => {
     // every name once before any name comes back, then in the same order
     expect(new Set(names.slice(0, 5)).size).toBe(5);
     expect(names.slice(5)).toEqual(names.slice(0, 5));
+  });
+
+  it('never brings a name back within the gap, even with more entries than names', () => {
+    // 8 names, 3 of them in two sets: 11 entries. With a gap of 5 days the
+    // rule always has a free name, so it must hold over many cycles.
+    const names = Array.from({ length: 8 }, (_, i) => card({ name: `Name ${i}`, cost: i }));
+    const entries = [...names, ...names.slice(0, 3).map((c) => ({ ...c, id: `${c.id}-b`, set: 'Second' }))];
+    const s = extendSchedule(entries, [], 200, 5);
+    expect(nameRepeats(entries, s, 5)).toEqual([]);
+    // and every entry still gets its day
+    expect(new Set(s).size).toBe(entries.length);
+  });
+
+  it('reports a name that comes back too soon', () => {
+    const twins = [card({ name: 'Twin', id: 'twin-a', set: 'First' }), card({ name: 'Twin', id: 'twin-b', set: 'Second' })];
+    expect(nameRepeats(twins, ['twin-a', 'twin-b'])).toEqual([[2, 'Twin']]);
   });
 
   it('decides the daily card, falling back to a hash past its end', () => {

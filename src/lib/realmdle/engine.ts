@@ -101,44 +101,68 @@ export function dailyCard(cards: Card[], puzzle: number, schedule: string[] = []
   return pool.find((c) => c.id === scheduled) ?? rendezvous(pool, puzzle);
 }
 
+/** A card name may not be the answer again within this many days, whatever its set. */
+export const NAME_GAP = 365;
+
 /**
  * Extends a schedule so it covers `until` puzzles. Existing entries are
- * never changed. Each new day takes an entry not yet used in the current
- * cycle (a cycle ends when every entry in the pool has had its day), and
- * among those prefers the name used longest ago, never-used names first.
- * So the Alpha and Beta copies of a card only both appear once every other
- * name has had a turn, and then as far apart as possible. Ties are broken
- * by hash, so the order is fixed by the data, not by when the script ran.
+ * never changed. Each new day is chosen by three rules, in order:
+ *
+ * 1. Its card name has not been the answer in the last NAME_GAP days, in
+ *    any set. There are more eligible names than days in the gap, so some
+ *    name is always free and this never has to bend.
+ * 2. Of those, the entry that has waited longest: every entry has a day
+ *    before any comes back.
+ * 3. Then the name that has waited longest, then a hash of the day, so the
+ *    order is fixed by the data and not by when the script ran.
  */
-export function extendSchedule(cards: Card[], schedule: string[], until: number): string[] {
+export function extendSchedule(cards: Card[], schedule: string[], until: number, gap = NAME_GAP): string[] {
   const pool = answerPool(cards);
-  const byId = new Map(pool.map((c) => [c.id, c]));
+  const byId = new Map(cards.map((c) => [c.id, c]));
   const out = [...schedule];
-  const used = new Set<string>(); // entries used since the current cycle began
-  const lastSeen = new Map<string, number>(); // name -> latest day it was the answer
+  const entrySeen = new Map<string, number>(); // id -> latest day (index) it was the answer
+  const nameSeen = new Map<string, number>(); // name -> latest day it was the answer
   const record = (id: string, day: number) => {
-    const card = byId.get(id);
-    if (!card) return;
-    if (used.size >= byId.size) used.clear();
-    used.add(id);
-    lastSeen.set(card.name, day);
+    entrySeen.set(id, day);
+    const name = byId.get(id)?.name;
+    if (name) nameSeen.set(name, day);
   };
   out.forEach(record);
 
   while (out.length < until) {
-    if (used.size >= byId.size) used.clear();
-    const open = pool.filter((c) => !used.has(c.id));
-    if (!open.length) break;
-    const age = (c: Card) => lastSeen.get(c.name) ?? -1;
-    const oldest = Math.min(...open.map(age));
+    const day = out.length;
+    const nameAge = (c: Card) => nameSeen.get(c.name) ?? -Infinity;
+    const entryAge = (c: Card) => entrySeen.get(c.id) ?? -Infinity;
+    const free = pool.filter((c) => day - nameAge(c) >= gap);
+    // only reachable with fewer names than `gap` days: fall back to the whole pool
+    let candidates = free.length ? free : pool;
+    if (!candidates.length) break;
+    const oldestEntry = Math.min(...candidates.map(entryAge));
+    candidates = candidates.filter((c) => entryAge(c) === oldestEntry);
+    const oldestName = Math.min(...candidates.map(nameAge));
     const pick = rendezvous(
-      open.filter((c) => age(c) === oldest),
-      out.length + 1,
+      candidates.filter((c) => nameAge(c) === oldestName),
+      day + 1,
     )!;
     out.push(pick.id);
-    record(pick.id, out.length - 1);
+    record(pick.id, day);
   }
   return out;
+}
+
+/** Days where a name repeats within NAME_GAP days of its last appearance, as [day, name] (1-based days). */
+export function nameRepeats(cards: Card[], schedule: string[], gap = NAME_GAP): [number, string][] {
+  const byId = new Map(cards.map((c) => [c.id, c]));
+  const lastSeen = new Map<string, number>();
+  const repeats: [number, string][] = [];
+  schedule.forEach((id, day) => {
+    const name = byId.get(id)?.name;
+    if (!name) return;
+    const last = lastSeen.get(name);
+    if (last !== undefined && day - last < gap) repeats.push([day + 1, name]);
+    lastSeen.set(name, day);
+  });
+  return repeats;
 }
 
 export type Verdict = 'correct' | 'partial' | 'wrong';
