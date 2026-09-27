@@ -163,8 +163,11 @@ each day with no server involved.
 - **Schedule:** `src/data/schedule.json` lists the answer for every
   puzzle a year ahead (puzzle n is `answers[n - 1]`). The fetch script
   only ever appends to it, never edits it, so no rebuild or new set can
-  change a day that is already set. Every eligible card is used once
-  before any repeats. Past its end, or if a scheduled card later gains a
+  change a day that is already set. Every eligible entry is used once
+  before any repeats, and among unused entries it prefers the card name
+  used longest ago: the Alpha and Beta copies of a card only both come up
+  once every other name has had a day (about 465 names, so no name repeats
+  in the first year), and then as far apart as possible. Past its end, or if a scheduled card later gains a
   twin, the day falls back to a hash of the puzzle number over the pool.
   Commit the file when it grows.
 - **Clues:** element (match, or close if one element is shared), type,

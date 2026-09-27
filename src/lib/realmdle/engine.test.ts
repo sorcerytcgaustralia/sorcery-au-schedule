@@ -86,6 +86,19 @@ describe('schedule', () => {
     expect(longer).toContain('newcomer');
   });
 
+  it('spaces out the copies of a card from different sets', () => {
+    // five cards, each printed in two sets: ten entries, five names
+    const twoSets = pool.slice(0, 5).flatMap((c) => [
+      { ...c, id: `${c.id}-a`, set: 'First' },
+      { ...c, id: `${c.id}-b`, set: 'Second' },
+    ]);
+    const s = extendSchedule(twoSets, [], 10);
+    const names = s.map((id) => twoSets.find((c) => c.id === id)!.name);
+    // every name once before any name comes back, then in the same order
+    expect(new Set(names.slice(0, 5)).size).toBe(5);
+    expect(names.slice(5)).toEqual(names.slice(0, 5));
+  });
+
   it('decides the daily card, falling back to a hash past its end', () => {
     const s = extendSchedule(pool, [], 5);
     expect(dailyCard(pool, 3, s)!.id).toBe(s[2]);

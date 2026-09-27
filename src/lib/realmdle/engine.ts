@@ -103,27 +103,40 @@ export function dailyCard(cards: Card[], puzzle: number, schedule: string[] = []
 
 /**
  * Extends a schedule so it covers `until` puzzles. Existing entries are
- * never changed; new ones take cards not yet used in the current cycle
- * (a cycle ends when every card in the pool has had its day), picked by
- * hash so the order is fixed by the data, not by when the script ran.
+ * never changed. Each new day takes an entry not yet used in the current
+ * cycle (a cycle ends when every entry in the pool has had its day), and
+ * among those prefers the name used longest ago, never-used names first.
+ * So the Alpha and Beta copies of a card only both appear once every other
+ * name has had a turn, and then as far apart as possible. Ties are broken
+ * by hash, so the order is fixed by the data, not by when the script ran.
  */
 export function extendSchedule(cards: Card[], schedule: string[], until: number): string[] {
   const pool = answerPool(cards);
-  const ids = new Set(pool.map((c) => c.id));
+  const byId = new Map(pool.map((c) => [c.id, c]));
   const out = [...schedule];
-  // cards already used since the current cycle began
-  const used = new Set<string>();
-  for (const id of out) {
-    if (!ids.has(id)) continue;
-    if (used.size >= ids.size) used.clear();
+  const used = new Set<string>(); // entries used since the current cycle began
+  const lastSeen = new Map<string, number>(); // name -> latest day it was the answer
+  const record = (id: string, day: number) => {
+    const card = byId.get(id);
+    if (!card) return;
+    if (used.size >= byId.size) used.clear();
     used.add(id);
-  }
+    lastSeen.set(card.name, day);
+  };
+  out.forEach(record);
+
   while (out.length < until) {
-    if (used.size >= ids.size) used.clear();
-    const pick = rendezvous(pool.filter((c) => !used.has(c.id)), out.length + 1);
-    if (!pick) break;
+    if (used.size >= byId.size) used.clear();
+    const open = pool.filter((c) => !used.has(c.id));
+    if (!open.length) break;
+    const age = (c: Card) => lastSeen.get(c.name) ?? -1;
+    const oldest = Math.min(...open.map(age));
+    const pick = rendezvous(
+      open.filter((c) => age(c) === oldest),
+      out.length + 1,
+    )!;
     out.push(pick.id);
-    used.add(pick.id);
+    record(pick.id, out.length - 1);
   }
   return out;
 }
