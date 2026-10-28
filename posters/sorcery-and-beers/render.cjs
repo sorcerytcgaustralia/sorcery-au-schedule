@@ -1,5 +1,5 @@
-// Renders poster.html to poster.png (A4 at 300 dpi), poster.pdf and
-// poster-social.jpg (1240px wide, for Facebook and Discord).
+// Renders poster.html to poster.png (A4 at 300 dpi) and poster.pdf, and
+// square.html to square.png (2160 x 2160, the 1080 square at 2x for socials).
 // Usage: node posters/sorcery-and-beers/render.cjs
 const { chromium } = require('playwright');
 const path = require('node:path');
@@ -15,5 +15,9 @@ const url = 'file://' + path.join(dir, 'poster.html');
   await page.evaluate(() => document.fonts.ready);
   await page.locator('.poster').screenshot({ path: path.join(dir, 'poster.png') });
   await page.pdf({ path: path.join(dir, 'poster.pdf'), format: 'A4', printBackground: true, preferCSSPageSize: true });
+  const sq = await browser.newPage({ viewport: { width: 1080, height: 1080 }, deviceScaleFactor: 2 });
+  await sq.goto('file://' + path.join(dir, 'square.html'), { waitUntil: 'networkidle' });
+  await sq.evaluate(() => document.fonts.ready);
+  await sq.locator('.square').screenshot({ path: path.join(dir, 'square.png') });
   await browser.close();
 })();
