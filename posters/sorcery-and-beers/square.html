@@ -9,7 +9,7 @@
      hairline row. Rendered by render.cjs. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Marcellus+SC&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Marcellus+SC&family=Spectral:ital,wght@0,400;1,400&display=block" rel="stylesheet">
 <style>
   :root {
     --ink: #0f0f10;
@@ -20,12 +20,13 @@
     --line: rgba(232, 227, 218, 0.14);
     --line-3: rgba(232, 227, 218, 0.4);
     --font-display: 'Marcellus SC', serif;
+    --font-text: 'Spectral', Georgia, serif;
     --font-info: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--ink); }
   body { -webkit-font-smoothing: antialiased; }
-  h1, p { margin: 0; }
+  h1, h2, p { margin: 0; }
 
   .square {
     position: relative; overflow: hidden; isolation: isolate;
@@ -55,7 +56,7 @@
   .scene-shade {
     position: absolute; inset: 0;
     background:
-      linear-gradient(180deg, rgba(15, 15, 16, 0.75) 0%, rgba(15, 15, 16, 0.35) 30%, rgba(15, 15, 16, 0.08) 50%, rgba(15, 15, 16, 0.25) 64%, rgba(15, 15, 16, 0.88) 82%, var(--ink) 100%),
+      linear-gradient(180deg, rgba(15, 15, 16, 0.75) 0%, rgba(15, 15, 16, 0.35) 28%, rgba(15, 15, 16, 0.12) 44%, rgba(15, 15, 16, 0.3) 56%, rgba(15, 15, 16, 0.9) 72%, var(--ink) 90%),
       radial-gradient(ellipse 75% 70% at 50% 45%, transparent 55%, rgba(15, 15, 16, 0.7) 100%);
   }
   .square::after {
@@ -73,42 +74,35 @@
   .title {
     position: relative; z-index: 1; margin-top: -58px;
     font-family: var(--font-display); font-weight: 400; font-size: 170px; line-height: 0.9; letter-spacing: 0.02em;
-    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.9));
+    color: #f6f1e8;
+    text-shadow: 0 6px 22px rgba(0, 0, 0, 0.9), 0 0 60px rgba(15, 15, 16, 0.7);
   }
-  /* lettered like "Contested Realm" in the logo: weathered silver over an
-     inked outline. The outline is a copy of the word drawn behind, so the
-     stroke never eats into the letters. */
-  .title span { position: relative; display: inline-block; }
-  .title span::before {
-    content: attr(data-t); position: absolute; left: 0; top: 0; z-index: -1;
-    color: #08080a; -webkit-text-stroke: 10px #08080a;
-  }
-  .title span i {
-    font-style: normal; color: transparent;
-    background: linear-gradient(180deg, #fbf7ef 0%, #e4ded3 50%, #aaa397 100%);
-    -webkit-background-clip: text; background-clip: text;
-  }
-  .title .amp { margin-right: 0.06em; }
-  .title .amp i { background-image: linear-gradient(180deg, #f6a457 0%, #e07a2c 60%, #b85a1e 100%); }
+  .title .amp { color: var(--ember); margin-right: 0.08em; text-shadow: 0 0 34px rgba(224, 122, 44, 0.55), 0 6px 22px rgba(0, 0, 0, 0.9); }
   .eyebrow { margin-top: 22px; font-family: var(--font-info); font-weight: 500; font-size: 19px; letter-spacing: 0.26em; text-transform: uppercase; color: #f3eee5;
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.95), 0 0 22px rgba(15, 15, 16, 0.95), 0 0 40px rgba(15, 15, 16, 0.9); }
   .eyebrow b { font-weight: 500; color: var(--ember); }
+  .standfirst { margin-top: 16px; max-width: 760px; text-align: center; font-family: var(--font-text); font-size: 24px; line-height: 1.45; color: #f3eee5; text-wrap: balance;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 0, 0, 0.95), 0 0 30px rgba(15, 15, 16, 0.95); }
 
   /* ---------- the facts, one hairline row ---------- */
-  .facts { margin-top: auto; width: 100%; display: grid; grid-template-columns: 1fr 1.25fr 0.9fr; border-top: 1px solid var(--line-3); }
-  .fact { padding: 22px 22px 0; text-align: left; }
+  .facts { margin-top: auto; width: 100%; display: grid; grid-template-columns: 0.95fr 1.3fr 1fr; border-top: 1px solid var(--line-3); }
+  .fact { padding: 20px 22px 0; text-align: left; }
   .fact:first-child { padding-left: 0; }
   .fact + .fact { border-left: 1px solid var(--line); }
   .label { font-family: var(--font-info); font-weight: 500; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--parch-muted); }
-  .value { margin-top: 8px; font-family: var(--font-display); font-size: 34px; line-height: 1.08; color: #f3eee5; }
-  .value b { font-weight: 400; color: var(--ember); }
+  .value { margin-top: 8px; font-family: var(--font-display); font-size: 31px; line-height: 1.08; color: #f3eee5; }
+  .sub { margin-top: 6px; font-family: var(--font-info); font-size: 16px; line-height: 1.4; color: var(--parch-soft); }
+  .sub b { font-weight: 500; color: var(--ember); }
 
-  .rsvp { margin-top: 30px; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-  .rsvp p { font-family: var(--font-display); font-size: 30px; color: #f3eee5; }
-  .pill { padding: 12px 26px; border-radius: 999px; background: var(--parchment); color: var(--ink);
-    font-family: var(--font-info); font-weight: 500; font-size: 20px; letter-spacing: 0.01em; }
+  .rsvp { margin-top: 26px; width: 100%; display: flex; align-items: center; gap: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .qr { flex: none; width: 128px; height: 128px; padding: 9px; border-radius: 8px; background: var(--parchment); }
+  .qr img { display: block; width: 100%; height: 100%; }
+  .rsvp h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 34px; line-height: 1.05; color: #f3eee5; }
+  .rsvp p { margin-top: 6px; font-family: var(--font-text); font-size: 20px; line-height: 1.4; color: var(--parch-soft); }
+  .pill { flex: none; margin-left: auto; padding: 12px 24px; border-radius: 999px; background: var(--parchment); color: var(--ink);
+    font-family: var(--font-info); font-weight: 500; font-size: 19px; letter-spacing: 0.01em; }
 
-  .credit { margin-top: 22px; width: 100%; font-family: var(--font-info); font-size: 11px; letter-spacing: 0.03em; color: rgba(232, 227, 218, 0.42); }
+  .credit { margin-top: 18px; width: 100%; font-family: var(--font-info); font-size: 11px; letter-spacing: 0.03em; color: rgba(232, 227, 218, 0.42); }
 </style>
 </head>
 <body>
@@ -121,27 +115,35 @@
 
   <div class="layout lockup">
     <img class="logo" src="assets/sorcery-logo.png" alt="Sorcery: Contested Realm">
-    <h1 class="title"><span class="amp" data-t="&amp;"><i>&amp;</i></span><span data-t="Beers"><i>Beers</i></span></h1>
+    <h1 class="title"><span class="amp">&amp;</span>Beers</h1>
     <p class="eyebrow">Casual night, <b>beginners welcome</b></p>
+    <p class="standfirst">A relaxed Thursday night of Sorcery at the pub.<br>Never played before? Pull up a chair and we will show you how.</p>
   </div>
 
   <div class="layout facts">
     <div class="fact">
-      <p class="label">Thursday 5 November</p>
-      <p class="value">From <b>6pm</b></p>
+      <p class="label">When</p>
+      <p class="value">Thursday<br>5 November</p>
+      <p class="sub">From <b>6pm</b></p>
     </div>
     <div class="fact">
-      <p class="label">Enmore</p>
-      <p class="value">The Golden Barley</p>
+      <p class="label">Where</p>
+      <p class="value">The Golden<br>Barley Hotel</p>
+      <p class="sub">165 Edgeware Road, Enmore</p>
     </div>
     <div class="fact">
       <p class="label">Bring</p>
-      <p class="value">Deck and mat</p>
+      <p class="value">Your deck,<br>BYO mat</p>
+      <p class="sub">New? Just bring yourself</p>
     </div>
   </div>
 
   <div class="layout rsvp">
-    <p>RSVP on Facebook or Discord</p>
+    <div class="qr"><img src="assets/discord-qr.svg" alt="QR code to the Sorcery TCG Australia Discord"></div>
+    <div>
+      <h2>RSVP so we save you a seat</h2>
+      <p>Message us on Facebook or Discord.</p>
+    </div>
     <span class="pill">discord.gg/eyPp9FKpxU</span>
   </div>
 
