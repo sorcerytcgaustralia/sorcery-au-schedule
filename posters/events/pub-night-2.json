@@ -1,0 +1,51 @@
+{
+  "rsvpUrl": "https://sorcerytcg.com/events/cmwabtk88003808leu4bt6yd3",
+  "city": "Sydney",
+  "edition": "No. 2",
+  "taglineHtml": "Casual night<br><em>Beginners welcome</em>",
+  "quote": "The same Sorcery you know and adore, but it's at the pub, so there's hot chippies.",
+  "columns": [
+    {
+      "label": "When",
+      "valueHtml": "Thursday<br>19 November",
+      "noteHtml": "From <em>6pm</em>"
+    },
+    {
+      "label": "Where",
+      "valueHtml": "The Golden<br>Barley Hotel",
+      "noteHtml": "165 Edgeware Road, Enmore<br>Beer garden, weather permitting"
+    },
+    {
+      "label": "Bring",
+      "valueHtml": "Your deck,<br>BYO mat",
+      "noteHtml": "New? Just bring yourself<br>and a mate"
+    }
+  ],
+  "rsvpTitle": "Scan to RSVP on SorceryTCG",
+  "rsvpNote": "Save your seat on the event page.",
+  "chips": [
+    "Free entry",
+    "Earns Dust",
+    "Families welcome"
+  ],
+  "discord": "discord.gg/eyPp9FKpxU",
+  "credit": "Art: Finwife by Margaret Organ-Kean via Kairos Archive, © Erik's Curiosa. Fan-made community event, realmofoz.com",
+  "art": {
+    "file": "art/finwife.png",
+    "srcW": 744,
+    "cropX": 0,
+    "cropY": 101,
+    "scale": 2.06,
+    "left": 0,
+    "top": 34,
+    "boxW": 1533,
+    "boxH": 1318,
+    "fadeRightFrom": 62,
+    "fadeBottomFrom": 80,
+    "washPosition": "70% 30%"
+  },
+  "partner": {
+    "name": "Fluke and Box",
+    "logo": "art/fluke-and-box.png"
+  }
+}

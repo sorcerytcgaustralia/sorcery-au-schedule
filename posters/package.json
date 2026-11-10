@@ -1,0 +1,16 @@
+{
+  "name": "sorcery-au-posters",
+  "private": true,
+  "type": "module",
+  "description": "Event posters for Sorcery TCG Australia, rendered from HTML with headless Chromium.",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-sans": "^5.1.0",
+    "@fontsource/marcellus": "^5.1.0",
+    "@fontsource/marcellus-sc": "^5.1.0",
+    "@fontsource/spectral": "^5.1.0",
+    "qrcode": "^1.5.4"
+  }
+}
