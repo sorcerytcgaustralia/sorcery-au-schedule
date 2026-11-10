@@ -62,7 +62,8 @@ html,body{width:2000px;height:2000px;background:var(--ink);color:var(--parchment
   linear-gradient(to bottom,rgba(15,15,16,0) 1090px,rgba(15,15,16,.9) 1275px,var(--ink) 1420px),
   linear-gradient(to right,rgba(15,15,16,0) 800px,rgba(15,15,16,.5) 1200px,rgba(15,15,16,.62) 2000px)}
 .grain{position:absolute;inset:0;opacity:.11;mix-blend-mode:overlay}
-.frame{position:absolute;inset:44px;border:1px solid rgba(232,227,218,.2)}
+/* The ink ring outside the frame line keeps the art inside it on every side. */
+.frame{position:absolute;inset:44px;border:1px solid rgba(232,227,218,.2);box-shadow:0 0 0 46px var(--ink)}
 
 .head{position:absolute;top:8px;left:0;right:0;display:flex;justify-content:center}
 .head div{display:flex;align-items:center;gap:22px;background:var(--ink);padding:0 44px;border-radius:40px;
@@ -79,6 +80,8 @@ html,body{width:2000px;height:2000px;background:var(--ink);color:var(--parchment
 .round{display:flex;align-items:center;justify-content:center;gap:26px;margin-top:30px;
   font:400 58px/1 var(--display);letter-spacing:.3em;color:var(--parchment)}
 .round i{flex:0 0 90px;height:1px;background:rgba(232,227,218,.45)}
+/* letter-spacing trails the last letter; pad the front so the word stays centred */
+.round span{padding-left:.3em}
 .round b{font-weight:400;color:var(--ember);letter-spacing:.06em}
 .tag{margin-top:36px;font:600 36px/1.5 var(--info);letter-spacing:.24em;text-transform:uppercase}
 .tag em{font-style:normal;color:var(--ember)}
@@ -122,7 +125,7 @@ html,body{width:2000px;height:2000px;background:var(--ink);color:var(--parchment
     <img class="logo" src="${url('art/sorcery-logo.png')}" alt="Sorcery: Contested Realm">
     <div class="at">at the</div>
     <div class="pub">P<small>ub</small></div>
-    <div class="round"><i></i><span>${esc(ev.city)}</span><b>${esc(ev.edition)}</b><i></i></div>
+    <div class="round"><i></i><span>${esc(ev.city)}</span>${ev.edition ? `<b>${esc(ev.edition)}</b>` : ''}<i></i></div>
     <div class="tag">${ev.taglineHtml}</div>
     <div class="quote">${esc(ev.quote)}</div>
   </div>
